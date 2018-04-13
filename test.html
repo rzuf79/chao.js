@@ -1,13 +1,24 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>Darknyeß</title>
+<title>chao.js</title>
 <head></head>
 <body>
 <script src="chao.js"></script>
 <script>
 
 	chao.init(640, 480);
-	// chao.backgroundColor = "#ffffff";
+
+	var StateGame = {
+		create: function(){
+			var thingie = chao.createEntity();
+		},
+
+		update: function(){
+			// console.log(chao.timeDelta);
+		}
+	};
+
+	chao.switchState(StateGame);
 
 
 </script>

@@ -40,12 +40,7 @@ var chao = {
 		chao.loadedFontsNum = 0;
 		chao.font 			= chao.loadBase64Font(chao.defaultFontData);
 
-		var dummyState = { create: function(){}, destroy: function(){}, update: function(){} };
-
-		chao.currentState = dummyState;
-
-		chao.switchState({update: function() {console.log(chao.timeDelta);} });
-
+		chao.currentState 	= {};
 	},
 
 	setFPS: function(FPS){
@@ -62,12 +57,16 @@ var chao = {
 	},
 	 
 	update: function(){
-		chao.timeDelta 	= (Date.now() - chao.lastTime) / 1000;
+		chao.timeDelta 	= (Date.now() - chao.lastTime) * .001;
 		chao.lastTime 	= Date.now(); 
 
 		chao.clearScreen();
 		chao.updateKeys();
 		chao.updateMouse();
+
+		if(chao.currentState.draw != undefined){
+			chao.currentState.draw();
+		}
 
 		if(chao.currentState.update != undefined){
 			chao.currentState.update();
@@ -75,8 +74,13 @@ var chao = {
 	},
 
 	switchState: function(newState){
-		chao.currentState.destroy();
+		if(chao.currentState.destroy != undefined){
+			chao.currentState.destroy();
+		}
 		chao.currentState = newState;
+		if(chao.currentState.create != undefined){
+			chao.currentState.create();
+		}
 	},
 
 	updateMouse: function(){
@@ -92,7 +96,7 @@ var chao = {
 	},
 
 	updateKeys: function(){
-
+		//
 	},
 
 	loadBase64Font: function(data){
@@ -105,8 +109,72 @@ var chao = {
 		return {element:s,file:"",name:fontname,type:"fnt"};
 	},
 
+	getLoadingProgress: function(){
+		var allData 	= chao.images.length;
+		var loadedData 	= 0;
+	},
+
 	getRandom: function(Max) { 
 		Max -= 1;
 		return Math.round(Max*Math.random()); 
 	},
+
+	createEntity: function(x, y){
+		var newEntity = {
+			name: 	 	"Entity",
+			base: 	 	chao.entityInterface,
+			x: 	 		x ? x : 0,
+			y: 	 		y ? y : 0,
+			width: 	 	0,
+			height: 	0,
+			children: 	[],
+			components:	[],
+			parent: 	null,
+			visible: 	true,
+			clickable: 	false,
+
+			add:		chao.entityInterface.add,
+			remove:		chao.entityInterface.remove
+		};
+
+		return newEntity;
+	},
+
+	entityInterface: {
+
+		draw: function(){
+			for(var i = 0; i < components.length; ++i){
+				if(components[i].draw != undefined){
+					components[i].draw();
+				}
+			}
+		},
+
+		update: function(){
+			for(var i = 0; i < components.length; ++i){
+				if(components[i].update != undefined){
+					components[i].update();
+				}
+			}
+		},
+
+		add: function(child){
+			this.children.push(child);
+			child.parent = this;
+		},
+
+		remove: function(child){
+			if(child.parent == this){
+				//
+			}
+		},
+
+		addComponent: function(component){
+			//
+		},
+
+		removeComponent: function(component){
+			//
+		},
+	}
 };
