@@ -8,14 +8,20 @@
 
 	chao.init(640, 480);
 
+	chao.loadImage("sticker", "sticker.png");
+
 	var StateGame = {
 		create: function(){
-			var thingie = new Entity(0, 0);
-			console.log(thingie);
+			var thingie = new Entity("Thingie", 0, 0);
+			var image 	= thingie.addComponent(new ComponentImage("sticker"));
+
+			this.add(thingie);
+			// console.log(thingie);
+			console.log(this);
 		},
 
 		update: function(){
-			// console.log(chao.timeDelta);
+			// 
 		}
 	};
 

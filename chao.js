@@ -17,16 +17,23 @@ var chao = {
 			Date.now = function now() { return new Date().getTime(); };
 		}
 
-		chao.canvas 		= document.createElement("canvas");
-		chao.canvas.setAttribute("width", width);
-		chao.canvas.setAttribute("height", height);
-		chao.canvas.style.backgroundColor = "black";
-		document.body.appendChild(chao.canvas);
+		var canvas = document.createElement("canvas");
+		canvas.setAttribute("width", width);
+		canvas.setAttribute("height", height);
+		canvas.style.backgroundColor = "black";
+		document.body.appendChild(canvas);
 
-		chao.context2D		= chao.canvas.getContext("2d");
+		var context		= canvas.getContext("2d");
+
+		chao.canvas = {
+			canvas: 	canvas,
+			context: 	context,
+			width: 		width,
+			height: 	height,
+		};
 	 
-		chao.canvas.addEventListener("mousedown", chao.onMouseDown, true);
-		chao.canvas.addEventListener("mouseup", chao.onMouseUp, true);
+		canvas.addEventListener("mousedown", chao.onMouseDown, true);
+		canvas.addEventListener("mouseup", chao.onMouseUp, true);
 
 		chao.images			= [];
 		chao.sounds			= [];
@@ -41,7 +48,8 @@ var chao = {
 		chao.loadedFontsNum = 0;
 		chao.font 			= chao.loadBase64Font(chao.defaultFontData);
 
-		chao.currentState 	= {};
+		chao.setLoadingState({});
+		chao.switchState({});
 
 		chao.loggingEnabled = true;
 	},
@@ -52,10 +60,10 @@ var chao = {
 
 	clearScreen: function(){
 		if (chao.backgroundColor=="none") { 
-			chao.context2D.clearRect(0, 0, chao.canvas.width, chao.canvas.height); 
+			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height); 
 		}else{ 
-			chao.context2D.fillStyle = chao.backgroundColor; 
-			chao.context2D.fillRect(0, 0, chao.canvas.width, chao.canvas.height); 
+			chao.canvas.context.fillStyle = chao.backgroundColor; 
+			chao.canvas.context.fillRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height); 
 		}
 	},
 	 
@@ -67,34 +75,119 @@ var chao = {
 		chao.updateKeys();
 		chao.updateMouse();
 
-		if(chao.currentState.rootObject){
-			chao.currentState.rootObject.draw(0, 0, 1.0);
-			chao.currentState.rootObject.update();
-		}
+		var stateToProcess = chao.getLoadingProgress() >= 1.0 ? chao.currentState : chao.loadingState;
 
-		if(chao.currentState.draw){
-			chao.currentState.draw();
+		stateToProcess.rootObject.draw(0, 0, 1.0);
+		stateToProcess.rootObject.update();
+
+		if(stateToProcess.draw){
+			stateToProcess.draw();
 		}
-		if(chao.currentState.update){
-			chao.currentState.update();
+		if(stateToProcess.update){
+			stateToProcess.update();
 		}
 	},
 
 	switchState: function(newState){
-		if(chao.currentState){
-			if(chao.currentState.destroy){
-				chao.currentState.destroy();
-			}	
-		}
+		chao.destroyState(chao.currentState);
 		
 		chao.currentState = newState;
-		if(chao.currentState.create){
-			chao.currentState.create();
+		chao.initState(chao.currentState);
+	},
+
+	setLoadingState: function(newLoadingState){
+		chao.destroyState(chao.loadingState);
+
+		chao.loadingState = newLoadingState;
+		chao.initState(newLoadingState);
+	},
+
+	initState: function(state){
+		state.rootObject = new Entity("Root", 0, 0);
+		state.add = function(entity){
+			this.rootObject.add(entity);
+		};
+		state.remove = function(entity){
+			this.rootObject.remove(entity);
+		};
+
+		if(state.create){
+			state.create();
 		}
 	},
 
-	getImage: function(imageName){
+	destroyState: function(state){
+		if(!state){
+			return;
+		}
+
+		if(state.destroy){
+			state.destroy();
+		}
+	},
+
+	createImage: function(key, width, height){
+		var newCanvas 		= document.createElement("canvas");
+		var newContext 		= newCanvas.getContext("2d");
+		newCanvas.width 	= width;
+		newCanvas.height 	= height;
+
+		var newImage 	= {
+			key: 		key,
+			canvas: 	newCanvas,
+			context: 	newContext,
+			width: 		width,
+			height: 	height,
+			ready: 		true,
+		};
+
+		chao.images.push(newImage);
+	},
+
+	loadImage: function(key, path){
+		if(chao.getImage(key)){
+			chao.log("There is already an image loaded with a key: " + key);
+			return;
+		}
+
+		var img = new Image();
+		img.src = path;
+		var newCanvas 	= document.createElement("canvas");
+		var newContext 	= newCanvas.getContext("2d");
+		var newImage 	= {
+			key: 		key,
+			canvas: 	newCanvas,
+			context: 	newContext,
+			width: 		-1,
+			height: 	-1,
+			ready: 		false,
+		};
+		
+		chao.images.push(newImage);
+
+		img.onload = function(){
+			newImage.canvas.width 	= img.width;
+			newImage.canvas.height 	= img.height;
+			newImage.context.drawImage(img, 0, 0);
+			newImage.width 	= img.width;
+			newImage.height = img.height;
+			newImage.ready 	= true;
+		};
+
+	},
+
+	getImage: function(key){
+		for(var i = 0; i < chao.images.length; ++i){
+			if(chao.images[i].key == key){
+				return chao.images[i];
+			}
+		}
+
 		return null;
+	},
+
+	drawImage: function(target, image, x, y){
+		target.context.drawImage(image.canvas, x, y);
 	},
 
 	updateMouse: function(){
@@ -126,6 +219,14 @@ var chao = {
 	getLoadingProgress: function(){
 		var allData 	= chao.images.length;
 		var loadedData 	= 0;
+
+		for(var i = 0; i < chao.images.length; ++i){
+			if(chao.images[i].ready){
+				loadedData ++;
+			}
+		}
+
+		return loadedData / allData;
 	},
 
 	getTimeDelta : function() {
@@ -152,10 +253,11 @@ var chao = {
  * @param {float} x - horizontal position of the entity
  * @param {float} y - vertical position of the entity
  */
-function Entity(x, y){
-	this.name 		= "Entity",
+function Entity(name, x, y){
+	this.name 		= name ? name : "Entity",
 	this.x 			= x ? x : 0,
 	this.y 			= y ? y : 0,
+	this.alpha 		= 1.0;
 	this.width 		= 0,
 	this.height 	= 0,
 	this.children 	= [],
@@ -165,29 +267,41 @@ function Entity(x, y){
 	this.clickable 	= false,
 
 	this.destroy = function(){
-		for(var i = 0; i < components.length; ++i){
-			if(components[i].destroy){
-				components[i].destroy();
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].destroy){
+				this.components[i].destroy();
 			}
 		}
 
-		for(var i = 0; i < children.length; ++i){
-			children[i].destroy();
+		for(var i = 0; i < this.children.length; ++i){
+			this.children[i].destroy();
 		}
 	}
 
 	this.draw = function(x, y, alpha){
-		for(var i = 0; i < components.length; ++i){
-			if(components[i].draw){
-				components[i].draw(this.x + x, this.y + y, this.alpha * alpha);
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].draw){
+				this.components[i].draw(x, y, alpha);
+			}
+		}
+
+		for(var i = 0; i < this.children.length; ++i){
+			if(this.children[i].draw){
+				this.children[i].draw(this.x + x, this.y + y, this.alpha * alpha);
 			}
 		}
 	}
 
 	this.update = function(){
-		for(var i = 0; i < components.length; ++i){
-			if(components[i].update){
-				components[i].update();
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].update){
+				this.components[i].update();
+			}
+		}
+
+		for(var i = 0; i < this.children.length; ++i){
+			if(this.children[i].update){
+				this.children[i].update();
 			}
 		}
 	}
@@ -207,9 +321,13 @@ function Entity(x, y){
 		if(component.entity === null){
 			component.entity = this;
 			this.components.push(component);
+
+			return component;
 		}else{
 			chao.log("Hey, this component is already bound to an Entity: " + component.entity);
 		}
+
+		return null;
 	}
 
 	this.getComponentByName = function(componentName){
@@ -242,12 +360,23 @@ function Entity(x, y){
  * @class
  * @param {string} imageName - name/id of the image to be used
  */
-function ComponentImage(imageName){
+function ComponentImage(key){
 	this.name 		= "Image",
 	this.entity 	= null;
 
-	if(imageName){
-		this.image = chao.getImage(imageName);
+	if(key){
+		this.image = chao.getImage(key);
+	}
+
+	this.draw = function(x, y, alpha){
+		if(!this.image){
+			return;
+		}
+
+		var drawX = this.entity.x + x;
+		var drawY = this.entity.y + x;
+
+		chao.drawImage(chao.canvas, this.image, drawX, drawY)
 	}
 
 }
