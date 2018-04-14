@@ -39,6 +39,8 @@
 		update: function(){
 			this.bounceTimer += chao.getTimeDelta() * 3;
 			this.thingie.y = 100 + Math.sin(this.bounceTimer) * 20;
+
+			this.thingie.getComponentByName("Image").rotation = Math.cos(this.bounceTimer) * 20;
 		}
 	};
 
