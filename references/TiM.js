@@ -210,11 +210,14 @@ drawImage: function(name, x, y, angle, scale, alpha, frame){
 
 	var img				= TiM.getImage(name);
 	var currentAlpha 	= TiM.context2D.globalAlpha;
+
 	TiM.context2D.globalAlpha=imgAlpha;
+	
 	TiM.context2D.save();
 	TiM.context2D.translate(x+((img.width/img.frames)*imgScale/2),y+(img.height*imgScale/2));
 	TiM.context2D.rotate(-((imgAngle)/(180/Math.PI)) );
-	TiM.context2D.translate(-(x+((img.width/img.frames)*imgScale/2)),-(y+(img.height*imgScale/2)));
+	TiM.context2D.translate(-(x+((img.width/img.frames)*imgScale/2)),
+		-(y+(img.height*imgScale/2)));
 
 	TiM.context2D.drawImage(img, imgFrame*(img.width/img.frames), 0, (img.width/img.frames), img.height, x, y, (img.width/img.frames)*imgScale, img.height*imgScale);
  

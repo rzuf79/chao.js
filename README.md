@@ -6,3 +6,7 @@ Because reinventing the wheel is always fun!
 aka
 
 Taking things I like from other game frameworks and throwing them into entity-component flavored goulash.
+
+aka
+
+It doesen't have to be efficient if it's fun.

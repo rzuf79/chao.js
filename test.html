@@ -1,27 +1,44 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>chao.js</title>
-<head></head>
+<head>
+	<style type="text/css">
+		body {
+			margin: 0;
+			background-color: #202020
+		}
+	</style>
+</head>
 <body>
 <script src="chao.js"></script>
 <script>
 
 	chao.init(640, 480);
-
+	chao.backgroundColor = "#ffffff";
 	chao.loadImage("sticker", "sticker.png");
+	chao.loadImage("zbylut", "zbylut.png");
 
 	var StateGame = {
-		create: function(){
-			var thingie = new Entity("Thingie", 0, 0);
-			var image 	= thingie.addComponent(new ComponentImage("sticker"));
 
-			this.add(thingie);
-			// console.log(thingie);
-			console.log(this);
+		bounceTimer: 0.0,
+
+		create: function(){
+			this.thingie = new Entity("Thingie", 100, 100);
+			var image 	= this.thingie.addComponent(new ComponentImage("sticker"));
+			this.add(this.thingie);
+
+			var zbylut = new Entity("Zbylut", 400, 100);
+			var zbylutImage = zbylut.addComponent(new ComponentImage("zbylut", 30, 30));
+			zbylutImage.addAnim("walk_s", [0, 1, 0, 2], 0.2, true);
+			zbylutImage.addAnim("walk_n", [4, 5, 4, 6], 0.2, true);
+			zbylutImage.addAnim("walk_sw", [12, 13, 12, 14], 0.2, true);
+			zbylutImage.playAnim("walk_sw");
+			this.add(zbylut);
 		},
 
 		update: function(){
-			// 
+			this.bounceTimer += chao.getTimeDelta() * 3;
+			this.thingie.y = 100 + Math.sin(this.bounceTimer) * 20;
 		}
 	};
 
