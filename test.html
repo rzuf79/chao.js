@@ -40,7 +40,9 @@
 			this.bounceTimer += chao.getTimeDelta() * 3;
 			this.thingie.y = 100 + Math.sin(this.bounceTimer) * 20;
 
-			this.thingie.getComponentByName("Image").rotation = Math.cos(this.bounceTimer) * 20;
+			this.thingie.rotation 	= Math.cos(this.bounceTimer) * 20;
+			this.thingie.scaleX 	= 0.8 + (Math.sin(this.bounceTimer) * 0.2);
+			this.thingie.scaleY 	= 0.8 + (Math.cos(this.bounceTimer) * 0.2);
 		}
 	};
 

@@ -32,8 +32,12 @@ var chao = {
 			height: 	height,
 		};
 	 
-		canvas.addEventListener("mousedown", chao.onMouseDown, true);
-		canvas.addEventListener("mouseup", chao.onMouseUp, true);
+		canvas.addEventListener("mousedown", chao.onMouseDown);
+		canvas.addEventListener("mouseup", chao.onMouseUp);
+		canvas.addEventListener("mousemove", chao.onMouseMove);
+		canvas.addEventListener("wheel", chao.onMouseWheel);
+		canvas.addEventListener("keyup", chao.onKeyDown);
+		canvas.addEventListener("keydown", chao.onKeyUp);
 
 		chao.images			= [];
 		chao.sounds			= [];
@@ -51,6 +55,17 @@ var chao = {
 		chao.currentFPS 	= 0;
 		chao.FPSCounter 	= 0;
 		chao.FPSTimer 		= 0;
+
+		chao.key 			= [];
+		chao.justPressed 	= [];
+		chao.justReleased 	= [];
+		for (var i = 0; i < 0x80; ++i) {
+			chao.key[i] 			= false;
+			chao.justPressed[i] 	= false;
+			chao.justReleased[i] 	= false;
+		}
+
+
 
 		chao.loadedFontsNum = 0;
 		chao.font 			= chao.loadBase64Font(chao.defaultFontData);
@@ -89,8 +104,6 @@ var chao = {
 		}
 
 		chao.clearScreen();
-		chao.updateKeys();
-		chao.updateMouse();
 
 		var stateToProcess = chao.currentState;
 
@@ -112,6 +125,9 @@ var chao = {
 		if(stateToProcess.update){
 			stateToProcess.update();
 		}
+
+		chao.updateKeys();
+		chao.updateMouse();
 	},
 
 	switchState: function(newState){
@@ -168,12 +184,13 @@ var chao = {
 		newCanvas.height 	= height;
 
 		var newImage 	= {
-			key: 		key,
-			canvas: 	newCanvas,
-			context: 	newContext,
-			width: 		width,
-			height: 	height,
-			ready: 		true,
+			key: 			key,
+			canvas: 		newCanvas,
+			context: 		newContext,
+			width: 			width,
+			height: 		height,
+			rotationOrigin:	{x:0.5, y:0.5}, // {0.0 - 1.0}
+			ready: 			true,
 		};
 
 		chao.images.push(newImage);
@@ -263,8 +280,39 @@ var chao = {
 		//
 	},
 
-	updateKeys: function(){
+	onMouseMove: function(){
 		//
+	},
+	
+	onMouseWheel: function(){
+		//
+	},
+
+	setMouseVisibility(value){
+		canvas.canvas.style.cursor = value ? "auto" : "none";
+	},
+
+	updateKeys: function(){
+		for (var i = 0; i < 0x80; ++i){
+			chao.justPressed[i] = false;
+			chao.justReleased[i] = false;
+		}
+	},
+
+	onKeyDown: function(e){
+		if(!chao.key[e.keyCode]){
+			chao.justPressed[e.keyCode] = true;
+		}
+		chao.key[e.keyCode] = true;
+
+		e.preventDefault();
+	},
+
+	onKeyUp: function(e){
+		chao.justReleased[e.keyCode] = true;
+		chao.key[e.keyCode] = false;
+
+		e.preventDefault();
 	},
 
 	loadBase64Font: function(data){
@@ -325,6 +373,9 @@ function Entity(name, x, y){
 	this.alpha 		= 1.0;
 	this.width 		= 0,
 	this.height 	= 0,
+	this.scaleX 	= 1.0;
+	this.scaleY 	= 1.0;
+	this.rotation 	= 0.0;
 	this.children 	= [],
 	this.components = [],
 	this.parent 	= null,
@@ -385,6 +436,7 @@ function Entity(name, x, y){
 	this.addComponent = function(component){
 		if(component.entity === null){
 			component.entity = this;
+			component.create();
 			this.components.push(component);
 
 			return component;
@@ -426,28 +478,28 @@ function Entity(name, x, y){
  * @param {string} imageName - name/id of the image to be used
  */
 function ComponentImage(key, frameWidth, frameHeight){
-	this.name 			= "Image";
-	this.entity 		= null;
-	this.image 			= null;
+	this.name 				= "Image";
+	this.entity 			= null;
+	this.image 				= null;
+	this.imageKey 			= key;
 
-	this.width 			= 0;
-	this.height 		= 0;
+	this.frameWidth 		= frameWidth || 0;
+	this.frameHeight 		= frameHeight || 0;
 
-	this.flipX 			= false;
-	this.flipY 			= false;
+	this.flipX 				= false;
+	this.flipY 				= false;
 
-	this.scaleX 		= 1.0;
-	this.scaleY 		= 1.0;
+	this.anims 				= [];
+	this.currentAnim		= -1;
+	this.currentFrame 		= 0;
+	this.animTimer 			= 0;
+	this.animPaused 		= false;
 
-	this.rotation 		= 0;
+	this.updateOnImageLoad 	= false;
 
-	this.anims 			= [];
-	this.currentAnim	= -1;
-	this.currentFrame 	= 0;
-	this.animTimer 		= 0;
-	this.animPaused 	= false;
-
-	this.setImage(key, frameWidth, frameHeight);
+	this.create = function(){
+		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
+	}
 
 	this.draw = function(x, y, alpha){
 		if(!this.image){
@@ -468,22 +520,33 @@ function ComponentImage(key, frameWidth, frameHeight){
 		var drawAlpha	= this.entity.alpha * alpha;
 		if(drawAlpha > 1.0) drawAlpha = 1.0;
 
-		var drawRect = {x:0, y:0, width:this.width, height:this.height};
+		var drawRect = {x:0, y:0, width:this.entity.width, height:this.entity.height};
 
 		if(this.currentAnim != -1){
-			var framesNumX = this.image.width / this.width;
+			var framesNumX = this.image.width / this.entity.width;
 			var frameX = anim.frames[this.currentFrame];
 			var frameY = Math.floor(frameX/framesNumX);
 			frameX -= frameY * framesNumX;
 
-			drawRect.x = frameX * this.width;
-			drawRect.y = frameY * this.height;
+			drawRect.x = frameX * this.entity.width;
+			drawRect.y = frameY * this.entity.height;
 		}
 
-		chao.drawImagePart(chao.canvas, this.image, drawX, drawY, drawRect, this.rotation, this.scaleX, this.scaleY, drawAlpha);
+		chao.drawImagePart(chao.canvas, this.image, drawX, drawY, drawRect, this.entity.rotation, this.entity.scaleX, this.entity.scaleY, drawAlpha);
 	}
 
 	this.update = function(){
+
+		if(this.updateOnImageLoad && this.image.ready){
+			this.updateOnImageLoad = false;
+			if(this.entity.width == -1){
+				this.entity.width = this.image.width;
+			}
+			if(this.entity.height == -1){
+				this.entity.height = this.image.height;
+			}
+		}
+
 		if(this.currentAnim != -1 && !this.animPaused){
 			var anim = this.anims[this.currentAnim];
 
@@ -502,6 +565,21 @@ function ComponentImage(key, frameWidth, frameHeight){
 					}
 				}
 			}
+		}
+	}
+
+	this.setImage = function(key, frameWidth, frameHeight){
+		if(!key){
+			return;
+		}
+
+		this.image = chao.getImage(key);
+
+		this.entity.width 	= frameWidth || this.image.width;
+		this.entity.height = frameHeight || this.image.height;
+
+		if(!this.image.ready && (!frameWidth || !frameHeight)){
+			this.updateOnImageLoad = true;
 		}
 	}
 
@@ -542,22 +620,3 @@ function ComponentImage(key, frameWidth, frameHeight){
 
 }
 
-ComponentImage.prototype.updateImage = function(image){
-	if(this.width == -1){
-		this.width = image.width;
-	}
-	if(this.height == -1){
-		this.height = image.height;
-	}
-}
-
-ComponentImage.prototype.setImage = function(key, frameWidth, frameHeight){
-	if(!key){
-		return;
-	}
-
-	this.image = chao.getImage(key);
-
-	this.width 	= frameWidth || this.image.width;
-	this.height = frameHeight || this.image.height;
-}
