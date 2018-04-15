@@ -24,6 +24,8 @@ var chao = {
 		document.body.appendChild(canvas);
 
 		var context		= canvas.getContext("2d");
+		
+		context.imageSmoothingEnabled = false; // this is for pixel art games
 
 		chao.canvas = {
 			canvas: 	canvas,
@@ -32,12 +34,15 @@ var chao = {
 			height: 	height,
 		};
 	 
-		canvas.addEventListener("mousedown", chao.onMouseDown);
-		canvas.addEventListener("mouseup", chao.onMouseUp);
-		canvas.addEventListener("mousemove", chao.onMouseMove);
-		canvas.addEventListener("wheel", chao.onMouseWheel);
-		canvas.addEventListener("keyup", chao.onKeyDown);
-		canvas.addEventListener("keydown", chao.onKeyUp);
+		window.addEventListener("mousedown", chao.onMouseDown);
+		window.addEventListener("mouseup", chao.onMouseUp);
+		window.addEventListener("mousemove", chao.onMouseMove);
+		window.addEventListener("wheel", chao.onMouseWheel);
+		window.addEventListener("keyup", chao.onKeyUp);
+		window.addEventListener("keydown", chao.onKeyDown);
+		
+		window.addEventListener("onblur", function() { chao.log("zaiste"); });
+		window.addEventListener("onfocus", function() { chao.log("caprawde"); });
 
 		chao.images			= [];
 		chao.sounds			= [];
@@ -250,8 +255,8 @@ var chao = {
 		scaleX 	= scaleX || 1;
 		scaleY 	= scaleY || 1;
 
-		var w 				= rect.width * scaleX;
-		var h 				= rect.height * scaleY;
+		var w 				= rect.width;// * scaleX;
+		var h 				= rect.height;// * scaleY;
 		var rotationPivot	= {x:(x+(w*image.rotationOrigin.x)), y:(y+(h*image.rotationOrigin.y))};
 
 		target.context.globalAlpha = alpha;
@@ -261,10 +266,16 @@ var chao = {
 		target.context.rotate(chao.rad2deg(angle));
 		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
+		x = scaleX >= 0 ? x : x - w * scaleX;
+		y = scaleY >= 0 ? y : y - h * scaleY;
+		target.context.translate(x, y);
+
+		target.context.scale(scaleX, scaleY);
+
 		target.context.drawImage(image.canvas,
 			rect.x, rect.y, rect.width, rect.height,
-			x, y, w, h);
-
+			0, 0, w, h);
+		
 		target.context.restore();
 	},
 
@@ -498,7 +509,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 	this.updateOnImageLoad 	= false;
 
 	this.create = function(){
-		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
+		this.setImage(chao.getImage(this.imageKey), this.frameWidth, this.frameHeight);
 	}
 
 	this.draw = function(x, y, alpha){
@@ -518,6 +529,8 @@ function ComponentImage(key, frameWidth, frameHeight){
 		var drawX 		= this.entity.x + x;
 		var drawY 		= this.entity.y + y;
 		var drawAlpha	= this.entity.alpha * alpha;
+		var drawScaleX 	= this.flipX ? -this.entity.scaleX : this.entity.scaleX;
+		var drawScaleY 	= this.flipY ? -this.entity.scaleY : this.entity.scaleY;
 		if(drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawRect = {x:0, y:0, width:this.entity.width, height:this.entity.height};
@@ -532,7 +545,10 @@ function ComponentImage(key, frameWidth, frameHeight){
 			drawRect.y = frameY * this.entity.height;
 		}
 
-		chao.drawImagePart(chao.canvas, this.image, drawX, drawY, drawRect, this.entity.rotation, this.entity.scaleX, this.entity.scaleY, drawAlpha);
+		chao.drawImagePart(chao.canvas, this.image, 
+			drawX, drawY, drawRect, 
+			this.entity.rotation, drawScaleX, drawScaleY, 
+			drawAlpha);
 	}
 
 	this.update = function(){
@@ -568,12 +584,12 @@ function ComponentImage(key, frameWidth, frameHeight){
 		}
 	}
 
-	this.setImage = function(key, frameWidth, frameHeight){
-		if(!key){
+	this.setImage = function(image, frameWidth, frameHeight){
+		if(!image){
 			return;
 		}
 
-		this.image = chao.getImage(key);
+		this.image = image
 
 		this.entity.width 	= frameWidth || this.image.width;
 		this.entity.height = frameHeight || this.image.height;

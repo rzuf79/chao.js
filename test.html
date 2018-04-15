@@ -24,15 +24,16 @@
 
 		create: function(){
 			this.thingie = new Entity("Thingie", 100, 100);
-			var image 	= this.thingie.addComponent(new ComponentImage("sticker"));
+			this.thingie.addComponent(new ComponentImage("sticker"));
 			this.add(this.thingie);
 
 			var zbylut = new Entity("Zbylut", 400, 100);
 			var zbylutImage = zbylut.addComponent(new ComponentImage("zbylut", 30, 30));
-			zbylutImage.addAnim("walk_s", [0, 1, 0, 2], 0.2, true);
-			zbylutImage.addAnim("walk_n", [4, 5, 4, 6], 0.2, true);
 			zbylutImage.addAnim("walk_sw", [12, 13, 12, 14], 0.2, true);
 			zbylutImage.playAnim("walk_sw");
+			zbylutImage.flipX = true;
+			zbylut.scaleX = 2;
+			zbylut.scaleY = 2;
 			this.add(zbylut);
 		},
 
@@ -41,12 +42,13 @@
 			this.thingie.y = 100 + Math.sin(this.bounceTimer) * 20;
 
 			this.thingie.rotation 	= Math.cos(this.bounceTimer) * 20;
-			this.thingie.scaleX 	= 0.8 + (Math.sin(this.bounceTimer) * 0.2);
-			this.thingie.scaleY 	= 0.8 + (Math.cos(this.bounceTimer) * 0.2);
+			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
+			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
 		}
 	};
-
+	
 	chao.switchState(StateGame);
+
 
 
 </script>
