@@ -125,12 +125,14 @@
 		create: function(){
 			this.thingie = new Entity("Thingie", 100, 100);
 			this.thingie.addComponent(new ComponentImage("sticker"));
+			this.thingie.clickable = true;
 			this.add(this.thingie);
 
 			var zbylut = new Entity("Zbylut", 400, 100);
 			zbylut.addComponent(new ComponentLudzik());
 			zbylut.scaleX = 2;
 			zbylut.scaleY = 2;
+			zbylut.clickable = true;
 			this.add(zbylut);
 		},
 
@@ -141,6 +143,13 @@
 			this.thingie.rotation 	= Math.cos(this.bounceTimer) * 20;
 			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
 			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
+
+			if(chao.mouse.justPressed){
+				var clickedEntity = this.rootObject.getEntityAt(chao.mouse.x, chao.mouse.y);
+				if(clickedEntity != null){
+					chao.log("Clicked on " + clickedEntity.name + "!");
+				}
+			}
 
 		}
 	};

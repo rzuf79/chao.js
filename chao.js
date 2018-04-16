@@ -65,11 +65,6 @@ var chao = {
 		chao.keys 			= [];
 		chao.justPressed 	= [];
 		chao.justReleased 	= [];
-		for (var i = 0; i < 0x80; ++i) {
-			chao.keys[i] 			= false;
-			chao.justPressed[i] 	= false;
-			chao.justReleased[i] 	= false;
-		}
 
 		chao.mouse = {};
 		chao.mouse.x 					= -1;
@@ -85,6 +80,7 @@ var chao = {
 		chao.mouse.justPressedMiddle	= false;
 		chao.mouse.justReleasedMiddle	= false;
 
+		chao.resetInput();
 
 		chao.loadedFontsNum = 0;
 		chao.font 			= chao.loadBase64Font(chao.defaultFontData);
@@ -112,10 +108,23 @@ var chao = {
 		if(isFocused){
 			chao.lastTime 	= Date.now();
 			chao.hasFocus 	= true;
+			chao.resetInput();
 		} else {
 			chao.hasFocus 	= false;
 			// pause, blur window or do something pausey
 		}
+	},
+
+	resetInput: function(){
+		for (var i = 0; i < 0x80; ++i) {
+			chao.keys[i] 			= false;
+			chao.justPressed[i] 	= false;
+			chao.justReleased[i] 	= false;
+		}
+
+		chao.mouse.pressed 				= false;
+		chao.mouse.pressedRight 		= false;
+		chao.mouse.pressedMiddle 		= false;
 	},
 	 
 	update: function(){
@@ -593,6 +602,58 @@ function Entity(name, x, y){
 	this.removeComponentByName = function(componentName){
 		this.removeComponent(this.getComponentByName(componentName));
 	}
+
+	this.alignToParent = function(anchorX, anchorY, alignX, alignY) {
+		this.alignToParentHorizontally(anchorX, alignX);
+		this.alignToParentVertically(anchorY, alignY);
+	}
+	
+	
+	this.alignToParentHorizontally = function(anchorX, alignX) {
+		if (this.parent != null) {
+			this.x = Math.ceil((this.parent.width * alignX) - (this.width * anchorX));
+		}
+	}
+	
+	this.alignToParentVertically = function(anchorY, alignY) {
+		if (this.parent != null) {
+			this.y = Math.ceil((this.parent.height * alignY) - (this.height * anchorY));
+		}
+	}
+
+	this.getScreenX = function(){
+		return this.parent == null ? this.x : this.x + this.parent.getScreenX();
+	}
+
+	this.getScreenY = function(){
+		return this.parent == null ? this.y : this.y + this.parent.getScreenY();
+	}
+
+	this.getEntityAt = function(x, y){
+		if(!this.visible){
+			return null;
+		}
+
+		for(var i = this.children.length - 1; i >= 0 ; --i){
+			var child = this.children[i].getEntityAt(x, y);
+
+			if(child !== null){
+				return child;
+			}
+		}
+
+		var screenX = this.getScreenX();
+		var screenY = this.getScreenY();
+
+		if(this.clickable 
+			&& x >= screenX && x <= screenX + this.width*this.scaleX
+			&& y >= screenY && y <= screenY + this.height*this.scaleY)
+		{
+			return this;
+		}
+
+		return null;
+	}
 }
 
 
@@ -741,7 +802,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 	}
 
 	this.getCurrentAnim = function(){
-		if(this.currentAnim > 0 && this.currentAnim < this.anims.length){
+		if(this.currentAnim >= 0 && this.currentAnim < this.anims.length){
 			return this.anims[this.currentAnim];
 		}
 
