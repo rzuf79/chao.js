@@ -16,7 +16,9 @@
 	chao.init(640, 480);
 	chao.backgroundColor = "#ffffff";
 	chao.loadImage("sticker", "sticker.png");
-	chao.loadImage("zbylut", "zbylut.png");
+	chao.loadImage("zbylut", "assets/zbylut.png");
+	chao.loadImage("button_sound_on", "assets/sound_on.png");
+	chao.loadImage("button_sound_off", "assets/sound_off.png");
 
 	function ComponentLudzik(){
 		this.name 				= "Ludzik";
@@ -134,6 +136,12 @@
 			zbylut.scaleY = 2;
 			zbylut.clickable = true;
 			this.add(zbylut);
+
+			this.buttonSound = (new Entity("Button Sound")).addComponent(new ComponentButton("button_sound_on"));
+			this.buttonSound.setImagePressed("button_sound_off");
+			this.buttonSound.entity.x = chao.screenWidth - 60;
+			this.buttonSound.entity.y = chao.screenHeight - 60;
+			this.add(this.buttonSound.entity);
 		},
 
 		update: function(){
@@ -143,14 +151,6 @@
 			this.thingie.rotation 	= Math.cos(this.bounceTimer) * 20;
 			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
 			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
-
-			if(chao.mouse.justPressed){
-				var clickedEntity = this.rootObject.getEntityAt(chao.mouse.x, chao.mouse.y);
-				if(clickedEntity != null){
-					chao.log("Clicked on " + clickedEntity.name + "!");
-				}
-			}
-
 		}
 	};
 	

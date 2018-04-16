@@ -42,6 +42,9 @@ var chao = {
 		window.addEventListener("keyup", chao.onKeyUp);
 		window.addEventListener("keydown", chao.onKeyDown);
 		
+		chao.screenWidth 	= width;
+		chao.screenHeight 	= height;
+
 		chao.installVisibilityHandler();
 		chao.hasFocus = true;
 
@@ -197,6 +200,8 @@ var chao = {
 
 	initState: function(state){
 		state.rootObject = new Entity("Root", 0, 0);
+		state.rootObject.width = chao.screenWidth;
+		state.rootObject.width = chao.screenHeight;
 		state.add = function(entity){
 			this.rootObject.add(entity);
 		};
@@ -661,7 +666,7 @@ function Entity(name, x, y){
  * Renders images, static and animated.
  *
  * @class
- * @param {string} imageName - name/id of the image to be used
+ * @param {string} key - name/id of the image to be used
  */
 function ComponentImage(key, frameWidth, frameHeight){
 	this.name 				= "Image";
@@ -817,5 +822,127 @@ function ComponentImage(key, frameWidth, frameHeight){
 		// TODO: actually do something here.
 	}
 
+}
+
+/**
+ * Simple, clickable button.
+ *
+ * @class
+ * @param {string} key - name/id of the image to be used
+ */
+function ComponentButton(key){
+	this.name 			= "Button";
+	this.entity 		= null;
+	this.imageKey 		= key;
+	this.image 			= null;
+	this.imagePressed 	= null;
+	this.text 			= null;
+
+	this.pressed 		= false;
+	this.dimDisabled	= false;
+	this.disabled 		= false;
+
+	this.width 			= 0;
+	this.height 		= 0;
+
+	this.onPress 		= function(button) {};
+	this.onHold 		= function(button) {};
+	this.onRelease 		= function(button) {};
+
+	this.create = function(){
+		this.setImage(this.imageKey);
+		this.entity.clickable = true;
+	}
+
+	this.update = function(){
+		var screenX = this.entity.getScreenX();
+		var screenY = this.entity.getScreenY();
+
+		if(!this.entity.visible){
+			return;
+		}
+
+		var mouseOver 	= this.isAbove(chao.mouse.x, chao.mouse.y);
+		var buttonAlpha = 1.0; 
+
+		if(mouseOver && !this.disabled){
+			if(chao.mouse.justReleased && this.pressed){
+
+				this.pressed = false;
+				buttonAlpha = 1.0;
+				if(this.onRelease){
+					this.onRelease(this);
+				}
+			}
+
+			if(chao.mouse.pressed){
+				buttonAlpha = 0.5;
+
+				if(!this.pressed && this.onPress){
+					this.onPress(this);
+				}
+				if(this.onHold){
+					this.onHold(this);
+				}
+
+				this.pressed = true;
+
+			} else if(this.pressed){
+				buttonAlpha = 1.0;
+			}
+
+		} else {
+			buttonAlpha = (!this.disabled || !this.dimInactive) ? 1.0 : 0.5;
+			this.pressed = false;
+		}
+
+		if(this.imagePressed){
+			this.image.entity.visible 			= buttonAlpha > 0.5;
+			this.imagePressed.entity.visible 	= buttonAlpha <= 0.5;
+		} else {
+			this.image.entity.alpha = buttonAlpha;
+			if(this.text){
+				this.text.entity.alpha = buttonAlpha;
+			}
+		}
+	}
+
+	this.setImage = function(key){
+		if(this.image){
+			this.entity.remove(this.image.entity);
+		}
+
+		this.image = (new Entity("Button Image")).addComponent(new ComponentImage(this.imageKey));
+		this.entity.add(this.image.entity);
+
+		this.updateSize();
+	}
+
+	this.setImagePressed = function(key){
+		if(this.imagePressed){
+			this.entity.remove(this.imagePressed.entity);
+		}
+
+		this.imagePressed = (new Entity("Button Image Pressed")).addComponent(new ComponentImage(key));
+		this.entity.add(this.imagePressed.entity);
+		this.imagePressed.entity.visible = false;
+	}
+
+	this.setText = function(text){
+		// TODO: do something here once text rendering is implemented.
+	}
+
+	this.updateSize = function(){
+		this.width = this.entity.width = this.image.entity.width;
+		this.height = this.entity.height = this.image.entity.height;
+	}
+
+	this.isAbove = function(x, y){
+		if(!this.entity.visible){
+			return false;
+		}
+
+		return this.entity.getEntityAt(x, y) === this.entity;
+	}
 }
 
