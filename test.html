@@ -18,6 +18,106 @@
 	chao.loadImage("sticker", "sticker.png");
 	chao.loadImage("zbylut", "zbylut.png");
 
+	function ComponentLudzik(){
+		this.name 				= "Ludzik";
+
+		this.create = function(){
+			this.image = this.entity.addComponent(new ComponentImage("zbylut", 30, 30));
+
+			this.image.addAnim("idle_n", [4], 0, false);
+			this.image.addAnim("idle_s", [0], 0, false);
+			this.image.addAnim("idle_w", [8], 0, false);
+			this.image.addAnim("idle_nw", [16], 0, false);
+			this.image.addAnim("idle_sw", [12], 0, false);
+
+			this.image.addAnim("run_n", [5, 4, 6, 4], 0.2, true);
+			this.image.addAnim("run_s", [1, 0, 2, 0], 0.2, true);
+			this.image.addAnim("run_w", [9, 8], 0.2, true);
+			this.image.addAnim("run_nw", [17, 16, 18, 16], 0.2, true);
+			this.image.addAnim("run_sw", [13, 12, 14, 12], 0.2, true);
+
+			this.image.playAnim("idle_s");
+		}
+
+		this.update = function(){
+			var direction 	= "";
+			var animName 	= "idle";
+
+			if(chao.keys[chao.KEY_UP]){
+				direction += "n";
+			}else if(chao.keys[chao.KEY_DOWN]){
+				direction += "s";
+			}
+			
+			if(chao.keys[chao.KEY_LEFT]){
+				direction += "w";
+			}else if(chao.keys[chao.KEY_RIGHT]){
+				direction += "e";
+			}
+
+			if(direction.length > 0){
+				switch(direction){
+					case "n" : 
+						animName 			= "run_n";
+						this.image.flipX 	= false;
+						break;
+					case "s" : 
+						animName 			= "run_s";
+						this.image.flipX 	= false;
+						break;
+					case "w" : 
+						animName 			= "run_w";
+						this.image.flipX 	= false;
+						break;
+					case "e" : 
+						animName 			= "run_w";
+						this.image.flipX 	= true;
+						break;
+					case "nw" : 
+						animName 			= "run_nw";
+						this.image.flipX 	= false;
+						break;
+					case "ne" : 
+						animName 			= "run_nw";
+						this.image.flipX 	= true;
+						break;
+					case "sw" : 
+						animName 			= "run_sw";
+						this.image.flipX 	= false;
+						break;
+					case "se" : 
+						animName 			= "run_sw";
+						this.image.flipX 	= true;
+				}
+			}
+
+			if(animName === "idle"){
+				animName = this.image.getCurrentAnim().key;
+
+				var dashPos = animName.indexOf("_");
+				animName = "idle" + animName.substr(dashPos);
+			}
+
+			this.image.playAnim(animName, false);
+
+			var currSpeed = chao.getTimeDelta() * 80;
+			if(direction.indexOf("n") != -1){
+				this.entity.y -= currSpeed;
+			}
+			if(direction.indexOf("s") != -1){
+				this.entity.y += currSpeed;
+			}
+			if(direction.indexOf("w") != -1){
+				this.entity.x -= currSpeed;
+			}
+			if(direction.indexOf("e") != -1){
+				this.entity.x += currSpeed;
+			}
+
+		}
+
+	}
+
 	var StateGame = {
 
 		bounceTimer: 0.0,
@@ -28,10 +128,7 @@
 			this.add(this.thingie);
 
 			var zbylut = new Entity("Zbylut", 400, 100);
-			var zbylutImage = zbylut.addComponent(new ComponentImage("zbylut", 30, 30));
-			zbylutImage.addAnim("walk_sw", [12, 13, 12, 14], 0.2, true);
-			zbylutImage.playAnim("walk_sw");
-			zbylutImage.flipX = true;
+			zbylut.addComponent(new ComponentLudzik());
 			zbylut.scaleX = 2;
 			zbylut.scaleY = 2;
 			this.add(zbylut);
@@ -44,6 +141,7 @@
 			this.thingie.rotation 	= Math.cos(this.bounceTimer) * 20;
 			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
 			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
+
 		}
 	};
 	

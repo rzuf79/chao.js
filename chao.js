@@ -37,12 +37,13 @@ var chao = {
 		window.addEventListener("mousedown", chao.onMouseDown);
 		window.addEventListener("mouseup", chao.onMouseUp);
 		window.addEventListener("mousemove", chao.onMouseMove);
+		window.addEventListener('contextmenu',function(e){e.preventDefault();});
 		window.addEventListener("wheel", chao.onMouseWheel);
 		window.addEventListener("keyup", chao.onKeyUp);
 		window.addEventListener("keydown", chao.onKeyDown);
 		
-		window.addEventListener("onblur", function() { chao.log("zaiste"); });
-		window.addEventListener("onfocus", function() { chao.log("caprawde"); });
+		chao.installVisibilityHandler();
+		chao.hasFocus = true;
 
 		chao.images			= [];
 		chao.sounds			= [];
@@ -61,15 +62,28 @@ var chao = {
 		chao.FPSCounter 	= 0;
 		chao.FPSTimer 		= 0;
 
-		chao.key 			= [];
+		chao.keys 			= [];
 		chao.justPressed 	= [];
 		chao.justReleased 	= [];
 		for (var i = 0; i < 0x80; ++i) {
-			chao.key[i] 			= false;
+			chao.keys[i] 			= false;
 			chao.justPressed[i] 	= false;
 			chao.justReleased[i] 	= false;
 		}
 
+		chao.mouse = {};
+		chao.mouse.x 					= -1;
+		chao.mouse.y 					= -1;
+		chao.mouse.wheelDelta 			= 0;
+		chao.mouse.pressed 				= false;
+		chao.mouse.justPressed			= false;
+		chao.mouse.justReleased			= false;
+		chao.mouse.pressedRight 		= false;
+		chao.mouse.justPressedRight		= false;
+		chao.mouse.justReleasedRight	= false;
+		chao.mouse.pressedMiddle 		= false;
+		chao.mouse.justPressedMiddle	= false;
+		chao.mouse.justReleasedMiddle	= false;
 
 
 		chao.loadedFontsNum = 0;
@@ -93,9 +107,27 @@ var chao = {
 			chao.canvas.context.fillRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height); 
 		}
 	},
+
+	onFocusChange: function(isFocused){
+		if(isFocused){
+			chao.lastTime 	= Date.now();
+			chao.hasFocus 	= true;
+		} else {
+			chao.hasFocus 	= false;
+			// pause, blur window or do something pausey
+		}
+	},
 	 
 	update: function(){
+
+		if(!chao.hasFocus){
+			return;
+		}
+
 		chao.timeDelta 	= (Date.now() - chao.lastTime) * .001;
+		if(chao.timeDelta > 0.5){
+			chao.log("Date.now()=" + Date.now() + " chao.lastTime=" + chao.lastTime);
+		}
 		chao.lastTime 	= Date.now();
 
 		if(chao.countFPS){
@@ -279,27 +311,61 @@ var chao = {
 		target.context.restore();
 	},
 
-	updateMouse: function(){
-		//
+	updateMouse: function(e){
+		chao.mouse.wheelDelta 			= 0;
+		chao.mouse.justPressed			= false;
+		chao.mouse.justReleased			= false;
+		chao.mouse.justPressedRight		= false;
+		chao.mouse.justReleasedRight	= false;
+		chao.mouse.justPressedMiddle	= false;
+		chao.mouse.justReleasedMiddle	= false;
 	},
 
-	onMouseDown: function(){
-		//
+	onMouseDown: function(e){
+		switch(e.which){
+			case 1:
+				chao.mouse.pressed = chao.mouse.justPressed = true;
+				break;
+			case 2:
+				chao.mouse.pressedMiddle = chao.mouse.justPressedMiddle = true;
+				break;
+			case 3:
+				chao.mouse.pressedRight = chao.mouse.justPressedRight = true;
+				break;
+		}
+		e.preventDefault();
 	},
 
-	onMouseUp: function(){
-		//
+	onMouseUp: function(e){
+		switch(e.which){
+			case 1:
+				chao.mouse.pressed 				= false;
+				chao.mouse.justReleased 		= true;
+				break;
+			case 2:
+				chao.mouse.pressedMiddle 		= false;
+				chao.mouse.justReleasedMiddle 	= true;
+				break;
+			case 3:
+				chao.mouse.pressedRight 		= false;
+				chao.mouse.justReleasedRight 	= true;
+				break;
+		}
+		e.preventDefault();
 	},
 
-	onMouseMove: function(){
-		//
+	onMouseMove: function(e){
+		chao.mouse.x = e.offsetX;
+		chao.mouse.y = e.offsetY;
+		e.preventDefault();
 	},
 	
-	onMouseWheel: function(){
-		//
+	onMouseWheel: function(e){
+		chao.mouse.wheelDelta = e.deltaY;
+		e.preventDefault();
 	},
 
-	setMouseVisibility(value){
+	setMouseVisibility: function(value){
 		canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
@@ -311,17 +377,17 @@ var chao = {
 	},
 
 	onKeyDown: function(e){
-		if(!chao.key[e.keyCode]){
+		if(!chao.keys[e.keyCode]){
 			chao.justPressed[e.keyCode] = true;
 		}
-		chao.key[e.keyCode] = true;
+		chao.keys[e.keyCode] = true;
 
 		e.preventDefault();
 	},
 
 	onKeyUp: function(e){
 		chao.justReleased[e.keyCode] = true;
-		chao.key[e.keyCode] = false;
+		chao.keys[e.keyCode] = false;
 
 		e.preventDefault();
 	},
@@ -353,6 +419,10 @@ var chao = {
 		return this.timeDelta * this.timeScale;
 	},
 
+	getUnscaledDelta : function() {
+		return this.timeDelta;
+	},
+
 	getRandom: function(Max) { 
 		Max -= 1;
 		return Math.round(Max*Math.random()); 
@@ -365,6 +435,50 @@ var chao = {
 	log: function(thingie){
 		if(chao.loggingEnabled){
 			console.log(thingie);
+		}
+	},
+
+	installVisibilityHandler: function(){
+
+		if(chao.visibilityHandlerInstalled){
+			chao.log("Visibility Handler is already installed!");
+			return;
+		}
+		
+		chao.visibilityHandlerInstalled = true;
+
+		var hiddenVar;
+		
+		if (document.hidden !== undefined){
+			hiddenVar = "visibilitychange";
+		} else {
+			var vendors = [ "webkit", "moz", "ms" ];
+
+			vendors.forEach(function (prefix){
+				if (document[prefix + "Hidden"] !== undefined){
+					document.hidden = function (){
+						return document[prefix + "Hidden"];
+					};
+					hiddenVar = prefix + "visibilitychange";
+				}
+			});
+		}
+
+		if(hiddenVar){
+			document.addEventListener(hiddenVar, function(event){
+				if(document.hidden || event.type === "pause"){
+					chao.onFocusChange(false);
+				} else {
+					chao.onFocusChange(true);
+				}
+			}, false);
+		}
+
+		window.onblur = function(){
+			chao.onFocusChange(false);
+		}
+		window.onfocus = function(){
+			chao.onFocusChange(true);
 		}
 	},
 
@@ -445,7 +559,7 @@ function Entity(name, x, y){
 	}
 
 	this.addComponent = function(component){
-		if(component.entity === null){
+		if(!component.entity){
 			component.entity = this;
 			component.create();
 			this.components.push(component);
@@ -569,7 +683,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 			this.animTimer += chao.getTimeDelta();
 
 			if(this.animTimer >= anim.delay){
-				this.animTimer = 0;
+				this.animTimer -= anim.delay;//= 0;
 
 				this.currentFrame ++;
 				if(this.currentFrame >= anim.frames.length){
@@ -624,6 +738,14 @@ function ComponentImage(key, frameWidth, frameHeight){
 		}
 
 		chao.log("Entity \"" + this.entity.name + "\" has no anim named \"" + key + "\".");
+	}
+
+	this.getCurrentAnim = function(){
+		if(this.currentAnim > 0 && this.currentAnim < this.anims.length){
+			return this.anims[this.currentAnim];
+		}
+
+		return null;
 	}
 
 	this.setAnimPause = function(value){
