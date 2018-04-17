@@ -124,11 +124,15 @@ var chao = {
 			chao.hasFocus 	= true;
 			chao.lastTime 	= Date.now();
 			chao.resetInput();
-			chao.setMute(chao.wasMutedOnFocusLost);
+			if(chao.muteOnFocusLost){
+				chao.setMute(chao.wasMutedOnFocusLost);
+			}
 		} else {
 			chao.hasFocus 	= false;
 			chao.wasMutedOnFocusLost = chao.muted;
-			chao.setMute(true);
+			if(chao.muteOnFocusLost){
+				chao.setMute(true);
+			}
 			// pause, blur window or do something pausey
 		}
 	},
@@ -438,7 +442,11 @@ var chao = {
 		sound.volumeNode.connect(sound.panNode);
 		sound.panNode.connect(chao.audioContext.destination);
 
-		sound.volumeNode.gain.setValueAtTime(sound.volume, 0);
+		if(sound.volumeNode.gain.setValueAtTime){
+			sound.volumeNode.gain.setValueAtTime(sound.volume, 0);
+		} else {
+			sound.volumeNode.gain.value = sound.volume;
+		}
 
 		if(sound.isMusic || !chao.muted){
 			sound.soundNode.start(0, sound.startOffset % sound.buffer.duration);
