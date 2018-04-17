@@ -49,35 +49,37 @@ var chao = {
 		window.addEventListener("keyup", chao.onKeyUp);
 		window.addEventListener("keydown", chao.onKeyDown);
 		
-		chao.screenWidth 	= width;
-		chao.screenHeight 	= height;
+		chao.screenWidth 		= width;
+		chao.screenHeight 		= height;
 
 		chao.installVisibilityHandler();
-		chao.hasFocus = true;
+		chao.hasFocus 			= true;
 
-		chao.images			= [];
+		chao.images				= [];
 
-		chao.onAssetsLoaded	= undefined;
+		chao.onAssetsLoaded		= undefined;
 
-		chao.updateInterval = null;
+		chao.updateInterval 	= null;
 		chao.setFPS(60);
-		chao.lastTime 		= Date.now();
-		chao.timeDelta 		= 0.0;
-		chao.timeScale 		= 1.0;
+		chao.lastTime 			= Date.now();
+		chao.timeDelta 			= 0.0;
+		chao.timeScale 			= 1.0;
 
-		chao.countFPS 		= false;
-		chao.currentFPS 	= 0;
-		chao.FPSCounter 	= 0;
-		chao.FPSTimer 		= 0;
+		chao.countFPS 			= false;
+		chao.currentFPS 		= 0;
+		chao.FPSCounter 		= 0;
+		chao.FPSTimer 			= 0;
 
-		chao.audioContext 	= new AudioContext();
-		chao.sounds 		= [];
-		chao.currentMusic 	= null;
-		chao.muted 			= false;
+		chao.audioContext 		= new AudioContext();
+		chao.sounds 			= [];
+		chao.currentMusic 		= null;
+		chao.muted 				= false;
+		chao.muteOnFocusLost	= true;
+		chao.wasMutedOnFocusLost= false;
 
-		chao.keys 			= [];
-		chao.justPressed 	= [];
-		chao.justReleased 	= [];
+		chao.keys 				= [];
+		chao.justPressed 		= [];
+		chao.justReleased 		= [];
 
 		chao.mouse = {};
 		chao.mouse.x 					= -1;
@@ -119,11 +121,14 @@ var chao = {
 
 	onFocusChange: function(isFocused){
 		if(isFocused){
-			chao.lastTime 	= Date.now();
 			chao.hasFocus 	= true;
+			chao.lastTime 	= Date.now();
 			chao.resetInput();
+			chao.setMute(chao.wasMutedOnFocusLost);
 		} else {
 			chao.hasFocus 	= false;
+			chao.wasMutedOnFocusLost = chao.muted;
+			chao.setMute(true);
 			// pause, blur window or do something pausey
 		}
 	},
@@ -335,7 +340,7 @@ var chao = {
 		target.context.restore();
 	},
 
-	loadSound: function(key, path, looped){
+	loadSound: function(key, path, volume, looped){
 
 		if(chao.getSound(key) !== null){
 			chao.log("There is already a sound loaded with this key: \"" + key + "\".");
@@ -353,7 +358,7 @@ var chao = {
 		sound.playing 		= false;
 		sound.isMusic 		= false;
 
-		sound.volume 		= 1;
+		sound.volume 		= volume || 1;
 		sound.pan 			= 0;
 		sound.startTime		= 0;
 		sound.startOffset 	= 0;
@@ -383,12 +388,12 @@ var chao = {
 		return sound;
 	},
 
-	loadMusic: function(key, oggPath, fallbackFormatPath){
+	loadMusic: function(key, oggPath, fallbackFormatPath, volume){
 		var sound;
 		if(chao.canPlayOgg){
-			sound = chao.loadSound(key, oggPath, true);
+			sound = chao.loadSound(key, oggPath, volume, true);
 		} else if(fallbackFormatPath){
-			sound = chao.loadSound(key, fallbackFormatPath, true);
+			sound = chao.loadSound(key, fallbackFormatPath, volume, true);
 		}
 
 		sound.isMusic = true;
@@ -433,6 +438,8 @@ var chao = {
 		sound.volumeNode.connect(sound.panNode);
 		sound.panNode.connect(chao.audioContext.destination);
 
+		sound.volumeNode.gain.setValueAtTime(sound.volume, 0);
+
 		if(sound.isMusic || !chao.muted){
 			sound.soundNode.start(0, sound.startOffset % sound.buffer.duration);
 		}
@@ -444,6 +451,16 @@ var chao = {
 	setMute: function(value){
 		if(chao.muted != value){
 			chao.muted = value;
+
+			if(value){
+				for(var i = 0; i < chao.sounds.length; ++i){
+					if(chao.sounds[i] == chao.currentMusic){
+						continue;
+					}
+
+					chao.stopSound(chao.sounds[i]);
+				}
+			}
 
 			if(chao.currentMusic !== null){
 				if(value){

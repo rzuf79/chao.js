@@ -16,8 +16,8 @@
 	chao.init(640, 480);
 	chao.backgroundColor = "#ffffff";
 
-	chao.loadMusic("nature", "assets/nature.ogg", "assets/nature.mp3");
-	chao.loadSound("oh", "assets/oh.wav");
+	chao.loadMusic("nature", "assets/nature.ogg", "assets/nature.mp3", 0.2);
+	chao.loadSound("oh", "assets/oh.wav", 1.0);
 	chao.loadSound("ugh", "assets/ugh.wav");
 	chao.loadSound("plum", "assets/plum.wav");
 
@@ -133,19 +133,17 @@
 
 		create: function(){
 
-			var selfie = this;
-
 			this.thingie = new Entity("Thingie", 100, 100);
 			this.thingie.addComponent(new ComponentImage("sticker"));
 			this.thingie.clickable = true;
-			// this.add(this.thingie);
+			this.add(this.thingie);
 
 			var zbylut = new Entity("Zbylut", 400, 100);
 			zbylut.addComponent(new ComponentLudzik());
 			zbylut.scaleX = 2;
 			zbylut.scaleY = 2;
 			zbylut.clickable = true;
-			// this.add(zbylut);
+			this.add(zbylut);
 
 			this.buttonMute = (new Entity("Button Mute")).addComponent(new ComponentButton("button_sound_on"));
 			this.buttonMute.entity.x = chao.screenWidth - 60;
@@ -153,9 +151,9 @@
 			this.buttonMute.onRelease = function(button){
 				chao.toggleMute();
 				if(chao.muted){
-					selfie.buttonMute.setImage("button_sound_off");
+					this.setImage("button_sound_off");
 				} else {
-					selfie.buttonMute.setImage("button_sound_on");
+					this.setImage("button_sound_on");
 				}
 			};
 			this.add(this.buttonMute.entity);
