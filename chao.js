@@ -57,6 +57,9 @@ var chao = {
 
 		chao.images				= [];
 
+		chao.imagePauseFade 	= null;
+		chao.updatePauseFadeImage();
+
 		chao.onAssetsLoaded		= undefined;
 
 		chao.updateInterval 	= null;
@@ -120,6 +123,9 @@ var chao = {
 	},
 
 	onFocusChange: function(isFocused){
+		if(chao.hasFocus == isFocused){
+			return;
+		}
 		if(isFocused){
 			chao.hasFocus 	= true;
 			chao.lastTime 	= Date.now();
@@ -134,6 +140,7 @@ var chao = {
 				chao.setMute(true);
 			}
 			// pause, blur window or do something pausey
+			// TODO: after implementing primitives
 		}
 	},
 
@@ -151,14 +158,9 @@ var chao = {
 	 
 	update: function(){
 
-		if(!chao.hasFocus){
-			return;
-		}
+		chao.clearScreen();
 
 		chao.timeDelta 	= (Date.now() - chao.lastTime) * .001;
-		if(chao.timeDelta > 0.5){
-			chao.log("Date.now()=" + Date.now() + " chao.lastTime=" + chao.lastTime);
-		}
 		chao.lastTime 	= Date.now();
 
 		if(chao.countFPS){
@@ -171,7 +173,6 @@ var chao = {
 			}
 		}
 
-		chao.clearScreen();
 
 		var stateToProcess = chao.currentState;
 
@@ -185,17 +186,21 @@ var chao = {
 		}
 
 		stateToProcess.rootObject.draw(0, 0, 1.0);
-		stateToProcess.rootObject.update();
-
 		if(stateToProcess.draw){
 			stateToProcess.draw();
 		}
-		if(stateToProcess.update){
-			stateToProcess.update();
-		}
 
-		chao.updateKeys();
-		chao.updateMouse();
+		if(chao.hasFocus){
+			stateToProcess.rootObject.update();
+			if(stateToProcess.update){
+				stateToProcess.update();
+			}
+
+			chao.updateKeys();
+			chao.updateMouse();
+		} else if(chao.getLoadingProgress() >= 1){
+			chao.drawImage(chao.canvas, chao.imagePauseFade, 0, 0);
+		}
 	},
 
 	switchState: function(newState){
@@ -263,15 +268,12 @@ var chao = {
 			ready: 			true,
 		};
 
-		chao.images.push(newImage);
+		chao.addImage(newImage);
+
+		return newImage;
 	},
 
 	loadImage: function(key, path){
-		if(chao.getImage(key)){
-			chao.log("There is already an image loaded with a key: " + key);
-			return;
-		}
-
 		var img = new Image();
 		img.src = path;
 		var newCanvas 	= document.createElement("canvas");
@@ -286,7 +288,7 @@ var chao = {
 			ready: 			false,
 		};
 		
-		chao.images.push(newImage);
+		chao.addImage(newImage);
 
 		img.onload = function(){
 			newImage.canvas.width 	= img.width;
@@ -297,16 +299,36 @@ var chao = {
 			newImage.ready 	= true;
 		};
 
+		return newImage;
 	},
 
-	getImage: function(key){
+	addImage: function(image){
+		var oldImage = -1;
+
 		for(var i = 0; i < chao.images.length; ++i){
-			if(chao.images[i].key == key){
-				return chao.images[i];
+			if(chao.images[i].key == image.key){
+				oldImage = i;
+				break;
 			}
 		}
 
-		return null;
+		if(oldImage != -1){
+			chao.images.splice(chao.images(1, 1));
+		}
+
+		chao.images.push(image);
+	},
+
+	getImage: function(key){
+		if(typeof key === "string" || key instanceof String){
+			for(var i = 0; i < chao.images.length; ++i){
+				if(chao.images[i].key == key){
+					return chao.images[i];
+				}
+			}
+		}
+
+		return key;
 	},
 
 	drawImage: function(target, image, x, y){
@@ -342,6 +364,112 @@ var chao = {
 			0, 0, w, h);
 		
 		target.context.restore();
+	},
+
+	setFillStyle: function(image, color){
+		image.context.fillStyle = chao.getRGBAString(color);
+	},
+
+	setStrokeStyle: function(image, color, width){
+		width = width || image.context.lineWidth;
+		image.context.lineWidth 	= width;
+		image.context.strokeStyle 	= chao.getRGBAString(color);
+	},
+
+	makeColor(r, g, b, a){
+		a = a || 255;
+		return (a<<24)|((r&0xff)<<16)|((g&0xff)<<8)|((b&0xff));
+	},
+
+	makeColorf(r, g, b, a){
+		a = a || 1;
+		return chao.makeColor(a*255, r*255, g*255, b*255);
+	},
+
+	getRGBAString: function(hexColor){
+		var r = (hexColor>>16)&0xff;
+		var g = (hexColor>>16)&0xff;
+		var b = hexColor&0xff;
+		var a = (hexColor>>>24) / 255;
+		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+	},
+
+	getPixel: function(image, x, y){
+		var data = image.context.getImageData(x, y, 1, 1).data;
+		return (data[3]<<24)|((data[0]&0xff)<<16)|((data[1]&0xff)<<8)|((data[2]&0xff));
+	},
+
+	putPixel: function(image, x, y, color){
+		chao.setFillStyle(color);
+		image.context.fillRect(x, y, 1, 1);
+	},
+
+	clearImage: function(image){
+		image.context.clearRect(0, 0, image.width, image.height);
+	},
+
+	clearToColor: function(image, color){
+		image.context.clearRect(0, 0, image.width, image.height);
+		chao.setFillStyle(image, color);
+		image.context.fillRect(0, 0, image.width, image.height);
+	},
+
+	drawLine: function(image, x1, y1, x2, y2, color, width){
+		chao.setStrokeStyle(image, color, width);
+		image.context.beginPath();
+		image.context.moveTo(x1, y1);
+		image.context.lineTo(x2, y2);
+		image.context.closePath();
+		image.context.stroke();
+	},
+
+	drawRect: function(image, x1, y1, w, h, color, width){
+		chao.setStrokeStyle(image, color, width);
+		image.context.strokeRect(x1, y1, w, h);
+	},
+
+	drawRectFill: function(image, x1, y1, w, h, color, width){
+		chao.setFillStyle(image, color);
+		image.context.fillRect(x1, y1, w, h);
+	},
+
+	drawPolygonLines(image, vertices, points){
+		image.context.beginPath();
+		for (var i = 0; i < vertices; i++){
+			if(i) {
+				image.context.lineTo(points[i*2],points[i*2+1]);
+			} else {
+				image.context.moveTo(points[i*2],points[i*2+1]);
+			}
+		}
+		image.context.closePath();
+	},
+
+	drawPolygon: function(image, vertices, points, color, width){
+		chao.setStrokeStyle(image, color, width);
+		chao.drawPolygonLines(image, vertices, points);
+		image.context.stroke();
+	},
+
+	drawPolygonFill: function(image, vertices, points, color){
+		chao.setFillStyle(image, color);
+		chao.drawPolygonLines(image, vertices, points);
+		image.context.fill();
+	},
+
+	updatePauseFadeImage: function(){
+		var playWidth 	= chao.screenWidth * 0.3;
+		var playHeight  = chao.screenWidth * 0.3;
+		var center 		= { x: chao.screenWidth/2, y: chao.screenHeight/2 };
+
+		var points	= [
+			center.x - playWidth/2, center.y - playHeight/2,
+			center.x + playWidth/2, center.y,
+			center.x - playWidth/2, center.y + playHeight/2
+		];
+		chao.imagePauseFade = chao.createImage("chao_pause_fade", chao.screenWidth, chao.screenHeight);
+		chao.clearToColor(chao.imagePauseFade, chao.makeColor(0, 0, 0, 160));
+		chao.drawPolygonFill(chao.imagePauseFade, 3, points, chao.makeColor(255, 255, 255, 170));
 	},
 
 	loadSound: function(key, path, volume, looped){

@@ -671,7 +671,12 @@ function DEG(r) { return -r*180.0/PI;}
 /// Helper for setting fill style
 function _fillstyle(bitmap,colour)
 {
-	bitmap.context.fillStyle = 'rgba('+ getr(colour) + ',' + getg(colour) + ',' + getb(colour) + ',' + getaf(colour) + ')';
+	bitmap.context.fillStyle = 
+	'rgba('+ 
+	getr(colour) + ',' + 
+	getg(colour) + ',' + 
+	getb(colour) + ',' + 
+	getaf(colour) + ')';
 }
 
 /// Helper for setting stroke style
@@ -679,7 +684,12 @@ function _strokestyle(bitmap,colour,width)
 {
 	if (!width) width=1;
 	bitmap.context.lineWidth = width;
-	bitmap.context.strokeStyle = 'rgba('+ getr(colour) + ',' + getg(colour) + ',' + getb(colour) + ',' + getaf(colour) + ')';
+	bitmap.context.strokeStyle = 
+	'rgba('+ 
+	getr(colour) + ',' + 
+	getg(colour) + ',' + 
+	getb(colour) + ',' + 
+	getaf(colour) + ')';
 }
 
 /// Creates a 0xAARRGGBB from values
