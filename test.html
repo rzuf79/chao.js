@@ -167,6 +167,18 @@
 			chao.playSound("nature");
 		},
 
+		draw: function(){
+			chao.drawText(chao.canvas, 
+				chao.font, 
+				"Bacon impsum dolor sit pork chop", 
+				0, 0, 
+				30, 
+				chao.makeColor(255, 255, 255), 
+				"left",
+				chao.makeColor(0, 0, 0),
+				2);
+		},
+
 		update: function(){
 			this.bounceTimer += chao.getTimeDelta() * 3;
 			this.thingie.y = 100 + Math.sin(this.bounceTimer) * 20;

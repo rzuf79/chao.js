@@ -48,6 +48,8 @@ var chao = {
 		window.addEventListener("wheel", chao.onMouseWheel);
 		window.addEventListener("keyup", chao.onKeyUp);
 		window.addEventListener("keydown", chao.onKeyDown);
+
+		chao.loggingEnabled 	= true;
 		
 		chao.screenWidth 		= width;
 		chao.screenHeight 		= height;
@@ -118,7 +120,6 @@ var chao = {
 		});
 		chao.switchState({});
 
-		chao.loggingEnabled = true;
 	},
 
 	setFPS: function(FPS){
@@ -386,12 +387,12 @@ var chao = {
 		image.context.strokeStyle 	= chao.getRGBAString(color);
 	},
 
-	makeColor(r, g, b, a){
+	makeColor: function(r, g, b, a){
 		a = a || 255;
 		return (a<<24)|((r&0xff)<<16)|((g&0xff)<<8)|((b&0xff));
 	},
 
-	makeColorf(r, g, b, a){
+	makeColorf: function(r, g, b, a){
 		a = a || 1;
 		return chao.makeColor(a*255, r*255, g*255, b*255);
 	},
@@ -480,6 +481,45 @@ var chao = {
 		chao.imagePauseFade = chao.createImage("chao_pause_fade", chao.screenWidth, chao.screenHeight);
 		chao.clearToColor(chao.imagePauseFade, chao.makeColor(0, 0, 0, 160));
 		chao.drawPolygonFill(chao.imagePauseFade, 3, points, chao.makeColor(255, 255, 255, 170));
+	},
+
+	loadFont: function(path){
+		var s = document.createElement('style');
+		var fontname = "font" + (chao.loadedFontsNum++);
+		s.id = fontname;
+		s.type = "text/css";
+		document.head.appendChild(s);
+		s.textContent = "@font-face { font-family: " + fontname + "; src:url('" + path + "');}";
+		return {element: s, name: fontname, type: "fnt"};
+	},
+
+	loadBase64Font: function(data){
+		var s = document.createElement('style');
+		var fontname = "font" + (chao.loadedFontsNum++);
+		s.id = fontname;
+		s.type = "text/css";
+		document.head.appendChild(s);
+		s.textContent = "@font-face { font-family: " + fontname + "; src:url('data:application/font-woff;base64," + data + "') format('woff');}";
+		return {element: s, name: fontname, type: "fnt"};
+	},
+
+	drawText: function(image, font, text, x, y, size, color, align, outlineColor, outlineSize){
+		color 			= color || 0xff000000;
+		align 			= align || "left";
+		outlineColor	= outlineColor || 0xff000000;
+		outlineSize 	= outlineSize || 0;
+
+		image.context.font 		= size.toFixed() + "px " + font.name;
+		image.context.textAlign = "left";
+
+		// var textSize = image.context.measureText(text); // for later
+
+		chao.setFillStyle(image, color);
+		image.context.fillText(text, x, y + size);
+		if(outlineSize > 0){
+			chao.setStrokeStyle(image, outlineColor, outlineSize);
+			image.context.strokeText(text, x, y+size);
+		}
 	},
 
 	loadSound: function(key, path, volume, looped){
@@ -750,16 +790,6 @@ var chao = {
 		chao.keys[e.keyCode] = false;
 
 		e.preventDefault();
-	},
-
-	loadBase64Font: function(data){
-		var s = document.createElement('style');
-		var fontname = "font" + (chao.loadedFontsNum++);
-		s.id = fontname;
-		s.type = "text/css";
-		document.head.appendChild(s);
-		s.textContent = "@font-face { font-family: " + fontname + "; src:url('data:application/font-woff;base64," + data + "') format('woff');}";
-		return {element:s,file:"",name:fontname,type:"fnt"};
 	},
 
 	getLoadingProgress: function(){
