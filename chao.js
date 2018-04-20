@@ -103,7 +103,19 @@ var chao = {
 		chao.loadedFontsNum = 0;
 		chao.font 			= chao.loadBase64Font(chao.defaultFontData);
 
-		chao.setLoadingState({});
+		chao.setLoadingState({
+			draw: function(){
+				var barWidth 		= chao.screenWidth * 0.6;
+				var barHeight 		= barWidth * 0.1;
+				var barX 			= chao.screenWidth / 2 - barWidth / 2;
+				var barY 			= chao.screenHeight - (barHeight * 1.25);
+				var barColor 		= chao.makeColor(255, 255, 255);
+
+				chao.clearToColor(chao.canvas, chao.makeColor(30, 30, 30));
+				chao.drawRect(chao.canvas, barX - 4, barY - 4, barWidth + 8, barHeight + 8, barColor);
+				chao.drawRectFill(chao.canvas, barX, barY, barWidth * chao.getLoadingProgress(), barHeight, barColor)
+			}
+		});
 		chao.switchState({});
 
 		chao.loggingEnabled = true;
@@ -139,8 +151,6 @@ var chao = {
 			if(chao.muteOnFocusLost){
 				chao.setMute(true);
 			}
-			// pause, blur window or do something pausey
-			// TODO: after implementing primitives
 		}
 	},
 
@@ -428,12 +438,12 @@ var chao = {
 		image.context.strokeRect(x1, y1, w, h);
 	},
 
-	drawRectFill: function(image, x1, y1, w, h, color, width){
+	drawRectFill: function(image, x1, y1, w, h, color){
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x1, y1, w, h);
 	},
 
-	drawPolygonLines(image, vertices, points){
+	drawPolygonLines: function(image, vertices, points){
 		image.context.beginPath();
 		for (var i = 0; i < vertices; i++){
 			if(i) {
@@ -1055,7 +1065,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 		var drawScaleY 	= this.flipY ? -this.entity.scaleY : this.entity.scaleY;
 		if(drawAlpha > 1.0) drawAlpha = 1.0;
 
-		var drawRect = {x:0, y:0, width:this.entity.width, height:this.entity.height};
+		var drawArea = {x:0, y:0, width:this.entity.width, height:this.entity.height};
 
 		if(this.currentAnim != -1){
 			var framesNumX = this.image.width / this.entity.width;
@@ -1063,12 +1073,12 @@ function ComponentImage(key, frameWidth, frameHeight){
 			var frameY = Math.floor(frameX/framesNumX);
 			frameX -= frameY * framesNumX;
 
-			drawRect.x = frameX * this.entity.width;
-			drawRect.y = frameY * this.entity.height;
+			drawArea.x = frameX * this.entity.width;
+			drawArea.y = frameY * this.entity.height;
 		}
 
 		chao.drawImagePart(chao.canvas, this.image, 
-			drawX, drawY, drawRect, 
+			drawX, drawY, drawArea, 
 			this.entity.rotation, drawScaleX, drawScaleY, 
 			drawAlpha);
 	}
