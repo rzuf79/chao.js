@@ -357,8 +357,8 @@ var chao = {
 		var h 				= rect.height;// * scaleY;
 		var rotationPivot	= {x:(x+(w*image.rotationOrigin.x)), y:(y+(h*image.rotationOrigin.y))};
 
-		target.context.globalAlpha = alpha;
 		target.context.save();
+		target.context.globalAlpha = alpha;
 
 		target.context.translate(rotationPivot.x, rotationPivot.y);
 		target.context.rotate(chao.rad2deg(angle));
@@ -610,7 +610,7 @@ var chao = {
 
 		sound.soundNode 		= chao.audioContext.createBufferSource();
 		sound.soundNode.buffer 	= sound.buffer;
-		sound.soundNode.loop 	= sound.loop;
+		sound.soundNode.loop 	= sound.looped;
 		sound.soundNode.addEventListener("ended", function(){sound.playing = false;});
 		sound.playing 			= true;
 
