@@ -130,8 +130,11 @@
 	var StateGame = {
 
 		bounceTimer: 0.0,
+		texts: [],
 
 		create: function(){
+
+			chao.countFPS = true;
 
 			this.thingie = new Entity("Thingie", 100, 100);
 			this.thingie.addComponent(new ComponentImage("sticker"));
@@ -164,7 +167,18 @@
 			buttonSound.onRelease = this.playSound;
 			this.add(buttonSound.entity);
 
-			chao.playSound("nature");
+			// ComponentText stress test
+			// huh, 17fps
+			// well, still better than phaser
+
+			// for(var i = 0; i < 100; ++i){
+			// 	var someText = new Entity("TextTest", 0, 0);
+			// 	var textComponent = someText.addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
+			// 	this.add(someText);
+			// 	this.texts.push(textComponent);
+			// }
+
+			// chao.playSound("nature");
 		},
 
 		draw: function(){
@@ -186,6 +200,11 @@
 			this.thingie.rotation 	= Math.cos(this.bounceTimer) * 20;
 			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
 			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
+
+			// for(var i = 0; i < this.texts.length; ++i){
+			// 	this.texts[i].text = "" + chao.getRandom(99999) + "x" + chao.getRandom(99999);
+			// }
+
 		},
 
 		playSound: function(button){
