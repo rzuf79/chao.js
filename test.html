@@ -170,7 +170,6 @@
 			// ComponentText stress test
 			// huh, 17fps
 			// well, still better than phaser
-
 			// for(var i = 0; i < 100; ++i){
 			// 	var someText = new Entity("TextTest", 0, 0);
 			// 	var textComponent = someText.addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
@@ -178,7 +177,39 @@
 			// 	this.texts.push(textComponent);
 			// }
 
+			var textTest = (new Entity("TextTest", 20, 300)).addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
+			this.add(textTest.entity);
+
+			// chao.log(textTest.entity.width);
+			chao.log("-------------");
+			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow";
+			// chao.log(textTest.entity.width);
+
 			// chao.playSound("nature");
+
+			// var colorCodes = [chao.makeColor(0, 0, 0), 
+			// chao.makeColor(0, 0, 170), 
+			// chao.makeColor(0, 255, 0), 
+			// chao.makeColor(0, 170, 170), 
+			// chao.makeColor(170, 0, 0), 
+			// chao.makeColor(128, 0, 128), 
+			
+			// chao.makeColor(153, 85, 0), 
+			// chao.makeColor(170, 170, 170), 
+			// chao.makeColor(85, 85, 85), 
+			// chao.makeColor(85, 85, 255), 
+			// chao.makeColor(84, 255, 63), 
+			// chao.makeColor(85, 255, 255), 
+			// chao.makeColor(255, 85, 85), 
+			
+			// chao.makeColor(255, 85, 255), 
+			// chao.makeColor(255, 255, 85), 
+			// chao.makeColor(255, 255, 255)];
+			// chao.log("-------------");
+
+			// for(var i = 0; i < colorCodes.length; ++i){
+			// 	chao.log(colorCodes[i]);
+			// }
 		},
 
 		draw: function(){
