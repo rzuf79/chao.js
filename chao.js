@@ -28,7 +28,6 @@ var chao = {
 	 * 14 = Yellow 			0xffffff55
 	 * 15 = BrightWhite		0xffffffff
 	 */
-
 	colorCodes: ["#000000", "#0000aa", "#00ff00", "#00aaaa", "#aa0000", "#800080", 
 	"#995500", "#aaaaaa", "#555555", "#5555ff", "#54ff3f", "#55ffff", "#ff5555", 
 	"#ff55ff", "#ffff55", "#ffffff"],
@@ -371,9 +370,16 @@ var chao = {
 		return key;
 	},
 
-	drawImage: function(target, image, x, y){
-		target.context.globalAlpha = 1.0;
+	drawImage: function(target, image, x, y, alpha, scaleX, scaleY){
+
+		scaleX = scaleX || 1;
+		scaleY = scaleY || 1;
+
+		target.context.save();
+		target.context.globalAlpha = alpha || 1.0;
+		target.context.scale(scaleX, scaleY);
 		target.context.drawImage(image.canvas, x, y);
+		target.context.restore();
 	},
 
 	drawImagePart: function(target, image, x, y, rect, angle, scaleX, scaleY, alpha){
@@ -1279,10 +1285,19 @@ function ComponentText(font, text, size){
 	}
 
 	this.draw = function(x, y, alpha){
-		var drawX = this.entity.x + x;
-		var drawY = this.entity.y + y;
+		var drawX 		= this.entity.x + x;
+		var drawY 		= this.entity.y + y;
+		var drawAlpha	= this.entity.alpha * alpha;
 
-		chao.drawImage(chao.canvas, this.image, drawX, drawY);
+		switch(this.align){
+			case "center": drawX -= this.entity.width / 2; break
+			case "right": drawX -= this.entity.width; break
+		}
+
+		chao.drawImage(chao.canvas, this.image, 
+			drawX, drawY, 
+			drawAlpha, 
+			this.entity.scaleX, this.entity.scaleY);
 	}
 
 	this.changeText = function(text){
@@ -1343,7 +1358,6 @@ function ComponentText(font, text, size){
 
 		var currentX = 0;
 		for(var i = 0; i < chunks.length; ++i){
-			chao.log(chunks[i].color);
 			chao.drawText(this.image, 
 				this.font,
 				chunks[i].text,
@@ -1353,8 +1367,6 @@ function ComponentText(font, text, size){
 				"left", 
 				this.outlineColor, 
 				this.outlineSize);
-
-			// chao.log(this.image.context.fillStyle);
 
 			currentX += chao.getTextSize(this.image, chunks[i].text).width;
 		}
