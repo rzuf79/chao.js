@@ -139,14 +139,14 @@
 			this.thingie = new Entity("Thingie", 100, 100);
 			this.thingie.addComponent(new ComponentImage("sticker"));
 			this.thingie.clickable = true;
-			this.add(this.thingie);
+			// this.add(this.thingie);
 
 			var zbylut = new Entity("Zbylut", 400, 100);
 			zbylut.addComponent(new ComponentLudzik());
 			zbylut.scaleX = 2;
 			zbylut.scaleY = 2;
 			zbylut.clickable = true;
-			this.add(zbylut);
+			// this.add(zbylut);
 
 			this.buttonMute = (new Entity("Button Mute")).addComponent(new ComponentButton("button_sound_on"));
 			this.buttonMute.entity.x = chao.screenWidth - 60;
@@ -164,6 +164,7 @@
 			var buttonSound = (new Entity("Button Sound")).addComponent(new ComponentButton("button"));
 			buttonSound.entity.x = chao.screenWidth - 300;
 			buttonSound.entity.y = chao.screenHeight - 50;
+			buttonSound.setText(chao.font, "Hmmm!", 20);
 			buttonSound.onRelease = this.playSound;
 			this.add(buttonSound.entity);
 
@@ -177,19 +178,23 @@
 			// 	this.texts.push(textComponent);
 			// }
 
-			var textTest = (new Entity("TextTest", 20, 300)).addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
+			var textTest = (new Entity("TextTest", 300, 300)).addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
 			this.add(textTest.entity);
-
-			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow";
+			textTest.align = "center";
+			textTest.backgroundColor = "gray";
+			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow\noraz niesamowita istnie\nmulti`12linia!";
 
 			// chao.playSound("nature");
+
+			// chao.log(textTest.rawText);
+			chao.log(textTest);
 
 		},
 
 		draw: function(){
 			chao.drawText(chao.canvas, 
 				chao.font, 
-				"Bacon impsum dolor sit pork chop", 
+				"Bacon impsum dolor\nsit pork chop", 
 				0, 0, 
 				30, 
 				chao.makeColor(255, 255, 255), 
