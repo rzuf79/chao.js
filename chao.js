@@ -67,6 +67,9 @@ var chao = {
 		window.addEventListener("mousemove", chao.onMouseMove);
 		window.addEventListener('contextmenu',function(e){e.preventDefault();});
 		window.addEventListener("wheel", chao.onMouseWheel);
+		canvas.addEventListener("touchstart", chao.onTouchStart);
+		canvas.addEventListener("touchmove", chao.onTouchMove);
+		window.addEventListener("touchend", chao.onTouchEnd);
 		window.addEventListener("keyup", chao.onKeyUp);
 		window.addEventListener("keydown", chao.onKeyDown);
 
@@ -108,7 +111,9 @@ var chao = {
 		chao.justPressed 		= [];
 		chao.justReleased 		= [];
 
-		chao.mouse = {};
+		chao.touches			= [];
+
+		chao.mouse 						= {};
 		chao.mouse.x 					= -1;
 		chao.mouse.y 					= -1;
 		chao.mouse.wheelDelta 			= 0;
@@ -231,6 +236,7 @@ var chao = {
 
 			chao.updateKeys();
 			chao.updateMouse();
+			chao.updateTouches();
 		} else if(chao.getLoadingProgress() >= 1){
 			chao.drawImage(chao.canvas, chao.imagePauseFade, 0, 0);
 		}
@@ -815,6 +821,82 @@ var chao = {
 
 	setMouseVisibility: function(value){
 		canvas.canvas.style.cursor = value ? "auto" : "none";
+	},
+
+	updateTouches: function(){
+		for(var i = 0; i < chao.touches.length; ++i){
+			chao.touches[i].justPressed = false;
+		}
+	},
+
+	onTouchStart: function(e){
+		var touches = e.changedTouches;
+		for(var i = 0; i < touches.length; ++i){
+			var newTouch = {
+				id: touches[i].identifier,
+				x: touches[i].pageX - chao.canvas.canvas.offsetLeft,
+				y: touches[i].pageY - chao.canvas.canvas.offsetTop,
+				justPressed: true
+			};
+			chao.touches.push(newTouch);
+
+			if(e.targetTouches[0].identifier == touches[i].identifier){
+				// it's a first touch, treat it as mouse
+				chao.mouse.pressed = chao.mouse.justPressed = true;
+				chao.mouse.x = newTouch.x;
+				chao.mouse.y = newTouch.y;
+			}
+
+			chao.mouse.x = newTouch.x;
+		}
+
+		e.preventDefault();
+	},
+
+	onTouchMove: function(e){
+		var touches = e.changedTouches;
+		for(var i = 0; i < touches.length; ++i){
+			var touch = chao.getTouch(touches[i].identifier);
+			if(touch != null){
+				touch.x = touches[i].pageX - chao.canvas.canvas.offsetLeft;
+				touch.y = touches[i].pageY - chao.canvas.canvas.offsetTop;
+
+				if(e.targetTouches[0].identifier == touches[i].identifier){
+					// it's a first touch, treat it as mouse
+					chao.mouse.x = touch.x;
+					chao.mouse.y = touch.y;
+				}
+			}
+		}
+		e.preventDefault();
+	},
+
+	onTouchEnd: function(e){
+		var touches = e.changedTouches;
+		for(var i = 0; i < touches.length; ++i){
+			var touch = chao.getTouch(touches[i].identifier);
+			if(touch != null){
+				var index = chao.touches.indexOf(touch);
+				chao.touches.splice(index, 1); // BALEETED!
+			}
+
+			if(e.targetTouches[0].identifier == touches[i].identifier){
+				// it's a first touch, treat it as mouse
+				chao.mouse.pressed = false;
+				chao.mouse.justReleased = true;
+			}
+		}
+
+		e.preventDefault();
+	},
+
+	getTouch: function(id){
+		for(var i = 0; i < chao.touches.length; ++i){
+			if(chao.touches[i].id == id){
+				return chao.touches[i];
+			}
+		}
+		return null;
 	},
 
 	updateKeys: function(){

@@ -186,9 +186,6 @@
 
 			// chao.playSound("nature");
 
-			// chao.log(textTest.rawText);
-			chao.log(textTest);
-
 		},
 
 		draw: function(){
@@ -211,6 +208,11 @@
 			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
 			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
 
+			for(var i = 0; i < chao.touches.length; ++i){
+				if(chao.touches[i].justPressed){
+					chao.log(chao.touches[i]);
+				}
+			}
 			// for(var i = 0; i < this.texts.length; ++i){
 			// 	this.texts[i].text = "" + chao.getRandom(99999) + "x" + chao.getRandom(99999);
 			// }
