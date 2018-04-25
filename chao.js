@@ -1132,13 +1132,13 @@ function Entity(name, x, y){
 	
 	this.alignToParentHorizontally = function(anchorX, alignX) {
 		if (this.parent != null) {
-			this.x = Math.ceil((this.parent.width * alignX) - (this.width * anchorX));
+			this.x = Math.ceil((this.parent.width * (alignX || 0.5)) - (this.width * (anchorX || 0.5)));
 		}
 	}
 	
 	this.alignToParentVertically = function(anchorY, alignY) {
 		if (this.parent != null) {
-			this.y = Math.ceil((this.parent.height * alignY) - (this.height * anchorY));
+			this.y = Math.ceil((this.parent.height * (alignY || 0.5)) - (this.height * (anchorY || 0.5)));
 		}
 	}
 
@@ -1623,7 +1623,7 @@ function ComponentButton(key){
 	this.setText = function(font, text, size){
 		if(!this.text){
 			this.text = (new Entity("Button Text", 0, 0)).addComponent(new ComponentText(font, text, size));
-			this.text.align = "center";
+			this.text.align = "left";
 			this.entity.add(this.text.entity);
 		} else {
 			if(font) this.text.font = font;
@@ -1631,8 +1631,7 @@ function ComponentButton(key){
 			if(size) this.text.size = size;
 		}
 
-		this.text.entity.x = (this.entity.width - this.text.entity.width) / 2;
-		this.text.entity.y = (this.entity.height - this.text.entity.height) / 2;
+		this.text.entity.alignToParent();
 
 		return this.text;
 	}
