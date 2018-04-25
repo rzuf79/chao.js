@@ -62,9 +62,9 @@ var chao = {
 			height: 	height,
 		};
 	 
-		window.addEventListener("mousedown", chao.onMouseDown);
+		canvas.addEventListener("mousedown", chao.onMouseDown);
 		window.addEventListener("mouseup", chao.onMouseUp);
-		window.addEventListener("mousemove", chao.onMouseMove);
+		canvas.addEventListener("mousemove", chao.onMouseMove);
 		window.addEventListener('contextmenu',function(e){e.preventDefault();});
 		window.addEventListener("wheel", chao.onMouseWheel);
 		canvas.addEventListener("touchstart", chao.onTouchStart);
@@ -836,12 +836,12 @@ var chao = {
 				id: touches[i].identifier,
 				x: touches[i].pageX - chao.canvas.canvas.offsetLeft,
 				y: touches[i].pageY - chao.canvas.canvas.offsetTop,
-				justPressed: true
+				justPressed: true,
+				isMouse: chao.touches.length == 0
 			};
 			chao.touches.push(newTouch);
 
-			if(e.targetTouches[0].identifier == touches[i].identifier){
-				// it's a first touch, treat it as mouse
+			if(newTouch.isMouse){
 				chao.mouse.pressed = chao.mouse.justPressed = true;
 				chao.mouse.x = newTouch.x;
 				chao.mouse.y = newTouch.y;
@@ -850,7 +850,9 @@ var chao = {
 			chao.mouse.x = newTouch.x;
 		}
 
-		e.preventDefault();
+		if(e.cancelable){
+			e.preventDefault();
+		}
 	},
 
 	onTouchMove: function(e){
@@ -861,14 +863,15 @@ var chao = {
 				touch.x = touches[i].pageX - chao.canvas.canvas.offsetLeft;
 				touch.y = touches[i].pageY - chao.canvas.canvas.offsetTop;
 
-				if(e.targetTouches[0].identifier == touches[i].identifier){
-					// it's a first touch, treat it as mouse
+				if(touch.isMouse){
 					chao.mouse.x = touch.x;
 					chao.mouse.y = touch.y;
 				}
 			}
 		}
-		e.preventDefault();
+		if(e.cancelable){
+			e.preventDefault();
+		}
 	},
 
 	onTouchEnd: function(e){
@@ -876,18 +879,19 @@ var chao = {
 		for(var i = 0; i < touches.length; ++i){
 			var touch = chao.getTouch(touches[i].identifier);
 			if(touch != null){
+				if(touch.isMouse){
+					chao.mouse.pressed = false;
+					chao.mouse.justReleased = true;
+				}
+
 				var index = chao.touches.indexOf(touch);
 				chao.touches.splice(index, 1); // BALEETED!
 			}
-
-			if(e.targetTouches[0].identifier == touches[i].identifier){
-				// it's a first touch, treat it as mouse
-				chao.mouse.pressed = false;
-				chao.mouse.justReleased = true;
-			}
 		}
 
-		e.preventDefault();
+		if(e.cancelable){
+			e.preventDefault();
+		}
 	},
 
 	getTouch: function(id){
