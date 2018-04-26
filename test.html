@@ -17,7 +17,7 @@
 	chao.init(640, 480);
 	chao.backgroundColor = "#ffffff";
 
-	chao.loadMusic("nature", "assets/nature.ogg", "assets/nature.mp3", 0.2);
+	// chao.loadMusic("nature", "assets/nature.ogg", "assets/nature.mp3", 0.2);
 	chao.loadSound("oh", "assets/oh.wav", 1.0);
 	chao.loadSound("ugh", "assets/ugh.wav");
 	chao.loadSound("plum", "assets/plum.wav");
@@ -31,8 +31,26 @@
 	function ComponentLudzik(){
 		this.name 				= "Ludzik";
 
+		this.onClick = function(x, y){
+			chao.log("Clicky! " + x + "x" + y);
+		}
+
+		this.onRelease = function(x, y){
+			chao.log("onRelease! " + x + "x" + y);
+		}
+
+		this.onMove = function(x, y){
+			chao.log("Moovy! " + x + "x" + y);
+		}
+
+		this.onCancel = function(){
+			chao.log("Canceled! :o");
+		}
+
 		this.create = function(){
 			this.image = this.entity.addComponent(new ComponentImage("zbylut", 30, 30));
+
+			this.entity.keepClickFocus = true;
 
 			this.image.addAnim("idle_n", [4], 0, false);
 			this.image.addAnim("idle_s", [0], 0, false);
@@ -140,14 +158,14 @@
 			this.thingie = new Entity("Thingie", 100, 100);
 			this.thingie.addComponent(new ComponentImage("sticker"));
 			this.thingie.clickable = true;
-			// this.add(this.thingie);
+			this.add(this.thingie);
 
 			var zbylut = new Entity("Zbylut", 400, 100);
 			zbylut.addComponent(new ComponentLudzik());
 			zbylut.scaleX = 2;
 			zbylut.scaleY = 2;
 			zbylut.clickable = true;
-			// this.add(zbylut);
+			this.add(zbylut);
 
 			this.buttonMute = (new Entity("Button Mute")).addComponent(new ComponentButton("button_sound_on"));
 			this.buttonMute.entity.x = chao.screenWidth - 60;
@@ -186,6 +204,8 @@
 			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow\noraz niesamowita istnie\nmulti`12linia!";
 
 			// chao.playSound("nature");
+
+			chao.logHierarchy();
 
 		},
 

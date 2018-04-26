@@ -127,6 +127,8 @@ var chao = {
 		chao.mouse.justPressedMiddle	= false;
 		chao.mouse.justReleasedMiddle	= false;
 
+		chao.focusedEntity				= null;
+
 		chao.resetInput();
 
 		chao.loadedFontsNum = 0;
@@ -223,13 +225,13 @@ var chao = {
 			}
 		}
 
-		stateToProcess.rootObject.draw(0, 0, 1.0);
+		stateToProcess.rootEntity.draw(0, 0, 1.0);
 		if(stateToProcess.draw){
 			stateToProcess.draw();
 		}
 
 		if(chao.hasFocus || !chao.pauseOnFadeEnabled){
-			stateToProcess.rootObject.update();
+			stateToProcess.rootEntity.update();
 			if(stateToProcess.update){
 				stateToProcess.update();
 			}
@@ -243,6 +245,8 @@ var chao = {
 	},
 
 	switchState: function(newState){
+		chao.focusedEntity = null;
+
 		chao.destroyState(chao.currentState);
 		
 		chao.currentState = newState;
@@ -262,14 +266,14 @@ var chao = {
 	},
 
 	initState: function(state){
-		state.rootObject = new Entity("Root", 0, 0);
-		state.rootObject.width = chao.screenWidth;
-		state.rootObject.width = chao.screenHeight;
+		state.rootEntity = new Entity("Root", 0, 0);
+		state.rootEntity.width = chao.screenWidth;
+		state.rootEntity.width = chao.screenHeight;
 		state.add = function(entity){
-			this.rootObject.add(entity);
+			this.rootEntity.add(entity);
 		};
 		state.remove = function(entity){
-			this.rootObject.remove(entity);
+			this.rootEntity.remove(entity);
 		};
 
 		if(state.create){
@@ -279,6 +283,10 @@ var chao = {
 
 	initCurrentState: function(){
 		chao.initState(chao.currentState);
+	},
+
+	getCurrentState: function(){
+		return chao.getLoadingProgress() >= 1.0 ? chao.currentState : chao.loadingState;
 	},
 
 	destroyState: function(state){
@@ -775,10 +783,18 @@ var chao = {
 		chao.mouse.justReleasedMiddle	= false;
 	},
 
-	onMouseDown: function(e){
-		switch(e.which){
+	getEntityUnderMouse: function(){
+		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
+	},
+
+	handleMouseDown: function(button){
+		switch(button){
 			case 1:
 				chao.mouse.pressed = chao.mouse.justPressed = true;
+				chao.focusedEntity = chao.getEntityUnderMouse();
+				if(chao.focusedEntity != null){
+					chao.focusedEntity.onClick();
+				}
 				break;
 			case 2:
 				chao.mouse.pressedMiddle = chao.mouse.justPressedMiddle = true;
@@ -787,14 +803,21 @@ var chao = {
 				chao.mouse.pressedRight = chao.mouse.justPressedRight = true;
 				break;
 		}
-		e.preventDefault();
 	},
 
-	onMouseUp: function(e){
-		switch(e.which){
+	handleMouseUp: function(button){
+		switch(button){
 			case 1:
 				chao.mouse.pressed 				= false;
 				chao.mouse.justReleased 		= true;
+				if(chao.focusedEntity != null){
+					if(chao.getEntityUnderMouse() != chao.focusedEntity){
+						chao.focusedEntity.onCancel();
+					} else {
+						chao.focusedEntity.onRelease();
+					}
+					chao.focusedEntity = null;
+				}
 				break;
 			case 2:
 				chao.mouse.pressedMiddle 		= false;
@@ -805,12 +828,39 @@ var chao = {
 				chao.mouse.justReleasedRight 	= true;
 				break;
 		}
+	},
+
+	handleMouseMove: function(x, y){
+		chao.mouse.x = x;
+		chao.mouse.y = y;
+
+		if(chao.focusedEntity != null){
+			if(!chao.focusedEntity.keepClickFocus){
+				var currentEntity = chao.getEntityUnderMouse();
+				if(currentEntity != chao.focusedEntity){
+					chao.focusedEntity.onCancel();
+					chao.focusedEntity = currentEntity;
+				}
+			}
+
+			if(chao.focusedEntity != null){
+				chao.focusedEntity.onMove();
+			}
+		}
+	},
+
+	onMouseDown: function(e){
+		chao.handleMouseDown(e.which);
+		e.preventDefault();
+	},
+
+	onMouseUp: function(e){
+		chao.handleMouseUp(e.which);
 		e.preventDefault();
 	},
 
 	onMouseMove: function(e){
-		chao.mouse.x = e.offsetX;
-		chao.mouse.y = e.offsetY;
+		chao.handleMouseMove(e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 	
@@ -842,9 +892,7 @@ var chao = {
 			chao.touches.push(newTouch);
 
 			if(newTouch.isMouse){
-				chao.mouse.pressed = chao.mouse.justPressed = true;
-				chao.mouse.x = newTouch.x;
-				chao.mouse.y = newTouch.y;
+				chao.handleMouseDown(1);
 			}
 
 			chao.mouse.x = newTouch.x;
@@ -864,8 +912,7 @@ var chao = {
 				touch.y = touches[i].pageY - chao.canvas.canvas.offsetTop;
 
 				if(touch.isMouse){
-					chao.mouse.x = touch.x;
-					chao.mouse.y = touch.y;
+					chao.handleMouseMove(touch.x, touch.y);
 				}
 			}
 		}
@@ -880,8 +927,7 @@ var chao = {
 			var touch = chao.getTouch(touches[i].identifier);
 			if(touch != null){
 				if(touch.isMouse){
-					chao.mouse.pressed = false;
-					chao.mouse.justReleased = true;
+					chao.handleMouseUp(1);
 				}
 
 				var index = chao.touches.indexOf(touch);
@@ -968,6 +1014,30 @@ var chao = {
 		}
 	},
 
+	logHierarchy: function(entity, indent){
+		entity 	= entity || chao.getCurrentState().rootEntity;
+		indent 	= indent || 0;
+
+		var entityLog = "";
+		for(var i = 0; i < indent; ++i){
+			entityLog += "  ";
+		}
+		entityLog += entity.name;
+		if(entity.components.length > 0){
+			entityLog += " (";
+			for(var i = 0; i < entity.components.length; ++i){
+				entityLog += entity.components[i].name;
+				if(i < entity.components.length - 1) entityLog += ", ";
+			}
+			entityLog += ")";
+		}
+		chao.log(entityLog);
+
+		for(var i = 0; i < entity.children.length; ++i){
+			chao.logHierarchy(entity.children[i], indent + 1);
+		}
+	},
+
 	installVisibilityHandler: function(){
 
 		if(chao.visibilityHandlerInstalled){
@@ -1022,20 +1092,21 @@ var chao = {
  * @param {float} y - vertical position of the entity
  */
 function Entity(name, x, y){
-	this.name 		= name || "Entity",
-	this.x 			= x || 0,
-	this.y 			= y || 0,
-	this.alpha 		= 1.0;
-	this.width 		= 0,
-	this.height 	= 0,
-	this.scaleX 	= 1.0;
-	this.scaleY 	= 1.0;
-	this.rotation 	= 0.0;
-	this.children 	= [],
-	this.components = [],
-	this.parent 	= null,
-	this.visible 	= true,
-	this.clickable 	= false,
+	this.name 			= name || "Entity",
+	this.x 				= x || 0,
+	this.y 				= y || 0,
+	this.alpha 			= 1.0;
+	this.width 			= 0,
+	this.height 		= 0,
+	this.scaleX 		= 1.0;
+	this.scaleY 		= 1.0;
+	this.rotation 		= 0.0;
+	this.children 		= [],
+	this.components 	= [],
+	this.parent 		= null,
+	this.visible 		= true,
+	this.clickable 		= false,
+	this.keepClickFocus	= false;
 
 	this.destroy = function(){
 		for(var i = 0; i < this.components.length; ++i){
@@ -1122,6 +1193,44 @@ function Entity(name, x, y){
 
 	this.removeComponentByName = function(componentName){
 		this.removeComponent(this.getComponentByName(componentName));
+	}
+
+	this.onClick = function(){
+		var relativeX = chao.mouse.x - this.x;
+		var relativeY = chao.mouse.y - this.y;
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].onClick){
+				this.components[i].onClick(relativeX, relativeY);
+			}
+		}
+	}
+
+	this.onMove = function(){
+		var relativeX = chao.mouse.x - this.x;
+		var relativeY = chao.mouse.y - this.y;
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].onMove){
+				this.components[i].onMove(relativeX, relativeY);
+			}
+		}
+	}
+
+	this.onCancel = function(){
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].onCancel){
+				this.components[i].onCancel();
+			}
+		}
+	}
+
+	this.onRelease = function(){
+		var relativeX = chao.mouse.x - this.x;
+		var relativeY = chao.mouse.y - this.y;
+		for(var i = 0; i < this.components.length; ++i){
+			if(this.components[i].onRelease){
+				this.components[i].onRelease(relativeX, relativeY);
+			}
+		}
 	}
 
 	this.alignToParent = function(anchorX, anchorY, alignX, alignY) {
