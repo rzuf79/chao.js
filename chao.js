@@ -39,7 +39,7 @@ var chao = {
 			Date.now = function now() { return new Date().getTime(); };
 		}
 
-		var AudioContext = window.AudioContext || window.webkitAudioContext;
+		AudioContext = window.AudioContext || window.webkitAudioContext || false;
 
 		var audioTest = document.createElement('audio');
 		chao.canPlayOgg = !!(audioTest.canPlayType && audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/no/, ''));
@@ -100,7 +100,9 @@ var chao = {
 		chao.FPSCounter 		= 0;
 		chao.FPSTimer 			= 0;
 
-		chao.audioContext 		= new AudioContext();
+		if(AudioContext){
+			chao.audioContext 		= new AudioContext();
+		}
 		chao.sounds 			= [];
 		chao.currentMusic 		= null;
 		chao.muted 				= false;
@@ -586,6 +588,10 @@ var chao = {
 
 	loadSound: function(key, path, volume, looped){
 
+		if(!chao.audioContext){
+			return;
+		}
+
 		if(chao.getSound(key) !== null){
 			chao.log("There is already a sound loaded with this key: \"" + key + "\".");
 		}
@@ -658,6 +664,9 @@ var chao = {
 	},
 
 	playSound: function(key){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		if(!sound){
 			chao.log("There is no loaded sound with this key: \"" + key + "\".");
@@ -725,6 +734,9 @@ var chao = {
 	},
 
 	stopSound: function(key){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		if(sound.playing){
 			sound.soundNode.stop();
@@ -733,11 +745,17 @@ var chao = {
 	},
 
 	getSoundPosition: function(key){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		return chao.audioContext.currentTime - sound.startTime;
 	},
 
 	setSoundPosition: function(key, position){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		sound.startOffset = position;
 		if(sound.playing){
@@ -746,6 +764,9 @@ var chao = {
 	},
 
 	playSoundFrom: function(key, position){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		
 		if(sound.playing){
@@ -756,6 +777,9 @@ var chao = {
 	},
 
 	pauseSound: function(key){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		if(sound.playing){
 			sound.soundNode.stop();
@@ -765,6 +789,9 @@ var chao = {
 	},
 
 	restartSound: function(key){
+		if(!chao.audioContext){
+			return;
+		}
 		var sound = chao.getSound(key);
 		if(sound.playing){
 			sound.soundNode.stop();
@@ -1630,12 +1657,12 @@ ComponentText.prototype = {
  * Simple, clickable button.
  *
  * @class
- * @param key - name/id of the image to be used
+ * @param image - name/id of the image to be used
  */
-function ComponentButton(key){
+function ComponentButton(image){
 	this.name 			= "Button";
 	this.entity 		= null;
-	this.imageKey 		= key;
+	this.imageKey 		= image;
 	this.image 			= null;
 	this.imagePressed 	= null;
 	this.text 			= null;
@@ -1759,3 +1786,70 @@ function ComponentButton(key){
 	}
 }
 
+/**
+ * A camera component.
+ *
+ * @class
+ */
+function ComponentCamera(){
+	this.name 			= "Camera";
+	this.entity 		= null;
+
+	this.create = function(){
+		//
+	}
+
+	this.update = function(){
+		//
+	}
+}
+
+/**
+ * A component to create a parallax effect on the image.
+ *
+ * @class
+ */
+function ComponentParallaxScroll(){
+	this.name 			= "Camera";
+	this.entity 		= null;
+
+	this.create = function(){
+		//
+	}
+
+	this.update = function(){
+		//
+	}
+}
+
+/**
+ * A single, basic particle.
+ *
+ * @class
+ * @param image - name/id of the image to be used. Will try to use existing image component when ommited.
+ */
+function ComponentParticle(image){
+	this.name 			= "Camera";
+	this.entity 		= null;
+
+	this.image			= null;
+	this.imageKey		= image;
+
+	this.lifetime		= 1.0;
+
+	this.create = function(){
+		if(!imageKey){
+			image = entity.getComponentByName("Image");
+		} else {
+			image = entity.addComponent(new ComponentImage(imageKey));
+		}
+
+		if(!image){
+			chao.log("ComponentParticle needs an existing ComponentImage or image key passed in constructor.");
+		}
+	}
+
+	this.update = function(){
+		//
+	}
+}
