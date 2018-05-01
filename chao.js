@@ -1060,12 +1060,18 @@ var chao = {
 	},
 
 	logHierarchy: function(entity, indent){
+		var logString = chao.logEntity(entity, 0);
+		chao.log(logString);
+	},
+
+	logEntity: function(entity, indent){
+
 		entity 	= entity || chao.getCurrentState().rootEntity;
 		indent 	= indent || 0;
 
 		var entityLog = "";
 		for(var i = 0; i < indent; ++i){
-			entityLog += "  ";
+			entityLog += "- ";
 		}
 		entityLog += entity.name;
 		if(entity.components.length > 0){
@@ -1076,11 +1082,12 @@ var chao = {
 			}
 			entityLog += ")";
 		}
-		chao.log(entityLog);
 
 		for(var i = 0; i < entity.children.length; ++i){
-			chao.logHierarchy(entity.children[i], indent + 1);
+			entityLog += chao.logEntity(entity.children[i], indent + 1);
 		}
+
+		return "\n" + entityLog;
 	},
 
 	installVisibilityHandler: function(){
