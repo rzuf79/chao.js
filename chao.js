@@ -129,12 +129,16 @@ var chao = {
 		chao.mouse.justPressedMiddle	= false;
 		chao.mouse.justReleasedMiddle	= false;
 
-		chao.focusedEntity				= null;
-
 		chao.resetInput();
 
-		chao.loadedFontsNum = 0;
-		chao.font 			= chao.loadBase64Font(chao.defaultFontData);
+		chao.loadedFontsNum 			= 0;
+		chao.font 						= chao.loadBase64Font(chao.defaultFontData);
+
+		chao.focusedEntity				= null;
+		chao.entitiesToDestroy			= [];
+
+		chao.currentState				= undefined;
+		chao.loadingState				= undefined;
 
 		chao.setLoadingState({
 			draw: function(){
@@ -244,6 +248,14 @@ var chao = {
 		} else if(chao.getLoadingProgress() >= 1){
 			chao.drawImage(chao.canvas, chao.imagePauseFade, 0, 0);
 		}
+
+		for(var i = 0; i < chao.entitiesToDestroy.length; ++i){
+			chao.entitiesToDestroy[i].destroy();
+			if(chao.entitiesToDestroy[i].parent){
+				chao.entitiesToDestroy[i].parent.remove(chao.entitiesToDestroy[i]);
+			}
+		}
+		chao.entitiesToDestroy = [];
 	},
 
 	switchState: function(newState){
@@ -299,6 +311,12 @@ var chao = {
 		if(state.destroy){
 			state.destroy();
 		}
+		state.rootEntity.destroy();
+		state.rootEntity = null;
+	},
+
+	destroyEntity: function(entity){
+		chao.entitiesToDestroy.push(entity);
 	},
 
 	createImage: function(key, width, height){
@@ -1145,6 +1163,9 @@ function Entity(name, x, y){
 		for(var i = 0; i < this.children.length; ++i){
 			this.children[i].destroy();
 		}
+
+		this.children	= [];
+		this.components	= [];
 	}
 
 	this.draw = function(x, y, alpha){
@@ -1673,7 +1694,7 @@ function ComponentButton(image){
 
 	this.onPress 		= function(button) {};
 	this.onHold 		= function(button) {};
-	this.onRelease 		= function(button) {};
+	this.onReleased 	= function(button) {};
 
 	this.create = function(){
 		this.setImage(this.imageKey);
@@ -1696,8 +1717,8 @@ function ComponentButton(image){
 
 				this.pressed = false;
 				buttonAlpha = 1.0;
-				if(this.onRelease){
-					this.onRelease(this);
+				if(this.onReleased){
+					this.onReleased(this);
 				}
 			}
 
@@ -1784,6 +1805,7 @@ function ComponentButton(image){
 
 		return this.entity.getEntityAt(x, y) === this.entity;
 	}
+
 }
 
 /**
@@ -1829,27 +1851,75 @@ function ComponentParallaxScroll(){
  * @param image - name/id of the image to be used. Will try to use existing image component when ommited.
  */
 function ComponentParticle(image){
-	this.name 			= "Camera";
-	this.entity 		= null;
+	this.name 				= "Camera";
+	this.entity 			= null;
 
-	this.image			= null;
-	this.imageKey		= image;
+	this.image				= null;
+	this.imageKey			= image;
 
-	this.lifetime		= 1.0;
+	this.lifetime			= 1.0;
+	this.fadeOutMode		= ComponentParticle.FADE_MODE_NONE;
+	this.velocity			= {x:0, y:0};
+	this.acceleration		= {x:0, y:0};
+	this.rotationVel		= 0;
+	this.rotationAcc		= 0;
+
+	this.useUnscaledTime	= false;
+
+	this.timer 				= 0;
 
 	this.create = function(){
-		if(!imageKey){
-			image = entity.getComponentByName("Image");
+		if(!this.imageKey){
+			this.image = this.entity.getComponentByName("Image");
 		} else {
-			image = entity.addComponent(new ComponentImage(imageKey));
+			this.image = this.entity.addComponent(new ComponentImage(this.imageKey));
 		}
 
-		if(!image){
+		if(!this.image){
 			chao.log("ComponentParticle needs an existing ComponentImage or image key passed in constructor.");
 		}
 	}
 
 	this.update = function(){
-		//
+		if(!this.image){
+			return;
+		}
+
+		var delta = this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
+
+		this.timer += delta;
+
+		if(this.timer >= this.lifetime){
+			chao.destroyEntity(this.entity);
+			return;
+		}
+
+		switch(this.fadeOutMode){
+			case ComponentParticle.FADE_MODE_NONE: {
+				this.entity.alpha = 1.0;
+				break;
+			}
+			case ComponentParticle.FADE_MODE_LINEAR: {
+				this.entity.alpha = 1.0 - (this.timer / this.lifetime);
+				break;
+			}
+			case ComponentParticle.FADE_MODE_LAST_SECOND: {
+				var v = this.lifetime - this.timer;
+				this.entity.alpha = v > 1.0 ? 1.0 : v;
+				break;
+			}
+		}
+
+		this.velocity.x 	+= this.acceleration.x * delta;
+		this.velocity.y 	+= this.acceleration.y * delta;
+		this.entity.x		+= this.velocity.x * delta;
+		this.entity.y		+= this.velocity.y * delta;
+
+		this.rotationVel	+= this.rotationAcc * delta;
+		this.entity.rotation+= this.rotationVel * delta;
+
 	}
 }
+ComponentParticle.FADE_MODE_NONE		= 0;
+ComponentParticle.FADE_MODE_LINEAR		= 1;
+ComponentParticle.FADE_MODE_LAST_SECOND	= 2;

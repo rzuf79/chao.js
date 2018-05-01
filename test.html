@@ -27,6 +27,7 @@
 	chao.loadImage("button_sound_on", "assets/sound_on.png");
 	chao.loadImage("button_sound_off", "assets/sound_off.png");
 	chao.loadImage("button", "assets/button.png");
+	chao.loadImage("cloudy", "assets/cloudy.png");
 
 	function ComponentLudzik(){
 		this.name 				= "Ludzik";
@@ -170,7 +171,7 @@
 			this.buttonMute = (new Entity("Button Mute")).addComponent(new ComponentButton("button_sound_on"));
 			this.buttonMute.entity.x = chao.screenWidth - 60;
 			this.buttonMute.entity.y = chao.screenHeight - 60;
-			this.buttonMute.onRelease = function(button){
+			this.buttonMute.onReleased = function(button){
 				chao.toggleMute();
 				if(chao.muted){
 					this.setImage("button_sound_off");
@@ -180,12 +181,15 @@
 			};
 			this.add(this.buttonMute.entity);
 
-			var buttonSound = (new Entity("Button Sound")).addComponent(new ComponentButton("button"));
-			buttonSound.entity.x = chao.screenWidth - 300;
-			buttonSound.entity.y = chao.screenHeight - 50;
+			var buttonSound = (new Entity("Button Sound", chao.screenWidth-300, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
 			buttonSound.setText(chao.font, "Hmmm!", 20);
 			buttonSound.onRelease = this.playSound;
 			this.add(buttonSound.entity);
+
+			var buttonLog = (new Entity("Button Log", chao.screenWidth-500, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
+			buttonLog.setText(chao.font, "Log things", 20);
+			buttonLog.onReleased = function() { chao.logHierarchy(); }
+			this.add(buttonLog.entity);
 
 			// ComponentText stress test
 			// huh, 17fps
@@ -205,7 +209,7 @@
 
 			// chao.playSound("nature");
 
-			chao.logHierarchy();
+			// chao.logHierarchy();
 
 		},
 
@@ -236,8 +240,26 @@
 
 		},
 
+		spawnParticle: function(image, x, y, velX, velY, gravity){
+			var newParticle = (new Entity("Particle", x, y)).addComponent(new ComponentParticle(image));
+			newParticle.velocity.x 		= velX;
+			newParticle.velocity.y 		= velY;
+			newParticle.acceleration.y 	= gravity;
+			newParticle.rotationVel		= velX * 10;
+			newParticle.lifetime		= 2.0;
+			newParticle.fadeOutMode		= ComponentParticle.FADE_MODE_LAST_SECOND;
+			chao.currentState.add(newParticle.entity);
+		},
+
 		playSound: function(button){
 			chao.playSound("oh");
+			for(var i = 0; i < 23; ++i){
+				chao.currentState.spawnParticle("cloudy", 
+					chao.screenWidth/2, chao.screenHeight/2, 
+					-60 + chao.getRandom(120), 
+					-80 - chao.getRandom(40), 
+					100);
+			}
 		},
 
 	};
