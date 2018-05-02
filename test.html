@@ -14,7 +14,7 @@
 <script src="chao.js"></script>
 <script>
 
-	chao.init(640, 480, chao.SCALING_MODE_STRETCH);
+	chao.init(640, 480, chao.SCALING_MODE_EXTEND);
 	chao.backgroundColor = "#ffffff";
 
 	// chao.loadMusic("nature", "assets/nature.ogg", "assets/nature.mp3", 0.2);
@@ -181,25 +181,16 @@
 			};
 			this.add(this.buttonMute.entity);
 
-			var buttonSound = (new Entity("Button Sound", chao.screenWidth-300, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
-			buttonSound.setText(chao.font, "Hmmm!", 20);
-			buttonSound.onRelease = this.playSound;
-			this.add(buttonSound.entity);
+			this.buttonSound = (new Entity("Button Sound", chao.screenWidth-300, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
+			this.buttonSound.setText(chao.font, "Hmmm!", 20);
+			this.buttonSound.onRelease = this.playSound;
+			this.add(this.buttonSound.entity);
 
-			var buttonLog = (new Entity("Button Log", chao.screenWidth-500, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
-			buttonLog.setText(chao.font, "Log things", 20);
-			buttonLog.onReleased = function() { chao.logHierarchy(); }
-			this.add(buttonLog.entity);
+			this.buttonLog = (new Entity("Button Log", chao.screenWidth-500, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
+			this.buttonLog.setText(chao.font, "Log things", 20);
+			this.buttonLog.onReleased = function() { chao.logHierarchy(); }
+			this.add(this.buttonLog.entity);
 
-			// ComponentText stress test
-			// huh, 17fps
-			// well, still better than phaser
-			// for(var i = 0; i < 100; ++i){
-			// 	var someText = new Entity("TextTest", 0, 0);
-			// 	var textComponent = someText.addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
-			// 	this.add(someText);
-			// 	this.texts.push(textComponent);
-			// }
 
 			var textTest = (new Entity("TextTest", 300, 300)).addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
 			this.add(textTest.entity);
@@ -213,9 +204,15 @@
 
 		},
 
+		resize: function(){
+			this.buttonMute.entity.alignToParent(1.0, 1.0, 1.0, 1.0, -10);
+			this.buttonSound.entity.alignToParent(1.0, 1.0, 1.5, 1.0, -20, -10);
+			this.buttonLog.entity.alignToParent(1.0, 1.0, 2.5, 1.0, -30, -10);
+		},
+
 		draw: function(){
-			// var text = "Bacon impsum dolor\nsit pork chop";
-			var text = "" + chao.screenScaleX + "x" + chao.screenScaleY;
+			var text = "Bacon impsum dolor\nsit pork chop";
+			// var text = "" + chao.screenScaleX + "x" + chao.screenScaleY;
 
 			chao.drawText(chao.canvas, 
 				chao.font, 

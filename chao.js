@@ -296,7 +296,7 @@ var chao = {
 	initState: function(state){
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
-		state.rootEntity.width = chao.screenHeight;
+		state.rootEntity.height = chao.screenHeight;
 		state.add = function(entity){
 			this.rootEntity.add(entity);
 		};
@@ -306,6 +306,9 @@ var chao = {
 
 		if(state.create){
 			state.create();
+		}
+		if(state.resize){
+			state.resize();
 		}
 	},
 
@@ -567,7 +570,7 @@ var chao = {
 			center.x + playWidth/2, center.y,
 			center.x - playWidth/2, center.y + playHeight/2
 		];
-		chao.imagePauseFade = chao.createImage("chao_pause_fade", chao.screenWidth, chao.screenHeight);
+		chao.imagePauseFade = chao.createImage(undefined, chao.screenWidth, chao.screenHeight);
 		chao.clearToColor(chao.imagePauseFade, chao.makeColor(0, 0, 0, 160));
 		chao.drawPolygonFill(chao.imagePauseFade, 3, points, chao.makeColor(255, 255, 255, 170));
 	},
@@ -1046,9 +1049,8 @@ var chao = {
 		}
 
 		var canvas	= chao.canvas.canvas;
-
-		var scaleX 	= window.innerWidth / chao.screenWidth;
-		var scaleY 	= window.innerHeight / chao.screenHeight;
+		var scaleX 	= window.innerWidth / chao.baseScreenWidth;
+		var scaleY 	= window.innerHeight / chao.baseScreenHeight;
 		var scale 	= Math.min(scaleX, scaleY);
 
 		switch(chao.scalingMode){
@@ -1078,7 +1080,25 @@ var chao = {
 				break;
 			}
 			case chao.SCALING_MODE_EXTEND:{
-				//
+				chao.setCanvasScale(scale, scale);
+
+				if(chao.baseScreenWidth * scale < window.innerWidth){
+					// extend the viewport horizontally
+					var missingPixs 	= window.innerWidth - (chao.baseScreenWidth * scale);
+					chao.screenWidth	= chao.baseScreenWidth + (missingPixs / scale);
+					chao.screenHeight	= chao.baseScreenHeight;
+				} else {
+					// extend the viewport vertivally
+					var missingPixs 	= window.innerHeight - (chao.baseScreenHeight * scale);
+					chao.screenWidth	= chao.baseScreenWidth;
+					chao.screenHeight	= chao.baseScreenHeight + (missingPixs / scale);
+				}
+				chao.canvas.width = chao.screenWidth;
+				chao.canvas.height = chao.screenHeight;
+				canvas.setAttribute("width", chao.screenWidth);
+				canvas.setAttribute("height", chao.screenHeight);
+
+				chao.updatePauseFadeImage();
 				break;
 			}
 		}
@@ -1094,12 +1114,22 @@ var chao = {
 				chao.canvas.canvas.style.minHeight = "100%";
 			}
 		}
+		chao.loadingState.rootEntity.width 	= chao.screenWidth;
+		chao.loadingState.rootEntity.height = chao.screenHeight;
+		chao.currentState.rootEntity.width 	= chao.screenWidth;
+		chao.currentState.rootEntity.height = chao.screenHeight;
+		if(chao.loadingState.resize){
+			chao.loadingState.resize();
+		}
+		if(chao.currentState.resize){
+			chao.currentState.resize();
+		}
+
 	},
 
 	setCanvasScale: function(x, y){
 		chao.screenScaleX = x;
 		chao.screenScaleY = y;
-		chao.log("" + chao.screenScaleX + "x" + chao.screenScaleY);
 
 		var canvas = chao.canvas.canvas;
 		canvas.style.marginLeft		= "0px";
@@ -1182,6 +1212,9 @@ var chao = {
 			}
 			entityLog += ")";
 		}
+
+		entityLog += " p:" + Math.ceil(entity.x) + "x" + Math.ceil(entity.y);
+		entityLog += " s:" + Math.ceil(entity.width) + "x" + Math.ceil(entity.height);
 
 		for(var i = 0; i < entity.children.length; ++i){
 			entityLog += chao.logEntity(entity.children[i], indent + 1);
@@ -1388,21 +1421,23 @@ function Entity(name, x, y){
 		}
 	}
 
-	this.alignToParent = function(anchorX, anchorY, alignX, alignY) {
-		this.alignToParentHorizontally(anchorX, alignX);
-		this.alignToParentVertically(anchorY, alignY);
+	this.alignToParent = function(alignX, alignY, anchorX, anchorY, pxOffsetX, pxOffsetY) {
+		this.alignToParentHorizontally(alignX, anchorX, pxOffsetX);
+		this.alignToParentVertically(alignY, anchorY, pxOffsetY);
 	}
 	
 	
-	this.alignToParentHorizontally = function(anchorX, alignX) {
+	this.alignToParentHorizontally = function(alignX, anchorX, pxOffset) {
 		if (this.parent != null) {
 			this.x = Math.ceil((this.parent.width * (alignX || 0.5)) - (this.width * (anchorX || 0.5)));
+			this.x += pxOffset || 0;
 		}
 	}
 	
-	this.alignToParentVertically = function(anchorY, alignY) {
+	this.alignToParentVertically = function(alignY, anchorY, pxOffset) {
 		if (this.parent != null) {
 			this.y = Math.ceil((this.parent.height * (alignY || 0.5)) - (this.height * (anchorY || 0.5)));
+			this.y += pxOffset || 0;
 		}
 	}
 
