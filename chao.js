@@ -103,6 +103,7 @@ var chao = {
 		chao.onAssetsLoaded		= undefined;
 
 		chao.updateInterval 	= null;
+		chao.framerate 			= 60;
 		chao.setFPS(60);
 		chao.lastTime 			= Date.now();
 		chao.timeDelta 			= 0.0;
@@ -172,6 +173,7 @@ var chao = {
 	},
 
 	setFPS: function(FPS){
+		chao.framerate = FPS;
 		chao.updateInterval = setInterval("chao.update()", 1000/FPS);
 	},
 
@@ -526,14 +528,14 @@ var chao = {
 		image.context.stroke();
 	},
 
-	drawRect: function(image, x1, y1, w, h, color, width){
+	drawRect: function(image, x, y, w, h, color, width){
 		chao.setStrokeStyle(image, color, width);
-		image.context.strokeRect(x1, y1, w, h);
+		image.context.strokeRect(x, y, w, h);
 	},
 
-	drawRectFill: function(image, x1, y1, w, h, color){
+	drawRectFill: function(image, x, y, w, h, color){
 		chao.setFillStyle(image, color);
-		image.context.fillRect(x1, y1, w, h);
+		image.context.fillRect(x, y, w, h);
 	},
 
 	drawPolygonLines: function(image, vertices, points){
@@ -1321,6 +1323,10 @@ function Entity(name, x, y){
 	}
 
 	this.draw = function(x, y, alpha){
+		if(!this.visible){
+			return;
+		}
+
 		for(var i = 0; i < this.components.length; ++i){
 			if(this.components[i].draw){
 				this.components[i].draw(x, y, alpha);
@@ -1975,6 +1981,11 @@ function ComponentCamera(){
 	this.trackPositionBuffer	= [];
 	this.trackSmoothness		= 1;
 
+	this.offsetX				= 0;
+	this.offsetY				= 0;
+	this.deadzone				= {x:0, y:0, width:0, height:0};
+	this.bounds 				= {x:0, y:0, width:-1, height:-1};
+
 	this.create = function(){
 		//
 	}
@@ -1984,7 +1995,31 @@ function ComponentCamera(){
 			return;
 		}
 
-		this.trackPositionBuffer.push( {x:this.trackedEntity.x, y:this.trackedEntity.y} );
+		var entityPos = {
+			x: this.trackedEntity.x + this.trackedEntity.width/2,
+			y: this.trackedEntity.y + this.trackedEntity.height/2
+		}
+
+		var relativePos = {
+			x: entityPos.x + this.entity.x,
+			y: entityPos.y + this.entity.y
+		}
+		var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x+this.deadzone.width;
+		var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y+this.deadzone.height;
+
+		var cameraPos = {
+			x: (-entityPos.x + (chao.screenWidth/2)) - this.offsetX,
+			y: (-entityPos.y + (chao.screenHeight/2)) - this.offsetY
+		}
+
+		if(this.bounds.width > 0){
+			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x+this.bounds.width)-chao.screenWidth);
+		}
+		if(this.bounds.height > 0){
+			cameraPos.y = -chao.clamp(-cameraPos.y, this.bounds.y, (this.bounds.y+this.bounds.height)-chao.screenHeight);
+		}
+
+		this.trackPositionBuffer.push( {x:cameraPos.x, y:cameraPos.y} );
 		while(this.trackPositionBuffer.length > this.trackSmoothness){
 			this.trackPositionBuffer.splice(0, 1);
 		}
@@ -1999,9 +2034,19 @@ function ComponentCamera(){
 			currentPosition.y /= this.trackPositionBuffer.length;
 		}
 
-		this.entity.x = (-currentPosition.x + (chao.screenWidth/2)) - this.trackedEntity.width/2;
-		this.entity.y = (-currentPosition.y + (chao.screenHeight/2)) - this.trackedEntity.height/2;
-		// this.entity.x -= chao.getTimeDelta() * 10;
+		
+		this.entity.x = currentPosition.x;
+		this.entity.y = currentPosition.y;
+
+
+		if(chao.justPressed[chao.KEY_C]){
+			// chao.log(this.entity.x + "x" + this.entity.y);
+			// chao.log(relativePos.x + "x" + relativePos.y);
+		}
+
+		
+
+
 	}
 
 	this.follow = function(entity, smoothness){
