@@ -14,7 +14,7 @@
 <script src="chao.js"></script>
 <script>
 
-	chao.init(640, 480);
+	chao.init(640, 480, chao.SCALING_MODE_STRETCH);
 	chao.backgroundColor = "#ffffff";
 
 	// chao.loadMusic("nature", "assets/nature.ogg", "assets/nature.mp3", 0.2);
@@ -214,9 +214,12 @@
 		},
 
 		draw: function(){
+			// var text = "Bacon impsum dolor\nsit pork chop";
+			var text = "" + chao.screenScaleX + "x" + chao.screenScaleY;
+
 			chao.drawText(chao.canvas, 
 				chao.font, 
-				"Bacon impsum dolor\nsit pork chop", 
+				text, 
 				0, 0, 
 				30, 
 				chao.makeColor(255, 255, 255), 
