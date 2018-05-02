@@ -1183,6 +1183,12 @@ var chao = {
 		return radians/(180/Math.PI);
 	},
 
+	clamp: function(value, min, max){
+		if(value < min) value = min;
+		if(value > max) value = max;
+		return value;
+	},
+
 	log: function(thingie){
 		if(chao.loggingEnabled){
 			console.log(thingie);
@@ -1266,6 +1272,12 @@ var chao = {
 			chao.onFocusChange(true);
 		}
 	},
+
+	helpers: {
+		createImage: function(name, image, x, y){
+			return (new Entity(name, x, y)).addComponent(new ComponentImage(image));
+		},
+	}
 
 };
 
@@ -1956,15 +1968,45 @@ function ComponentButton(image){
  * @class
  */
 function ComponentCamera(){
-	this.name 			= "Camera";
-	this.entity 		= null;
+	this.name 					= "Camera";
+	this.entity 				= null;
+
+	this.trackedEntity			= null;
+	this.trackPositionBuffer	= [];
+	this.trackSmoothness		= 1;
 
 	this.create = function(){
 		//
 	}
 
 	this.update = function(){
-		//
+		if(this.trackedEntity == null){
+			return;
+		}
+
+		this.trackPositionBuffer.push( {x:this.trackedEntity.x, y:this.trackedEntity.y} );
+		while(this.trackPositionBuffer.length > this.trackSmoothness){
+			this.trackPositionBuffer.splice(0, 1);
+		}
+		
+		var currentPosition = {x:0, y:0 };
+		for(var i = 0; i < this.trackPositionBuffer.length; ++i){
+			currentPosition.x += this.trackPositionBuffer[i].x;
+			currentPosition.y += this.trackPositionBuffer[i].y;
+		}
+		if(this.trackPositionBuffer.length > 0){
+			currentPosition.x /= this.trackPositionBuffer.length;
+			currentPosition.y /= this.trackPositionBuffer.length;
+		}
+
+		this.entity.x = (-currentPosition.x + (chao.screenWidth/2)) - this.trackedEntity.width/2;
+		this.entity.y = (-currentPosition.y + (chao.screenHeight/2)) - this.trackedEntity.height/2;
+		// this.entity.x -= chao.getTimeDelta() * 10;
+	}
+
+	this.follow = function(entity, smoothness){
+		this.trackedEntity		= entity;
+		this.trackSmoothness 	= smoothness || 1;
 	}
 }
 

@@ -1,0 +1,115 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>chao.js</title>
+<head>
+	<style type="text/css">
+		body {
+			margin: 0;
+			background-color: #202020
+		}
+	</style>
+</head>
+<body>
+	<center>
+<script src="chao.js"></script>
+<script>
+
+	chao.init(640, 480, chao.SCALING_MODE_KEEP_RATIO);
+	chao.backgroundColor = "#ffffff";
+
+	chao.loadImage("buba", "assets/buba.png");
+	chao.loadImage("cloud", "assets/cloud.png");
+	chao.loadImage("island_large", "assets/island_large.png");
+	chao.loadImage("island_small1", "assets/island_small1.png");
+	chao.loadImage("island_small2", "assets/island_small2.png");
+
+	function ComponentLudzik(){
+		this.name 				= "Buba";
+
+		this.create = function(){
+			this.image = this.entity.addComponent(new ComponentImage("buba", 64, 64));
+
+			this.image.addAnim("idle", [0], 0, false);
+			this.image.addAnim("run", [1, 0, 2, 0], 0.2, true);
+			this.image.playAnim("idle");
+		}
+
+		this.update = function(){
+			var direction 	= "";
+			var animName 	= "idle";
+
+			if(chao.keys[chao.KEY_UP]){
+				direction += "n";
+			}else if(chao.keys[chao.KEY_DOWN]){
+				direction += "s";
+			}
+			
+			if(chao.keys[chao.KEY_LEFT]){
+				direction += "w";
+			}else if(chao.keys[chao.KEY_RIGHT]){
+				direction += "e";
+			}
+
+			if(direction.length > 0){
+				animName = "run";
+			}
+
+			this.image.playAnim(animName, false);
+
+			var currSpeed = chao.getTimeDelta() * 80;
+			if(direction.indexOf("n") != -1){
+				this.entity.y -= currSpeed;
+			}
+			if(direction.indexOf("s") != -1){
+				this.entity.y += currSpeed;
+			}
+			if(direction.indexOf("w") != -1){
+				this.entity.x -= currSpeed;
+				this.image.flipX = true;
+			}
+			if(direction.indexOf("e") != -1){
+				this.entity.x += currSpeed;
+				this.image.flipX = false;
+			}
+
+		}
+
+	}
+
+	var StateGame = {
+
+		create: function(){
+
+			chao.countFPS = true;
+
+			var camera = (new Entity("Camera")).addComponent(new ComponentCamera());
+			this.add(camera.entity);
+
+			camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
+
+			this.ludzik = (new Entity("Buba", 400, 400)).addComponent(new ComponentLudzik());
+			camera.entity.add(this.ludzik.entity);
+
+			camera.follow(this.ludzik.entity, 60);
+
+		},
+
+		update: function(){
+			if(chao.justPressed[chao.KEY_L]){
+				chao.logHierarchy();
+			}
+
+			this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, 214, 610);
+			this.ludzik.entity.y = chao.clamp(this.ludzik.entity.y, 220, 550);
+
+		},
+
+
+	};
+	
+	chao.switchState(StateGame);
+
+
+
+</script>
+</body>
