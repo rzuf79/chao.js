@@ -84,6 +84,8 @@
 			this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 			this.add(this.camera.entity);
 
+			this.camera.entity.add(chao.helpers.createImage("Small Island", "island_small1", -64, -64).entity);
+
 			this.camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
 
 			this.ludzik = (new Entity("Buba", 400, 400)).addComponent(new ComponentLudzik());
@@ -96,12 +98,15 @@
 								width: 100,
 								height: 100};
 
+
 			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyess", 35);
 			this.add(this.textLogo.entity);
 			this.textLogo.entity.alignToParentHorizontally();
 			chao.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7, 
 				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
+			// this.rootEntity.alpha = 0;
+			chao.helpers.fadeEntityIn(this.rootEntity, 5.0);
 		},
 
 		update: function(){
@@ -115,7 +120,8 @@
 				this.camera.unfollow();
 			}
 			if(chao.justPressed[chao.KEY_SPACE]){
-				chao.finishAllTweens(true);
+				// chao.finishAllTweens(true);
+				this.camera.slideToPosition(0, 0, 1);
 			}
 
 			this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, 214, 610);

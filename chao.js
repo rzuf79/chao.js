@@ -272,7 +272,7 @@ var chao = {
 			chao.updateTouches();
 		}
 
-		stateToProcess.rootEntity.draw(0, 0, 1.0);
+		stateToProcess.rootEntity.draw(0, 0);
 		if(stateToProcess.draw){
 			stateToProcess.draw();
 		}
@@ -1331,7 +1331,7 @@ drawImage
 				switch(tween.repeatMode){
 					case chao.REPEAT_MODE_ONCE:{
 						tween.timer = tween.lifetime;
-						tweensToRemove.push(i);
+						tweensToRemove.push(tween);
 						break;
 					}
 					case chao.REPEAT_MODE_LOOP:{
@@ -1373,15 +1373,20 @@ drawImage
 				}
 			}
 			tween.target[tween.varName] = (tween.to * v) + (tween.from * (1 - v));
+
+			if(chao.justPressed[chao.KEY_T]){
+				chao.log("" + tween.varName + "=" + tween.target[tween.varName] + " (" + v + ")");
+			}
 		}
 
 		// bring out your dead!
 		for(var i = 0; i < tweensToRemove.length; ++i){
-			var tween = chao.tweens[tweensToRemove[i]];
+			var id = chao.tweens.indexOf(tweensToRemove[i]);
+			var tween = chao.tweens[id];
 			if(tween.finishCallback){
 				tween.finishCallback.call(tween.target);
 			}
-			chao.tweens.splice(tweensToRemove[i], 1);
+			chao.tweens.splice(id, 1);
 		}
 	},
 
@@ -1418,12 +1423,13 @@ drawImage
 
 		for(var i = 0; i < chao.tweens.length; ++i){
 			if(chao.tweens[i].target == entity){
-				tweensToRemove.push(i);
+				tweensToRemove.push(chao.tweens[i]);
 			}
 		}
 
 		for(var i = 0; i < tweensToRemove.length; ++i){
-			chao.tweens.splice(tweensToRemove[i], 1);
+			var id = chao.tweens.indexOf(tweensToRemove[i]);
+			chao.tweens.splice(id, 1);
 		}
 	},
 
@@ -1452,11 +1458,11 @@ drawImage
 		},
 
 		fadeEntityOut: function(entity, time){
-			addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
+			chao.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
 		},
 
 		fadeEntityIn: function(entity, time){
-			addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
+			chao.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
 		},
 	}
 
@@ -2169,6 +2175,8 @@ function ComponentCamera(){
 	this.previousPos			= {x:0, y:0};
 	this.bounds 				= {x:0, y:0, width:-1, height:-1};
 
+	this.slideTweens			= [];
+
 	this.update = function(){
 		if(this.trackedEntity == null){
 			this.addPositionToBuffer(this.entity.x, this.entity.y);
@@ -2255,8 +2263,20 @@ function ComponentCamera(){
 		this.trackedEntity = null;
 	}
 
-	this.slideToPosition = function(){
-		//
+	this.slideToPosition = function(x, y, time, interpolationType, callback){
+		interpolationType = interpolationType || chao.INTERPOLATE_SMOOTH;
+
+		for(var i = 0; i < this.slideTweens.length; ++i){
+			chao.removeTween(this.slideTweens[i]);
+		}
+		this.slideTweens = [];
+		this.unfollow();
+
+		x = -x + chao.screenWidth/2;
+		y = -y + chao.screenHeight/2;
+
+		this.slideTweens.push(chao.addTween(this.entity, "x", this.entity.x, x, time, interpolationType, chao.REPEAT_MODE_ONCE, 0, callback));
+		this.slideTweens.push(chao.addTween(this.entity, "y", this.entity.y, y, time, interpolationType, chao.REPEAT_MODE_ONCE));
 	}
 
 	this.addPositionToBuffer = function(x, y){
