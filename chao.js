@@ -12,6 +12,16 @@ var chao = {
 	SCALING_MODE_EXTEND		: 3,	// scale to fit and lenghten the shorter dimension to fill the viewport
 	SCALING_MODE_END		: 4,
 
+	INTERPOLATE_LINEAR		: 0,
+	INTERPOLATE_SMOOTH		: 1,
+	INTERPOLATE_EASE_TO		: 2,
+	INTERPOLATE_EASE_FROM	: 3,
+	INTERPOLATE_BOUNCE		: 4,
+
+	REPEAT_MODE_ONCE		: 0,
+	REPEAT_MODE_LOOP		: 1,
+	REPEAT_MODE_BOUNCE		: 2,
+
 	/** Key codes */
 	KEY_A: 0x41, KEY_B: 0x42, KEY_C: 0x43, KEY_D: 0x44, KEY_E: 0x45, KEY_F: 0x46, KEY_G: 0x47, KEY_H: 0x48, KEY_I: 0x49, KEY_J: 0x4A, KEY_K: 0x4B, KEY_L: 0x4C, KEY_M: 0x4D, KEY_N: 0x4E, KEY_O: 0x4F, KEY_P: 0x50, KEY_Q: 0x51, KEY_R: 0x52, KEY_S: 0x53, KEY_T: 0x54, KEY_U: 0x55, KEY_V: 0x56, KEY_W: 0x57, KEY_X: 0x58, KEY_Y: 0x59, KEY_Z: 0x5A, KEY_0: 0x30, KEY_1: 0x31, KEY_2: 0x32, KEY_3: 0x33, KEY_4: 0x34, KEY_5: 0x35, KEY_6: 0x36, KEY_7: 0x37, KEY_8: 0x38, KEY_9: 0x39, KEY_0_PAD: 0x60, KEY_1_PAD: 0x61, KEY_2_PAD: 0x62, KEY_3_PAD: 0x63, KEY_4_PAD: 0x64, KEY_5_PAD: 0x65, KEY_6_PAD: 0x66, KEY_7_PAD: 0x67, KEY_8_PAD: 0x68, KEY_9_PAD: 0x69, KEY_F1: 0x70, KEY_F2: 0x71, KEY_F3: 0x72, KEY_F4: 0x73, KEY_F5: 0x74, KEY_F6: 0x75, KEY_F7: 0x76, KEY_F8: 0x77, KEY_F9: 0x78, KEY_F10: 0x79, KEY_F11: 0x7a, KEY_F12: 0x7b, KEY_ESC: 0x1B, KEY_TILDE: 0xc0, KEY_MINUS: 0xbd, KEY_EQUALS: 0xbb, KEY_BACKSPACE: 0x08, KEY_TAB: 0x09, KEY_OPENBRACE: 0xdb, KEY_CLOSEBRACE: 0xdd, KEY_ENTER: 0x0D, KEY_COLON: 0xba, KEY_QUOTE: 0xde, KEY_BACKSLASH: 0xdc, KEY_COMMA: 0xbc, KEY_STOP: 0xbe, KEY_SLASH: 0xBF, KEY_SPACE: 0x20, KEY_INSERT: 0x2D, KEY_DEL: 0x2E, KEY_HOME: 0x24, KEY_END: 0x23, KEY_PGUP: 0x21, KEY_PGDN: 0x22, KEY_LEFT: 0x25, KEY_RIGHT: 0x27, KEY_UP: 0x26, KEY_DOWN: 0x28, KEY_SLASH_PAD: 0x6F, KEY_ASTERISK: 0x6A, KEY_MINUS_PAD: 0x6D, KEY_PLUS_PAD: 0x6B, KEY_ENTER_PAD: 0x0D, KEY_PRTSCR: 0x2C, KEY_PAUSE: 0x13, KEY_EQUALS_PAD: 0x0C, KEY_LSHIFT: 0x10, KEY_RSHIFT: 0x10, KEY_LCONTROL: 0x11, KEY_RCONTROL: 0x11, KEY_ALT: 0x12, KEY_ALTGR: 0x12, KEY_LWIN: 0x5b, KEY_RWIN: 0x5c, KEY_MENU: 0x5d, KEY_SCRLOCK: 0x9d, KEY_NUMLOCK: 0x90, KEY_CAPSLOCK: 0x14,
 	
@@ -148,6 +158,8 @@ var chao = {
 		chao.loadedFontsNum 			= 0;
 		chao.font 						= chao.loadBase64Font(chao.defaultFontData);
 
+		chao.tweens						= [];
+
 		chao.focusedEntity				= null;
 		chao.entitiesToDestroy			= [];
 
@@ -236,7 +248,8 @@ var chao = {
 		}
 
 
-		var stateToProcess = chao.currentState;
+		var stateToProcess 	= chao.currentState;
+		var focusPause		= !chao.hasFocus && chao.pauseOnFadeEnabled;
 
 		if(chao.getLoadingProgress() < 1.0){
 			stateToProcess = chao.loadingState;
@@ -247,21 +260,24 @@ var chao = {
 			}
 		}
 
-		stateToProcess.rootEntity.draw(0, 0, 1.0);
-		if(stateToProcess.draw){
-			stateToProcess.draw();
-		}
-
-		if(chao.hasFocus || !chao.pauseOnFadeEnabled){
+		if(!focusPause){
 			stateToProcess.rootEntity.update();
 			if(stateToProcess.update){
 				stateToProcess.update();
 			}
 
+			chao.updateTweens();
 			chao.updateKeys();
 			chao.updateMouse();
 			chao.updateTouches();
-		} else if(chao.getLoadingProgress() >= 1){
+		}
+
+		stateToProcess.rootEntity.draw(0, 0, 1.0);
+		if(stateToProcess.draw){
+			stateToProcess.draw();
+		}
+
+		if(focusPause && chao.getLoadingProgress() >= 1){
 			chao.drawImage(chao.canvas, chao.imagePauseFade, 0, 0);
 		}
 
@@ -269,6 +285,7 @@ var chao = {
 			chao.entitiesToDestroy[i].destroy();
 			if(chao.entitiesToDestroy[i].parent){
 				chao.entitiesToDestroy[i].parent.remove(chao.entitiesToDestroy[i]);
+				chao.entitiesToDestroy[i].parent = null;
 			}
 		}
 		chao.entitiesToDestroy = [];
@@ -335,6 +352,7 @@ var chao = {
 	},
 
 	destroyEntity: function(entity){
+		chao.removeTweensFromEntity(entity);
 		chao.entitiesToDestroy.push(entity);
 	},
 
@@ -417,19 +435,33 @@ var chao = {
 				}
 			}
 		}
-
+drawImage
 		return key;
 	},
 
-	drawImage: function(target, image, x, y, alpha, scaleX, scaleY){
+	drawImage: function(target, image, x, y, alpha, scaleX, scaleY, angle){
 
-		scaleX = scaleX || 1;
-		scaleY = scaleY || 1;
+		alpha 	= alpha || 1;
+		scaleX 	= scaleX || 1;
+		scaleY 	= scaleY || 1;
+		angle	= angle || 0;
 
 		target.context.save();
+		
 		target.context.globalAlpha = alpha || 1.0;
+
+		var rotationPivot	= {
+			x:(x+((image.width*scaleX)/2)),
+			y:(y+((image.height*scaleY)/2))
+		};
+		target.context.translate(rotationPivot.x, rotationPivot.y);
+		target.context.rotate(chao.rad2deg(angle));
+		target.context.translate(-rotationPivot.x, -rotationPivot.y);
+
 		target.context.scale(scaleX, scaleY);
+		
 		target.context.drawImage(image.canvas, x, y);
+		
 		target.context.restore();
 	},
 
@@ -441,7 +473,10 @@ var chao = {
 
 		var w 				= rect.width;// * scaleX;
 		var h 				= rect.height;// * scaleY;
-		var rotationPivot	= {x:(x+(w*image.rotationOrigin.x)), y:(y+(h*image.rotationOrigin.y))};
+		var rotationPivot	= {
+			x:(x+(w*image.rotationOrigin.x)),
+			y:(y+(h*image.rotationOrigin.y))
+		};
 
 		target.context.save();
 		target.context.globalAlpha = alpha;
@@ -1275,9 +1310,153 @@ var chao = {
 		}
 	},
 
+	updateTweens: function(){
+		var tweensToRemove = [];
+
+		for(var i = 0; i < chao.tweens.length; ++i){
+			var tween = chao.tweens[i];
+
+			tween.timer += tween.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
+
+			if(tween.delay > 0){
+				if(tween.timer >= tween.delay){
+					tween.delay = 0;
+					tween.timer = 0;
+				} else {
+					continue;
+				}
+			}
+
+			if(tween.timer >= tween.lifetime){
+				switch(tween.repeatMode){
+					case chao.REPEAT_MODE_ONCE:{
+						tween.timer = tween.lifetime;
+						tweensToRemove.push(i);
+						break;
+					}
+					case chao.REPEAT_MODE_LOOP:{
+						tween.timer = 0.0;
+						if(tween.finishCallback){
+							tween.finishCallback.call(tween.target);
+						}
+						break;
+					}
+					case chao.REPEAT_MODE_BOUNCE:{
+						tween.timer = 0.0;
+						tween.direction = tween.direction == 1 ? -1 : 1;
+						if(tween.finishCallback){
+							tween.finishCallback.call(tween.target);
+						}
+					}
+				}
+			}
+
+			var v = tween.timer / tween.lifetime;
+			if(tween.direction < 0){
+				v = 1 - v;
+			}
+			switch(tween.interpolationType){
+				case chao.INTERPOLATE_SMOOTH: {
+					v = v * v * (3 - 2 * v);
+					break;
+				}
+				case chao.INTERPOLATE_EASE_TO: {
+					v = 1 - (1 - v) * (1 - v);
+					break;
+				}
+				case chao.INTERPOLATE_EASE_FROM: {
+					v = v * v;
+					break;
+				}
+				case chao.INTERPOLATE_BOUNCE: {
+					// TODO: when I find this bloody snippet
+				}
+			}
+			tween.target[tween.varName] = (tween.to * v) + (tween.from * (1 - v));
+		}
+
+		// bring out your dead!
+		for(var i = 0; i < tweensToRemove.length; ++i){
+			var tween = chao.tweens[tweensToRemove[i]];
+			if(tween.finishCallback){
+				tween.finishCallback.call(tween.target);
+			}
+			chao.tweens.splice(tweensToRemove[i], 1);
+		}
+	},
+
+	addTween: function(target, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback){
+		var newTween = {
+			target: 			target,
+			varName: 			varName,
+			from: 				from || target[varName],
+			to: 				to,
+			lifetime: 			time || 1,
+			interpolationType: 	interpolationType || chao.INTERPOLATE_LINEAR,
+			repeatMode: 		repeatMode || chao.REPEAT_MODE_ONCE,
+			delay: 				delay || 0,
+			finishCallback: 	finishCallback,
+
+			timer: 				0,
+			useUnscaledTime: 	false,
+			direction: 			1,
+		}
+
+		chao.tweens.push(newTween);
+		return newTween;
+	},
+
+	removeTween: function(tween){
+		var i = chao.tweens.indexOf(tween);
+		if(i != -1){
+			chao.tweens.splice(i, 1);
+		}
+	},
+
+	removeTweensFromEntity: function(entity){
+		var tweensToRemove = [];
+
+		for(var i = 0; i < chao.tweens.length; ++i){
+			if(chao.tweens[i].target == entity){
+				tweensToRemove.push(i);
+			}
+		}
+
+		for(var i = 0; i < tweensToRemove.length; ++i){
+			chao.tweens.splice(tweensToRemove[i], 1);
+		}
+	},
+
+	finishAllTweens: function(includeLoops){
+		for(var i = 0; i < chao.tweens.length; ++i){
+			var tween = chao.tweens[i];
+			if(tween.repeatMode == chao.REPEAT_MODE_ONCE || includeLoops){
+				tween.repeatMode = chao.REPEAT_MODE_ONCE; // in case "includeLoops" is on
+				tween.timer = tween.lifetime;
+			}
+		}
+
+	},
+
+	clearTweens: function(){
+		chao.tweens = [];
+	},
+
 	helpers: {
 		createImage: function(name, image, x, y){
 			return (new Entity(name, x, y)).addComponent(new ComponentImage(image));
+		},
+
+		createText: function(name, x, y, font, text, size){
+			return (new Entity(name, x, y)).addComponent(new ComponentText(font, text, size));
+		},
+
+		fadeEntityOut: function(entity, time){
+			addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
+		},
+
+		fadeEntityIn: function(entity, time){
+			addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
 		},
 	}
 
@@ -1368,7 +1547,9 @@ function Entity(name, x, y){
 	this.addComponent = function(component){
 		if(!component.entity){
 			component.entity = this;
-			component.create();
+			if(component.create){
+				component.create();
+			}
 			this.components.push(component);
 
 			return component;
@@ -1699,7 +1880,8 @@ function ComponentText(font, text, size){
 		chao.drawImage(chao.canvas, this.image, 
 			drawX, drawY, 
 			drawAlpha, 
-			this.entity.scaleX, this.entity.scaleY);
+			this.entity.scaleX, this.entity.scaleY,
+			this.entity.rotation);
 	}
 
 	this.changeText = function(text){
@@ -1984,34 +2166,57 @@ function ComponentCamera(){
 	this.offsetX				= 0;
 	this.offsetY				= 0;
 	this.deadzone				= {x:0, y:0, width:0, height:0};
+	this.previousPos			= {x:0, y:0};
 	this.bounds 				= {x:0, y:0, width:-1, height:-1};
-
-	this.create = function(){
-		//
-	}
 
 	this.update = function(){
 		if(this.trackedEntity == null){
+			this.addPositionToBuffer(this.entity.x, this.entity.y);
 			return;
 		}
 
-		var entityPos = {
+		// figuring out some basic stuff
+		var targetPos = {
 			x: this.trackedEntity.x + this.trackedEntity.width/2,
 			y: this.trackedEntity.y + this.trackedEntity.height/2
 		}
 
 		var relativePos = {
-			x: entityPos.x + this.entity.x,
-			y: entityPos.y + this.entity.y
+			x: targetPos.x + this.entity.x,
+			y: targetPos.y + this.entity.y
 		}
-		var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x+this.deadzone.width;
-		var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y+this.deadzone.height;
 
 		var cameraPos = {
-			x: (-entityPos.x + (chao.screenWidth/2)) - this.offsetX,
-			y: (-entityPos.y + (chao.screenHeight/2)) - this.offsetY
+			x: (-targetPos.x + (chao.screenWidth/2)) - this.offsetX,
+			y: (-targetPos.y + (chao.screenHeight/2)) - this.offsetY
 		}
 
+		// contrived deadzone calculations		
+		if(targetPos.x > (this.deadzone.x-this.entity.x) + this.deadzone.width/2){
+			cameraPos.x += Math.abs(((this.deadzone.x-cameraPos.x)+this.deadzone.width)-targetPos.x);
+		}else {
+			cameraPos.x -= Math.abs((this.deadzone.x-cameraPos.x)-targetPos.x);
+		}
+		if(targetPos.y > (this.deadzone.y-this.entity.y) + this.deadzone.height/2){
+			cameraPos.y += Math.abs(((this.deadzone.y-cameraPos.y)+this.deadzone.height)-targetPos.y);
+		}else {
+			cameraPos.y -= Math.abs((this.deadzone.y-cameraPos.y)-targetPos.y);
+		}
+
+		var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x+this.deadzone.width;
+		var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y+this.deadzone.height;
+		if(deadZonedX){
+			cameraPos.x = this.previousPos.x;
+		} else {
+			this.previousPos.x = cameraPos.x;
+		}
+		if(deadZonedY){
+			cameraPos.y = this.previousPos.y;
+		} else {
+			this.previousPos.y = cameraPos.y;
+		}
+
+		// clamping camera position to the set bounds
 		if(this.bounds.width > 0){
 			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x+this.bounds.width)-chao.screenWidth);
 		}
@@ -2019,39 +2224,46 @@ function ComponentCamera(){
 			cameraPos.y = -chao.clamp(-cameraPos.y, this.bounds.y, (this.bounds.y+this.bounds.height)-chao.screenHeight);
 		}
 
-		this.trackPositionBuffer.push( {x:cameraPos.x, y:cameraPos.y} );
-		while(this.trackPositionBuffer.length > this.trackSmoothness){
-			this.trackPositionBuffer.splice(0, 1);
-		}
+		// smoothing the camera movement
+		this.addPositionToBuffer(cameraPos.x, cameraPos.y);
 		
-		var currentPosition = {x:0, y:0 };
+		var smoothedPos = {x:0, y:0 };
 		for(var i = 0; i < this.trackPositionBuffer.length; ++i){
-			currentPosition.x += this.trackPositionBuffer[i].x;
-			currentPosition.y += this.trackPositionBuffer[i].y;
+			smoothedPos.x += this.trackPositionBuffer[i].x;
+			smoothedPos.y += this.trackPositionBuffer[i].y;
 		}
 		if(this.trackPositionBuffer.length > 0){
-			currentPosition.x /= this.trackPositionBuffer.length;
-			currentPosition.y /= this.trackPositionBuffer.length;
+			smoothedPos.x /= this.trackPositionBuffer.length;
+			smoothedPos.y /= this.trackPositionBuffer.length;
 		}
-
 		
-		this.entity.x = currentPosition.x;
-		this.entity.y = currentPosition.y;
-
-
-		if(chao.justPressed[chao.KEY_C]){
-			// chao.log(this.entity.x + "x" + this.entity.y);
-			// chao.log(relativePos.x + "x" + relativePos.y);
-		}
-
-		
-
+		// and after a hard day's work, finally setting the camera position!
+		this.entity.x = smoothedPos.x;
+		this.entity.y = smoothedPos.y;
 
 	}
 
 	this.follow = function(entity, smoothness){
 		this.trackedEntity		= entity;
-		this.trackSmoothness 	= smoothness || 1;
+		this.trackSmoothness 	= smoothness || this.trackSmoothness;
+		if(this.trackSmoothness <= 0){
+			this.trackSmoothness = 1;
+		}
+	}
+
+	this.unfollow = function(){
+		this.trackedEntity = null;
+	}
+
+	this.slideToPosition = function(){
+		//
+	}
+
+	this.addPositionToBuffer = function(x, y){
+		this.trackPositionBuffer.push( {x:x, y:y} );
+		while(this.trackPositionBuffer.length > this.trackSmoothness){
+			this.trackPositionBuffer.splice(0, 1);
+		}
 	}
 }
 
