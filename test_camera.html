@@ -84,7 +84,9 @@
 			this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 			this.add(this.camera.entity);
 
-			this.camera.entity.add(chao.helpers.createImage("Small Island", "island_small1", -64, -64).entity);
+			var bouncyIsle = chao.helpers.createImage("Small Island", "island_small1", -64, -64);
+			this.camera.entity.add(bouncyIsle.entity);
+			chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 
 			this.camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
 
@@ -111,7 +113,6 @@
 				20);
 			this.add(debugInfo.entity);
 			debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
-			chao.log(debugInfo.entity);
 
 			chao.helpers.fadeEntityIn(this.rootEntity, 5.0);
 		},

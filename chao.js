@@ -1459,6 +1459,10 @@ var chao = {
 		fadeEntityIn: function(entity, time){
 			chao.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
 		},
+
+		addBounceTween: function(entity, amplitude, time){
+			chao.addTween(entity, "y", entity.y-amplitude/2, entity.y+amplitude/2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
+		}
 	}
 
 };
@@ -1535,6 +1539,10 @@ function Entity(name, x, y){
 	}
 
 	this.add = function(child){
+		if(child.parent === undefined){
+			chao.log("You are prolly trying to add a non-Entity object to the Entities hierarchy. Maybe it's a component? If so, try to add its \".entity\" var instead of itself. And here's the culprit:");
+			chao.log(child);
+		}
 		this.children.push(child);
 		child.parent = this;
 	}
