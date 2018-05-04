@@ -99,13 +99,20 @@
 								height: 100};
 
 
-			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyess", 35);
+			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
 			this.add(this.textLogo.entity);
 			this.textLogo.entity.alignToParentHorizontally();
 			chao.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7, 
 				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
-			// this.rootEntity.alpha = 0;
+
+			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
+				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy",
+				20);
+			this.add(debugInfo.entity);
+			debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
+			chao.log(debugInfo.entity);
+
 			chao.helpers.fadeEntityIn(this.rootEntity, 5.0);
 		},
 
