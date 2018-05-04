@@ -15,7 +15,7 @@
 <script>
 
 	chao.init(640, 480, chao.SCALING_MODE_KEEP_RATIO);
-	chao.backgroundColor = "#ffffff";
+	chao.backgroundColor = "#28293f";
 
 	chao.loadImage("buba", "assets/buba.png");
 	chao.loadImage("cloud", "assets/cloud.png");
@@ -81,6 +81,14 @@
 
 			chao.countFPS = true;
 
+			var background = chao.createImage(undefined, 1000, 1000);
+			chao.clearToColor(background, chao.backgroundColor);
+			for(var i = 0; i < 1000; ++i){
+				chao.putPixel(background, chao.getRandom(background.width), chao.getRandom(background.height), "#f9f7c7");
+			}
+			this.add(chao.helpers.createImage("Sky", background, 0, 0).entity);
+			// return;
+
 			this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 			this.add(this.camera.entity);
 
@@ -88,17 +96,87 @@
 			this.camera.entity.add(bouncyIsle.entity);
 			chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 
+			var smallerIslands = [];
+			for(var i = 0; i < 25; ++i){
+				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
+				var newIsle = chao.helpers.createImage("Smaller Island", imgName, 0, 0).entity;
+				var tries = 0;
+				while(tries < 108){
+					newIsle.x = chao.getRandom(800); newIsle.y = chao.getRandom(800);
+					tries ++;
+					var collide = false;
+					for(var j = 0; j < smallerIslands.length; ++j) {
+						if(newIsle.checkCollision(smallerIslands[j])) {
+							collide = true; break;
+						}
+					}
+					if(collide) continue;
+					break;
+				}
+				smallerIslands.push(newIsle);
+				newIsle.alpha = 0.4;
+				newIsle.scaleX = newIsle.scaleY = 0.5;
+				newIsle.addComponent(new ComponentParallaxScroll(0.1, 0.1));
+				this.camera.entity.add(newIsle);
+			}
+
+			var islands = [];
+			for(var i = 0; i < 15; ++i){
+				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
+				var newIsle = chao.helpers.createImage("Small Island", imgName, 0, 0).entity;
+				var tries = 0;
+				while(tries < 108){
+					newIsle.x = chao.getRandom(800); newIsle.y = chao.getRandom(800);
+					tries ++;
+					var collide = false;
+					for(var j = 0; j < islands.length; ++j) {
+						if(newIsle.checkCollision(islands[j])) {
+							collide = true; break;
+						}
+					}
+					if(collide) continue;
+					break;
+				}
+				islands.push(newIsle);
+				newIsle.alpha = 0.7;
+				newIsle.addComponent(new ComponentParallaxScroll(0.3, 0.3));
+				this.camera.entity.add(newIsle);
+			}
+
+			var clouds = [];
+			for(var i = 0; i < 15; ++i){
+				var newCloud = chao.helpers.createImage("Cloud", "cloud", 0, 0).entity;
+				var tries = 0;
+				while(tries < 108){
+					newCloud.x = chao.getRandom(800); newCloud.y = chao.getRandom(800);
+					tries ++;
+					var collide = false;
+					for(var j = 0; j < clouds.length; ++j) {
+						if(newCloud.checkCollision(clouds[j])){ 
+							collide = true; break;
+						}
+					}
+					if(collide) continue;
+					break;
+				}
+				clouds.push(newCloud);
+				newCloud.alpha = 0.4;
+				newCloud.scaleX = newCloud.scaleY = (60 + chao.getRandom(41)) / 100;
+				newCloud.addComponent(new ComponentParallaxScroll(0.6, 0.6));
+				this.camera.entity.add(newCloud);
+			}
+
 			this.camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
 
 			this.ludzik = (new Entity("Buba", 400, 400)).addComponent(new ComponentLudzik());
 			this.camera.entity.add(this.ludzik.entity);
 
 			this.camera.follow(this.ludzik.entity, chao.framerate);
-			this.camera.bounds = {x:100, y:100, width:750, height:700};
-			this.camera.deadzone = {	x: chao.screenWidth/2-50,
-								y: chao.screenHeight/2-50,
-								width: 100,
-								height: 100};
+			// this.camera.bounds = {x:100, y:100, width:750, height:700};
+			// this.camera.deadzone = {	x: chao.screenWidth/2-50,
+			// 					y: chao.screenHeight/2-50,
+			// 					width: 100,
+			// 					height: 100};
 
 
 			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
@@ -108,13 +186,13 @@
 				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
 
-			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
-				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy",
-				20);
-			this.add(debugInfo.entity);
-			debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
+			// var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
+			// 	"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy",
+			// 	20);
+			// this.add(debugInfo.entity);
+			// debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
 
-			chao.helpers.fadeEntityIn(this.rootEntity, 5.0);
+			chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
 		},
 
 		update: function(){

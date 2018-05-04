@@ -2,7 +2,6 @@
  * chao.js
  */
 
-
 /** @namespace*/
 var chao = {
 	/** Consts */
@@ -539,7 +538,7 @@ var chao = {
 	},
 
 	putPixel: function(image, x, y, color){
-		chao.setFillStyle(color);
+		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, 1, 1);
 	},
 
@@ -1579,6 +1578,22 @@ function Entity(name, x, y){
 		return null;
 	}
 
+	this.getComponentInChildrenByName = function(componentName){
+		var foundComponent = this.getComponentByName(componentName);
+		if(foundComponent != null){
+			return foundComponent;
+		}
+
+		for(var i = 0; i < this.children.length; ++i){
+			foundComponent = this.children[i].getComponentInChildrenByName(componentName);
+			if(foundComponent != null){
+				return foundComponent;
+			}
+		}
+
+		return null;
+	}
+
 	this.removeComponent = function(component){
 		if(component.entity === this){
 			this.components.splice(this.components.indexOf(component), 1);
@@ -1686,8 +1701,14 @@ function Entity(name, x, y){
 
 		return null;
 	}
-}
 
+	this.checkCollision = function(entity){
+		return entity.x + entity.width*entity.scaleX > this.x
+			&& entity.y + entity.height*entity.scaleY > this.y
+			&& this.x + this.width*this.scaleX > entity.x
+			&& this.y + this.height*this.scaleY > entity.y;
+	}
+}
 
 /**
  * Renders images, static and animated.
@@ -2033,7 +2054,7 @@ ComponentText.prototype = {
  * Simple, clickable button.
  *
  * @class
- * @param image - name/id of the image to be used
+ * @param image name/id of the image to be used
  */
 function ComponentButton(image){
 	this.name 			= "Button";
@@ -2206,29 +2227,31 @@ function ComponentCamera(){
 			y: (-targetPos.y + (chao.screenHeight/2)) - this.offsetY
 		}
 
-		// contrived deadzone calculations		
-		if(targetPos.x > (this.deadzone.x-this.entity.x) + this.deadzone.width/2){
-			cameraPos.x += Math.abs(((this.deadzone.x-cameraPos.x)+this.deadzone.width)-targetPos.x);
-		}else {
-			cameraPos.x -= Math.abs((this.deadzone.x-cameraPos.x)-targetPos.x);
-		}
-		if(targetPos.y > (this.deadzone.y-this.entity.y) + this.deadzone.height/2){
-			cameraPos.y += Math.abs(((this.deadzone.y-cameraPos.y)+this.deadzone.height)-targetPos.y);
-		}else {
-			cameraPos.y -= Math.abs((this.deadzone.y-cameraPos.y)-targetPos.y);
-		}
+		// contrived deadzone calculations
+		if(this.deadzone.width > 0 && this.deadzone.height > 0){
+			if(targetPos.x > (this.deadzone.x-this.entity.x) + this.deadzone.width/2){
+				cameraPos.x += Math.abs(((this.deadzone.x-cameraPos.x)+this.deadzone.width)-targetPos.x);
+			}else {
+				cameraPos.x -= Math.abs((this.deadzone.x-cameraPos.x)-targetPos.x);
+			}
+			if(targetPos.y > (this.deadzone.y-this.entity.y) + this.deadzone.height/2){
+				cameraPos.y += Math.abs(((this.deadzone.y-cameraPos.y)+this.deadzone.height)-targetPos.y);
+			}else {
+				cameraPos.y -= Math.abs((this.deadzone.y-cameraPos.y)-targetPos.y);
+			}
 
-		var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x+this.deadzone.width;
-		var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y+this.deadzone.height;
-		if(deadZonedX){
-			cameraPos.x = this.previousPos.x;
-		} else {
-			this.previousPos.x = cameraPos.x;
-		}
-		if(deadZonedY){
-			cameraPos.y = this.previousPos.y;
-		} else {
-			this.previousPos.y = cameraPos.y;
+			var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x+this.deadzone.width;
+			var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y+this.deadzone.height;
+			if(deadZonedX){
+				cameraPos.x = this.previousPos.x;
+			} else {
+				this.previousPos.x = cameraPos.x;
+			}
+			if(deadZonedY){
+				cameraPos.y = this.previousPos.y;
+			} else {
+				this.previousPos.y = cameraPos.y;
+			}
 		}
 
 		// clamping camera position to the set bounds
@@ -2298,17 +2321,42 @@ function ComponentCamera(){
  * A component to create a parallax effect on the image.
  *
  * @class
+ * @param scrollFactorX How much the Entity will be affected by the camera crolling horizontally (e.g. 0=no movement and 1=same movement as the camera)
+ * @param scrollFactorY How much the Entity will be affected by the camera crolling vertically (e.g. 0=no movement and 1=same movement as the camera)
  */
-function ComponentParallaxScroll(){
+function ComponentParallaxScroll(scrollFactorX, scrollFactorY, camera){
 	this.name 			= "Parallax";
 	this.entity 		= null;
 
+	this.scrollFactorX	= scrollFactorX;
+	this.scrollFactorY	= scrollFactorY;
+	this.camera 		= camera;
+
+	this.lastCameraX	= 0;
+	this.lastCameraY	= 0;
+
 	this.create = function(){
-		//
+		if(camera == undefined){
+			this.camera = chao.currentState.rootEntity.getComponentInChildrenByName("Camera");
+		}
+		if(this.camera == null){
+			chao.log("ComponentParallaxScroll requires a ComponentCamera to work, but none was found in the current State. :(");
+		}
+
+		this.lastCameraX = this.camera.entity.x;
+		this.lastCameraY = this.camera.entity.y;
 	}
 
 	this.update = function(){
-		//
+		if(!this.camera){
+			return;
+		}
+
+		this.entity.x += (this.lastCameraX - this.camera.entity.x) * (1-this.scrollFactorX);
+		this.entity.y += (this.lastCameraY - this.camera.entity.y) * (1-this.scrollFactorY);
+
+		this.lastCameraX = this.camera.entity.x;
+		this.lastCameraY = this.camera.entity.y;
 	}
 }
 
@@ -2316,7 +2364,7 @@ function ComponentParallaxScroll(){
  * A single, basic particle.
  *
  * @class
- * @param image - name/id of the image to be used. Will try to use existing image component when ommited.
+ * @param image name/id of the image to be used. Will try to use existing image component when ommited.
  */
 function ComponentParticle(image){
 	this.name 				= "Particle";
