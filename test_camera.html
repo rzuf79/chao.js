@@ -87,7 +87,6 @@
 				chao.putPixel(background, chao.getRandom(background.width), chao.getRandom(background.height), "#f9f7c7");
 			}
 			this.add(chao.helpers.createImage("Sky", background, 0, 0).entity);
-			// return;
 
 			this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 			this.add(this.camera.entity);
@@ -186,11 +185,11 @@
 				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
 
-			// var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
-			// 	"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy",
-			// 	20);
-			// this.add(debugInfo.entity);
-			// debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
+			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
+				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy",
+				20);
+			this.add(debugInfo.entity);
+			debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
 
 			chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
 		},

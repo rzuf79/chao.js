@@ -7,9 +7,13 @@ aka
 
 Taking things I like from other game frameworks and throwing them into entity-component flavored goulash.
 
-======
+***
 
-# THE BLAG
+# Credits:
 
-*26-04-2018*
-Huh! Everything seems to be coming along quite nicely! Scaling seems to be a helluva task to figure out properly but then it will be all fun and games. The framework should be feature-completish not long after a short may-break! Then, the only thing left to do shall be making an actual game, which will expose a myriad microissues. (hiya there, mr Blakemore) Until then!
+Sos Sosowki's [allegro.js](https://github.com/TheSos/allegrojs), from which I shamelessly took most of the core code - images loading and manipulation or keyboard and mouse input among many other things.
+
+Rex van der Spuy's [ga.js](https://github.com/kittykatattack/ga) - some input, audio and viewport scaling code is stolen from this guy's framework.
+
+Photonstorm's [Phaser](https://github.com/photonstorm/phaser) - took the Visibility Handler from there and possibly some other minor things I don't remember.
+

@@ -5,6 +5,8 @@
 /** @namespace*/
 var chao = {
 	/** Consts */
+	VERSION					: "0.1",
+
 	SCALING_MODE_NONE		: 0,	// game canvas will not be scaled at all
 	SCALING_MODE_STRETCH	: 1,	// scales the canvas to fill the whole viewport
 	SCALING_MODE_KEEP_RATIO	: 2,	// scales the canvas to fit the viewport but keeps the aspect ratio
@@ -654,6 +656,10 @@ var chao = {
 			width: 	image.context.measureText(text).width,
 			height:	image.context.measureText("M").width // well, it seems good enough.
 		};
+	},
+
+	getTestStringSize: function(){
+		var testString = "giItT1WQy@!-/#";
 	},
 
 	loadSound: function(key, path, volume, looped){
@@ -1865,11 +1871,6 @@ function ComponentImage(key, frameWidth, frameHeight){
 	this.setAnimPause = function(value){
 		this.animPaused = value;
 	}
-
-	this.setTint = function(rgba){
-		// TODO: actually do something here.
-	}
-
 }
 
 /**
