@@ -430,7 +430,8 @@ var chao = {
 
 	getImage: function(key){
 		if(typeof key === "string" || key instanceof String){
-			for(var i = 0; i < chao.images.length; ++i){
+			var n = chao.images.length;
+			for(var i = 0; i < n; ++i){
 				if(chao.images[i].key == key){
 					return chao.images[i];
 				}
@@ -733,7 +734,8 @@ var chao = {
 
 	getSound: function(key){
 		if(typeof key === "string" || key instanceof String){
-			for(var i = 0; i < chao.sounds.length; ++i){
+			var n = chao.sounds.length;
+			for(var i = 0; i < n; ++i){
 				if(chao.sounds[i].key === key){
 					return chao.sounds[i];
 				}
@@ -1526,13 +1528,15 @@ function Entity(name, x, y){
 			return;
 		}
 
-		for(var i = 0; i < this.components.length; ++i){
+		var componentsNum = this.components.length;
+		for(var i = 0; i < componentsNum; ++i){
 			if(this.components[i].draw){
 				this.components[i].draw(x, y, alpha);
 			}
 		}
 
-		for(var i = 0; i < this.children.length; ++i){
+		var childrenNum = this.children.length;
+		for(var i = 0; i < childrenNum; ++i){
 			if(this.children[i].draw){
 				this.children[i].draw(this.x + x, this.y + y, this.alpha * alpha);
 			}
@@ -1540,13 +1544,15 @@ function Entity(name, x, y){
 	}
 
 	this.update = function(){
-		for(var i = 0; i < this.components.length; ++i){
+		var componentsNum = this.components.length;
+		for(var i = 0; i < componentsNum; ++i){
 			if(this.components[i].update){
 				this.components[i].update();
 			}
 		}
 
-		for(var i = 0; i < this.children.length; ++i){
+		var childrenNum = this.children.length;
+		for(var i = 0; i < childrenNum; ++i){
 			if(this.children[i].update){
 				this.children[i].update();
 			}
@@ -1697,7 +1703,8 @@ function Entity(name, x, y){
 			return null;
 		}
 
-		for(var i = this.children.length - 1; i >= 0 ; --i){
+		var childrenNum = this.children.length;
+		for(var i = childrenNum - 1; i >= 0 ; --i){
 			var child = this.children[i].getEntityAt(x, y);
 
 			if(child !== null){
@@ -2351,7 +2358,7 @@ function ComponentParallaxScroll(scrollFactorX, scrollFactorY, camera){
 			this.camera = chao.currentState.rootEntity.getComponentInChildrenByName("Camera");
 		}
 		if(this.camera == null){
-			chao.log("ComponentParallaxScroll requires a ComponentCamera to work, but none was found in the current State. :(");
+			chao.log("ComponentParallaxScroll requires a ComponentCamera to work, but none was found on the current State. :(");
 		}
 
 		this.lastCameraX = this.camera.entity.x;
