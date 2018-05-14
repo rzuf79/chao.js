@@ -662,6 +662,12 @@ var chao = {
 		var testString = "giItT1WQy@!-/#";
 	},
 
+	resumeAudioPlayback: function(){
+		if(chao.audioContext && chao.audioContext.state == "suspended"){
+			chao.audioContext.resume();
+		}
+	},
+
 	loadSound: function(key, path, volume, looped){
 
 		if(!chao.audioContext){
@@ -891,6 +897,10 @@ var chao = {
 	},
 
 	handleMouseDown: function(button){
+
+		// Fix for mobile Safari and desktop Chrome after update 66: resume suspended audio context on user interaction
+		chao.resumeAudioPlayback();
+
 		switch(button){
 			case 1:
 				chao.mouse.pressed = chao.mouse.justPressed = true;
