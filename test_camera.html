@@ -22,6 +22,7 @@
 	chao.loadImage("island_large", "assets/island_large.png");
 	chao.loadImage("island_small1", "assets/island_small1.png");
 	chao.loadImage("island_small2", "assets/island_small2.png");
+	chao.loadImage("cloudy", "assets/cloudy.png");
 
 	function ComponentLudzik(){
 		this.name 				= "Buba";
@@ -167,8 +168,16 @@
 
 			this.camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
 
+
+			this.gameObjects = new Entity("Game Objects");
+			this.camera.entity.add(this.gameObjects);
+
 			this.ludzik = (new Entity("Buba", 400, 400)).addComponent(new ComponentLudzik());
-			this.camera.entity.add(this.ludzik.entity);
+			this.gameObjects.add(this.ludzik.entity);
+
+			this.gameObjects.add(chao.helpers.createImage("Kurzyk", "cloudy", 300, 300).entity);
+			this.gameObjects.add(chao.helpers.createImage("Kurzyk", "cloudy", 360, 330).entity);
+
 
 			this.camera.follow(this.ludzik.entity, chao.framerate);
 			// this.camera.bounds = {x:100, y:100, width:750, height:700};
@@ -211,6 +220,20 @@
 
 			this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, 214, 610);
 			this.ludzik.entity.y = chao.clamp(this.ludzik.entity.y, 220, 550);
+
+			// sorty sort
+			var objs 	= this.gameObjects.children;
+			var n 		= objs.length;
+			for(var i = 0; i < n; ++i){
+				for(var j = 0; j < n - i - 1; ++j){
+					var swap = objs[j].y+objs[j].height > objs[j+1].y+objs[j+1].height;
+					if(swap){
+						var tempChild = objs[j];
+						objs[j] = objs[j+1];
+						objs[j+1] = tempChild;
+					}
+				}
+			}
 		},
 
 		draw: function(){

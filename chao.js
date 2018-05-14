@@ -1479,7 +1479,8 @@ var chao = {
 
 		addBounceTween: function(entity, amplitude, time){
 			chao.addTween(entity, "y", entity.y-amplitude/2, entity.y+amplitude/2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
-		}
+		},
+
 	}
 
 };
@@ -1506,7 +1507,7 @@ function Entity(name, x, y){
 	this.parent 		= null,
 	this.visible 		= true,
 	this.clickable 		= false,
-	this.keepClickFocus	= false;
+	this.keepClickFocus	= false; // When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
 
 	this.destroy = function(){
 		for(var i = 0; i < this.components.length; ++i){
