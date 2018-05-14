@@ -1768,8 +1768,9 @@ function ComponentImage(key, frameWidth, frameHeight){
 	this.currentFrame 		= 0;
 	this.animTimer 			= 0;
 	this.animPaused 		= false;
+	this.animFinished		= false;
 
-	this.updateOnImageLoad 	= false;
+	this.updateOnImageLoad 	= false; // internal, handles the images that were not yet loaded
 
 	this.create = function(){
 		this.setImage(chao.getImage(this.imageKey), this.frameWidth, this.frameHeight);
@@ -1841,6 +1842,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 					} else {
 						this.currentFrame --;
 						this.animPaused = true;
+						this.animFinished = true;
 					}
 				}
 			}
@@ -1882,6 +1884,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 				this.currentFrame 	= 0;
 				this.animTimer 		= 0;
 				this.animPaused 	= false;
+				this.animFinished	= false;
 				return;
 			}
 		}
@@ -2295,7 +2298,7 @@ function ComponentCamera(){
 		// smoothing the camera movement
 		this.addPositionToBuffer(cameraPos.x, cameraPos.y);
 		
-		var smoothedPos = {x:0, y:0 };
+		var smoothedPos = { x:0, y:0 };
 		for(var i = 0; i < this.trackPositionBuffer.length; ++i){
 			smoothedPos.x += this.trackPositionBuffer[i].x;
 			smoothedPos.y += this.trackPositionBuffer[i].y;
