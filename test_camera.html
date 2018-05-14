@@ -218,7 +218,7 @@
 			}
 			if(chao.justPressed[chao.KEY_SPACE]){
 				// chao.finishAllTweens(true);
-				this.camera.slideToPosition(0, 0, 1);
+				this.camera.slideToPosition(0, 0, 2.5, chao.INTERPOLATE_BOUNCE);
 			}
 
 			this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, 214, 610);

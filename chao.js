@@ -1385,7 +1385,15 @@ var chao = {
 					break;
 				}
 				case chao.INTERPOLATE_BOUNCE: {
-					// TODO: when I find this bloody snippet
+					if ( v < ( 1.0 / 2.75 ) ) {
+						v = 7.5625 * v * v;
+					} else if ( v < ( 2.0 / 2.75 ) ) {
+						v = 7.5625 * ( v -= ( 1.5 / 2.75 ) ) * v + 0.75;
+					} else if ( v < ( 2.5 / 2.75 ) ) {
+						v = 7.5625 * ( v -= ( 2.25 / 2.75 ) ) * v + 0.9375;
+					} else {
+						v = 7.5625 * ( v -= ( 2.625 / 2.75 ) ) * v + 0.984375;
+					}
 				}
 			}
 			tween.target[tween.varName] = (tween.to * v) + (tween.from * (1 - v));
