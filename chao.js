@@ -1752,6 +1752,9 @@ function ComponentImage(key, frameWidth, frameHeight){
 	this.flipX 				= false;
 	this.flipY 				= false;
 
+	this.scrollFactorX		= 1.0; // How much the Entity will be affected by the camera crolling horizontally (e.g. 0=no movement and 1=same movement as the camera
+	this.scrollFactorY		= 1.0; // How much the Entity will be affected by the camera crolling vertically (e.g. 0=no movement and 1=same movement as the camera
+
 	this.anims 				= [];
 	this.currentAnim		= -1;
 	this.currentFrame 		= 0;
@@ -1778,8 +1781,8 @@ function ComponentImage(key, frameWidth, frameHeight){
 			anim = this.anims[this.currentAnim];
 		}
 
-		var drawX 		= this.entity.x + x;
-		var drawY 		= this.entity.y + y;
+		var drawX 		= this.entity.x + x * this.scrollFactorX;
+		var drawY 		= this.entity.y + y * this.scrollFactorY;
 		var drawAlpha	= this.entity.alpha * alpha;
 		var drawScaleX 	= this.flipX ? -this.entity.scaleX : this.entity.scaleX;
 		var drawScaleY 	= this.flipY ? -this.entity.scaleY : this.entity.scaleY;
@@ -2333,49 +2336,6 @@ function ComponentCamera(){
 		while(this.trackPositionBuffer.length > this.trackSmoothness){
 			this.trackPositionBuffer.splice(0, 1);
 		}
-	}
-}
-
-/**
- * A component to create a parallax effect on the image.
- *
- * @class
- * @param scrollFactorX How much the Entity will be affected by the camera crolling horizontally (e.g. 0=no movement and 1=same movement as the camera)
- * @param scrollFactorY How much the Entity will be affected by the camera crolling vertically (e.g. 0=no movement and 1=same movement as the camera)
- */
-function ComponentParallaxScroll(scrollFactorX, scrollFactorY, camera){
-	this.name 			= "Parallax";
-	this.entity 		= null;
-
-	this.scrollFactorX	= scrollFactorX;
-	this.scrollFactorY	= scrollFactorY;
-	this.camera 		= camera;
-
-	this.lastCameraX	= 0;
-	this.lastCameraY	= 0;
-
-	this.create = function(){
-		if(camera == undefined){
-			this.camera = chao.currentState.rootEntity.getComponentInChildrenByName("Camera");
-		}
-		if(this.camera == null){
-			chao.log("ComponentParallaxScroll requires a ComponentCamera to work, but none was found on the current State. :(");
-		}
-
-		this.lastCameraX = this.camera.entity.x;
-		this.lastCameraY = this.camera.entity.y;
-	}
-
-	this.update = function(){
-		if(!this.camera){
-			return;
-		}
-
-		this.entity.x += (this.lastCameraX - this.camera.entity.x) * (1-this.scrollFactorX);
-		this.entity.y += (this.lastCameraY - this.camera.entity.y) * (1-this.scrollFactorY);
-
-		this.lastCameraX = this.camera.entity.x;
-		this.lastCameraY = this.camera.entity.y;
 	}
 }
 

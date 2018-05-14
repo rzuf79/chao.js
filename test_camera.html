@@ -99,71 +99,74 @@
 			var smallerIslands = [];
 			for(var i = 0; i < 25; ++i){
 				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-				var newIsle = chao.helpers.createImage("Smaller Island", imgName, 0, 0).entity;
+				var newIsle = chao.helpers.createImage("Smaller Island", imgName, 0, 0);
 				var tries = 0;
 				while(tries < 108){
-					newIsle.x = chao.getRandom(800); newIsle.y = chao.getRandom(800);
+					newIsle.entity.x = chao.getRandom(800); newIsle.entity.y = chao.getRandom(800);
 					tries ++;
 					var collide = false;
 					for(var j = 0; j < smallerIslands.length; ++j) {
-						if(newIsle.checkCollision(smallerIslands[j])) {
+						if(newIsle.entity.checkCollision(smallerIslands[j])) {
 							collide = true; break;
 						}
 					}
 					if(collide) continue;
 					break;
 				}
-				smallerIslands.push(newIsle);
-				newIsle.alpha = 0.4;
-				newIsle.scaleX = newIsle.scaleY = 0.5;
-				newIsle.addComponent(new ComponentParallaxScroll(0.1, 0.1));
-				this.camera.entity.add(newIsle);
+				smallerIslands.push(newIsle.entity);
+				newIsle.entity.alpha = 0.4;
+				newIsle.entity.scaleX = newIsle.entity.scaleY = 0.5;
+				newIsle.scrollFactorX = 0.1;
+				newIsle.scrollFactorY = 0.1;
+				this.camera.entity.add(newIsle.entity);
 			}
 
 			var islands = [];
 			for(var i = 0; i < 15; ++i){
 				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-				var newIsle = chao.helpers.createImage("Small Island", imgName, 0, 0).entity;
+				var newIsle = chao.helpers.createImage("Small Island", imgName, 0, 0);
 				var tries = 0;
 				while(tries < 108){
-					newIsle.x = chao.getRandom(800); newIsle.y = chao.getRandom(800);
+					newIsle.entity.x = chao.getRandom(800); newIsle.entity.y = chao.getRandom(800);
 					tries ++;
 					var collide = false;
 					for(var j = 0; j < islands.length; ++j) {
-						if(newIsle.checkCollision(islands[j])) {
+						if(newIsle.entity.checkCollision(islands[j])) {
 							collide = true; break;
 						}
 					}
 					if(collide) continue;
 					break;
 				}
-				islands.push(newIsle);
-				newIsle.alpha = 0.7;
-				newIsle.addComponent(new ComponentParallaxScroll(0.3, 0.3));
-				this.camera.entity.add(newIsle);
+				islands.push(newIsle.entity);
+				newIsle.entity.alpha = 0.7;
+				newIsle.scrollFactorX = 0.3;
+				newIsle.scrollFactorY = 0.3;
+				this.camera.entity.add(newIsle.entity);
 			}
 
 			var clouds = [];
 			for(var i = 0; i < 15; ++i){
-				var newCloud = chao.helpers.createImage("Cloud", "cloud", 0, 0).entity;
+				var newCloud = chao.helpers.createImage("Cloud", "cloud", 0, 0);
 				var tries = 0;
 				while(tries < 108){
-					newCloud.x = chao.getRandom(800); newCloud.y = chao.getRandom(800);
+					newCloud.entity.x = chao.getRandom(800); newCloud.entity.y = chao.getRandom(800);
 					tries ++;
 					var collide = false;
 					for(var j = 0; j < clouds.length; ++j) {
-						if(newCloud.checkCollision(clouds[j])){ 
+						if(newCloud.entity.checkCollision(clouds[j])){ 
 							collide = true; break;
 						}
 					}
 					if(collide) continue;
 					break;
 				}
-				clouds.push(newCloud);
-				newCloud.alpha = 0.4;
-				newCloud.scaleX = newCloud.scaleY = (60 + chao.getRandom(41)) / 100;
-				newCloud.addComponent(new ComponentParallaxScroll(0.6, 0.6));
-				this.camera.entity.add(newCloud);
+				clouds.push(newCloud.entity);
+				newCloud.entity.alpha = 0.4;
+				newCloud.entity.scaleX = newCloud.entity.scaleY = (60 + chao.getRandom(41)) / 100;
+				newCloud.scrollFactorX = 0.6;
+				newCloud.scrollFactorY = 0.6;
+				this.camera.entity.add(newCloud.entity);
 			}
 
 			this.camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
