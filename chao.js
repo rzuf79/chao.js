@@ -130,7 +130,7 @@ var chao = {
 		chao.framerate 			= 60;										// How many times the game is supposed to be updated each second.
 		chao.setFPS(60);
 		chao.lastTime 			= Date.now();								// Internal - remembers the epoch time from the last update cycle.
-		chao.timeDelta 			= 0.0;										// Miliseconds that passed since the last frame.
+		chao.timeDelta 			= 0.0;										// milliseconds that passed since the last frame.
 		chao.timeScale 			= 1.0;										// Scale time returned by getTimeDelta function. Useful for slowing down or speeding things up.
 
 		chao.countFPS 			= false;									// Set to true and the engine will count how many frames it managed to process each second.
@@ -1011,7 +1011,7 @@ var chao = {
 	},
 
 	/**
-	 * Resume audio playback if it was suspended.
+	 * Resumes audio playback if it was suspended.
 	 */
 	resumeAudioPlayback: function(){
 		if(chao.audioContext && chao.audioContext.state === "suspended"){
@@ -1020,7 +1020,13 @@ var chao = {
 	},
 
 	/**
-	 * 
+	 * Loads a sound file.
+	 *
+	 * @param key - string by which this sound shall be identified.
+	 * @param path - path to the sound file.
+	 * @param volume - volume at which the sound will be played.
+	 * @param looped - is the sound looped.
+	 * @return - loaded sound object.
 	 */
 	loadSound: function(key, path, volume, looped){
 
@@ -1075,7 +1081,13 @@ var chao = {
 	},
 
 	/**
+	 * Similar to the loadSound, but sets some music-specific thing up and allows passing a fallback file if the default one is not supported by current browser/device.
 	 *
+	 * @param key - string by which this sound shall be identified.
+	 * @param path - path to the ogg audio file. (to simplify things up, ogg is the default music file format in chao)
+	 * @param fallbackFormatPath - path to a fallback audio file, used if oggs cannot be played.
+	 * @param volume - volume at which the music will be played.
+	 * @return - loaded sound object.
 	 */
 	loadMusic: function(key, oggPath, fallbackFormatPath, volume){
 		var sound;
@@ -1086,10 +1098,15 @@ var chao = {
 		}
 
 		sound.isMusic = true;
+
+		return sound;
 	},
 
 	/**
+	 * Gets the sound object by the given key.
 	 *
+	 * @param key - string identifying the sound we wish to get.
+	 * @return - sound object if found. If not found, or if the key is not a string, the given key param will be returned. It's designed like this to make some internal stuff faster.
 	 */
 	getSound: function(key){
 		if(typeof key === "string" || key instanceof String){
@@ -1107,7 +1124,9 @@ var chao = {
 	},
 
 	/**
+	 * Plays a sound.
 	 *
+	 * @param key - sound object of string id of the sound to be played.
 	 */
 	playSound: function(key){
 		if(!chao.audioContext){
@@ -1152,7 +1171,9 @@ var chao = {
 	},
 
 	/**
+	 * Mute or resume the audio playback.
 	 *
+	 * @param value - true stops and prevents further audio playback, also pauses the music. Pass false to resume playback.
 	 */
 	setMute: function(value){
 		if(chao.muted != value){
@@ -1179,14 +1200,16 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Toggles between muted and unmuted state.
 	 */
 	toggleMute: function(){
 		chao.setMute(!chao.muted);
 	},
 
 	/**
+	 * Stops playback of the given sound object.
 	 *
+	 * @param key - sound object or string id of the sound to stop.
 	 */
 	stopSound: function(key){
 		if(!chao.audioContext){
@@ -1200,7 +1223,10 @@ var chao = {
 	},
 
 	/**
+	 * Returns sound position.
 	 *
+	 * @param key - sound object or string id of the sound.
+	 * @return - position of the sound.
 	 */
 	getSoundPosition: function(key){
 		if(!chao.audioContext){
@@ -1211,7 +1237,10 @@ var chao = {
 	},
 
 	/**
+	 * Sets sound position.
 	 *
+	 * @param key - sound object or string id of the sound.
+	 * @param position - position to set.
 	 */
 	setSoundPosition: function(key, position){
 		if(!chao.audioContext){
@@ -1225,7 +1254,10 @@ var chao = {
 	},
 
 	/**
+	 * Play a sound from given position.
 	 *
+	 * @param key - sound object or string id of the sound.
+	 * @param position - position to play from.
 	 */
 	playSoundFrom: function(key, position){
 		if(!chao.audioContext){
@@ -1241,7 +1273,9 @@ var chao = {
 	},
 
 	/**
+	 * Pauses a sound.
 	 *
+	 * @param key - sound object or string id of the sound.
 	 */
 	pauseSound: function(key){
 		if(!chao.audioContext){
@@ -1256,7 +1290,9 @@ var chao = {
 	},
 
 	/**
+	 * Plays a sound fhrom the beginning.
 	 *
+	 * @param key - sound object or string id of the sound.
 	 */
 	restartSound: function(key){
 		if(!chao.audioContext){
@@ -1271,9 +1307,9 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Updates the mouse inputs. Called in chao.update().
 	 */
-	updateMouse: function(e){
+	updateMouse: function(){
 		chao.mouse.wheelDelta 			= 0;
 		chao.mouse.justPressed			= false;
 		chao.mouse.justReleased			= false;
@@ -1284,14 +1320,18 @@ var chao = {
 	},
 
 	/**
+	 * Finds an entity that happens to be under the mouse cursor.
 	 *
+	 * @return - an entity under the mouse cursor. If none were found, you get a sweet null.
 	 */
 	getEntityUnderMouse: function(){
 		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
 	},
 
 	/**
+	 * Handles mouse clicks and the first touch input, which is handled like the left mouse button.
 	 *
+	 * @param button - id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
 	 */
 	handleMouseDown: function(button){
 
@@ -1316,7 +1356,9 @@ var chao = {
 	},
 
 	/**
+	 * Handles mouse and the first touch input releases.
 	 *
+	 * @param button - id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
 	 */
 	handleMouseUp: function(button){
 		switch(button){
@@ -1344,7 +1386,10 @@ var chao = {
 	},
 
 	/**
+	 * Handles mouse and the first touch input movement.
 	 *
+	 * @param x - x position of the pointer, from the left edge of the viewport.
+	 * @param y - y position of the pointer, from the top edge of the viewport.
 	 */
 	handleMouseMove: function(x, y){
 		chao.mouse.x = x;
@@ -1366,7 +1411,9 @@ var chao = {
 	},
 
 	/**
+	 * Mouse down callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onMouseDown: function(e){
 		chao.handleMouseDown(e.which);
@@ -1374,7 +1421,9 @@ var chao = {
 	},
 
 	/**
+	 * Mouse up callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onMouseUp: function(e){
 		chao.handleMouseUp(e.which);
@@ -1382,7 +1431,9 @@ var chao = {
 	},
 
 	/**
+	 * Mouse move callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onMouseMove: function(e){
 		chao.handleMouseMove(e.offsetX, e.offsetY);
@@ -1390,7 +1441,9 @@ var chao = {
 	},
 	
 	/**
+	 * Mouse wheel callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onMouseWheel: function(e){
 		chao.mouse.wheelDelta = e.deltaY;
@@ -1398,14 +1451,16 @@ var chao = {
 	},
 
 	/**
+	 * Sets the visibility of the default system cursor.
 	 *
+	 * @param value - true if we want to see it, false otherwise.
 	 */
 	setMouseVisibility: function(value){
 		canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
 	/**
-	 *
+	 * Updates touch inputs. Called in chao.update();
 	 */
 	updateTouches: function(){
 		for(var i = 0; i < chao.touches.length; ++i){
@@ -1414,7 +1469,9 @@ var chao = {
 	},
 
 	/**
+	 * Touch start callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onTouchStart: function(e){
 		var touches = e.changedTouches;
@@ -1442,7 +1499,9 @@ var chao = {
 	},
 
 	/**
+	 * Touch move callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onTouchMove: function(e){
 		var touches = e.changedTouches;
@@ -1464,7 +1523,9 @@ var chao = {
 	},
 
 	/**
+	 * Touch end callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onTouchEnd: function(e){
 		var touches = e.changedTouches;
@@ -1486,7 +1547,10 @@ var chao = {
 	},
 
 	/**
+	 * Finds and returns a touch object.
 	 *
+	 * @param id - unique id of the touch.
+	 * @return - a touch object if found or false if none exists with the given id.
 	 */
 	getTouch: function(id){
 		for(var i = 0; i < chao.touches.length; ++i){
@@ -1498,7 +1562,9 @@ var chao = {
 	},
 
 	/**
+	 * Internal helper to convert the convoluted touch coords to a reasonable ones.
 	 *
+	 * @param touch - touch object to get fixed coords from.
 	 */
 	getTouchPos: function(touch){
 		return {
@@ -1508,7 +1574,7 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Updates keyboard inputs. Called in chao.update().
 	 */
 	updateKeys: function(){
 		for (var i = 0; i < 0x80; ++i){
@@ -1518,7 +1584,9 @@ var chao = {
 	},
 
 	/**
+	 * Keyboard key down callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onKeyDown: function(e){
 		if(!chao.keys[e.keyCode]){
@@ -1530,7 +1598,9 @@ var chao = {
 	},
 
 	/**
+	 * Keyboard key up callback.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	onKeyUp: function(e){
 		chao.justReleased[e.keyCode] = true;
@@ -1540,7 +1610,9 @@ var chao = {
 	},
 
 	/**
+	 * Called when game window is resized. Applies scaling modes.
 	 *
+	 * @param e - event passed by the Event Listener.
 	 */
 	resize: function(e){
 		if(chao.scalingMode <= chao.SCALING_MODE_NONE || chao.scalingMode >= chao.SCALING_MODE_END){
@@ -1627,7 +1699,10 @@ var chao = {
 	},
 
 	/**
+	 * Stretches the game viewport canvas to given scale.
 	 *
+	 * @param x - horizontal scale of the canvas.
+	 * @param y - vertical scale of the canvas.
 	 */
 	setCanvasScale: function(x, y){
 		chao.screenScaleX = x;
@@ -1650,7 +1725,9 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Counts loading progress based on all assets "ready" state.
+	 * 
+	 * @return - loading progress as a float between 0.0 and 1.0.
 	 */
 	getLoadingProgress: function(){
 		var allData 	= chao.images.length + chao.sounds.length;
@@ -1672,21 +1749,27 @@ var chao = {
 	},
 
 	/**
+	 * Returns milliseconds that passed since the last frame. Scaled by chao.timeScale.
 	 *
+	 * @return - milliseconds that passed since the last frame.
 	 */
 	getTimeDelta : function() {
-		return this.timeDelta * this.timeScale;
+		return chao.timeDelta * chao.timeScale;
 	},
 
 	/**
+	 * Returns milliseconds that passed since the last frame. Not affected by chao.timeScale so useful for pause menus etc.
 	 *
+	 * @return - milliseconds that passed since the last frame.
 	 */
 	getUnscaledDelta : function() {
-		return this.timeDelta;
+		return chao.timeDelta;
 	},
 
 	/**
+	 * Generates a random integer between 0 (inclusive) and max (exclusive).
 	 *
+	 * @param max - maximum value of the generated integer will be lesser than this.
 	 */
 	getRandom: function(max){ 
 		max -= 1;
@@ -1694,14 +1777,22 @@ var chao = {
 	},
 
 	/**
+	 * Converts radians to degrees.
 	 *
+	 * @param radians - radians to convert.
+	 * @return - angle in degrees.
 	 */
 	rad2deg: function(radians){
 		return radians/(180/Math.PI);
 	},
 
 	/**
+	 * Clamps the given value between min (inclusive) and max (inclusive).
 	 *
+	 * @param value - value to clamp.
+	 * @param min - we don't want the value to be anything less than this (inclusive).
+	 * @param max - we don't want the value to be anything more than this (inclusive).
+	 * @return - suprise! A clamped value!
 	 */
 	clamp: function(value, min, max){
 		if(value < min) value = min;
@@ -1710,7 +1801,9 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Log a thing to the browser's js console. Set chao.loggingEnabled to false to prevent the logging.
+	 * 
+	 * @param thingie - a thingie to put in the console.
 	 */
 	log: function(thingie){
 		if(chao.loggingEnabled){
@@ -1719,15 +1812,20 @@ var chao = {
 	},
 
 	/**
+	 * Draws a pretty log of the hierarchy of all the children sticked to the given entity,
 	 *
+	 * @param entity - an entity to draw the hierarchy log for.
 	 */
-	logHierarchy: function(entity, indent){
+	logHierarchy: function(entity){
 		var logString = chao.logEntity(entity, 0);
 		chao.log(logString);
 	},
 
 	/**
+	 * Used by logHierarchy to recursively create a hierarchy log string for given entity.
 	 *
+	 * @param entity - entity to make a log string for.
+	 * @param indent - indentation level for the currently generated string.
 	 */
 	logEntity: function(entity, indent){
 
@@ -1759,7 +1857,7 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Sets up some event listeners so we know wneh the game's window loses focus. Called somewhere in chao.init().
 	 */
 	installVisibilityHandler: function(){
 
@@ -1806,7 +1904,7 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Updates all tween sanims. Called in chao.update().
 	 */
 	updateTweens: function(){
 		var tweensToRemove = [];
@@ -1829,6 +1927,7 @@ var chao = {
 				switch(tween.repeatMode){
 					case chao.REPEAT_MODE_ONCE:{
 						tween.timer = tween.lifetime;
+						tween.finished = true;
 						tweensToRemove.push(tween);
 						break;
 					}
@@ -1893,7 +1992,18 @@ var chao = {
 	},
 
 	/**
+	 * Add a new tween anim.
 	 *
+	 * @param target - an object containing the variable we will be tweening.
+	 * @param varName - name of the variable that will be tweened.
+	 * @param from - value to tween from.
+	 * @param to - target value to tween to.
+	 * @param time - length of the tween in seconds.
+	 * @param interpolationType - type of interpolation. Use the chao.INTERPOLATE_* consts. Defaults to chao.INTERPOLATE_LINEAR.
+	 * @param repeatMode - how (and if) the tween shall be looped. Use the chao.REPEAT_MODE_* consts. Defaults to chao.REPEAT_MODE_ONCE.
+	 * @param delay - delay in seconds before the tweening starts.
+	 * @param finishCallback - function to be called when the tween has finished its job.
+	 * @return - tween object containing info about this tween.
 	 */
 	addTween: function(target, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback){
 		var newTween = {
@@ -1910,6 +2020,8 @@ var chao = {
 			timer: 				0,
 			useUnscaledTime: 	false,
 			direction: 			1,
+
+			finished: 			false,
 		}
 
 		chao.tweens.push(newTween);
@@ -1917,7 +2029,9 @@ var chao = {
 	},
 
 	/**
+	 * Removes a tween.
 	 *
+	 * @param tween - tween object to be removed.
 	 */
 	removeTween: function(tween){
 		var i = chao.tweens.indexOf(tween);
@@ -1927,7 +2041,9 @@ var chao = {
 	},
 
 	/**
+	 * Remove all tweens affecting the given entity or its components.
 	 *
+	 * @param entity - entity to remove all the tweens from.
 	 */
 	removeTweensFromEntity: function(entity){
 		var tweensToRemove = [];
@@ -1935,6 +2051,15 @@ var chao = {
 		for(var i = 0; i < chao.tweens.length; ++i){
 			if(chao.tweens[i].target == entity){
 				tweensToRemove.push(chao.tweens[i]);
+				continue;
+			}
+
+			for(var j = 0; j < entity.components.length; ++j){
+				if(chao.tweens[i].target == entity.components[i]){
+					tweensToRemove.push(chao.tweens[i]);
+					break;
+				}
+
 			}
 		}
 
@@ -1945,7 +2070,9 @@ var chao = {
 	},
 
 	/**
+	 * Force finish all the tweens. Useful eg. for skipping cutscenes.
 	 *
+	 * @param includeLoops - when true, it will forcibly finish also the looping tweens.
 	 */
 	finishAllTweens: function(includeLoops){
 		for(var i = 0; i < chao.tweens.length; ++i){
@@ -1959,7 +2086,7 @@ var chao = {
 	},
 
 	/**
-	 *
+	 * Removes all the tweens without asking questions.
 	 */
 	clearTweens: function(){
 		chao.tweens = [];
@@ -1969,22 +2096,62 @@ var chao = {
 	 * Sub-namespace containing some useful helper functions.
 	 */
 	helpers: {
+
+		/**
+		 * Creates an entity and sticks ComponentImage to it.
+		 *
+		 * @param entityName - name for the created entity.
+		 * @param image - image of its id.
+		 * @param x - x position of the entity.
+		 * @param y - y position of the entity.
+		 * @return - created ComponentImage component.
+		 */
 		createImage: function(entityName, image, x, y){
 			return (new Entity(entityName, x, y)).addComponent(new ComponentImage(image));
 		},
 
+		/**
+		 * Creates an entity and sticks ComponentText to it.
+		 *
+		 * @param entityName - name for the created entity.
+		 * @param x - x position of the entity.
+		 * @param y - y position of the entity.
+		 * @param font - font to use for the text object.
+		 * @param text - text that will be displayed.
+		 * @param size - size of the text.
+		 * @return - created ComponentText component.
+		 */
 		createText: function(entityName, x, y, font, text, size){
 			return (new Entity(entityName, x, y)).addComponent(new ComponentText(font, text, size));
 		},
 
+		/**
+		 * Fades out the entity.
+		 *
+		 * @param entity - entity to fade out.
+		 * @param time - seconds the fade will take.
+		 */
 		fadeEntityOut: function(entity, time){
 			chao.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
 		},
 
+		/**
+		 * Fades in the entity.
+		 *
+		 * @param entity - entity to fade in.
+		 * @param time - seconds the fade will take.
+		 */
 		fadeEntityIn: function(entity, time){
 			chao.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
 		},
 
+		/**
+		 * Adds a bouncy-bounce to the entity.
+		 *
+		 * @param entity - entity to apply the bounce tween to.
+		 * @param amplitude - bounce amplitude in pixels.
+		 * @param time - bounce time in seconds.
+		 */
 		addBounceTween: function(entity, amplitude, time){
 			chao.addTween(entity, "y", entity.y-amplitude/2, entity.y+amplitude/2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
 		},
