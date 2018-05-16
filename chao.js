@@ -2,31 +2,33 @@
  * chao.js
  */
 
-/** @namespace*/
+/**
+ * Global chao namespace.
+ */
 var chao = {
-	/** Consts */
+	/** Consts. */
 	VERSION					: "0.1",
 
-	SCALING_MODE_NONE		: 0,	// game canvas will not be scaled at all
-	SCALING_MODE_STRETCH	: 1,	// scales the canvas to fill the whole viewport
-	SCALING_MODE_KEEP_RATIO	: 2,	// scales the canvas to fit the viewport but keeps the aspect ratio
-	SCALING_MODE_EXTEND		: 3,	// scale to fit and lenghten the shorter dimension to fill the viewport
+	SCALING_MODE_NONE		: 0,	// Game canvas will not be scaled at all.
+	SCALING_MODE_STRETCH	: 1,	// Scales the canvas to fill the whole viewport.
+	SCALING_MODE_KEEP_RATIO	: 2,	// Scales the canvas to fit the viewport but keeps the aspect ratio.
+	SCALING_MODE_EXTEND		: 3,	// Scale to fit and lenghten the shorter dimension to fill the viewport.
 	SCALING_MODE_END		: 4,
 
-	INTERPOLATE_LINEAR		: 0,
-	INTERPOLATE_SMOOTH		: 1,
-	INTERPOLATE_EASE_TO		: 2,
-	INTERPOLATE_EASE_FROM	: 3,
-	INTERPOLATE_BOUNCE		: 4,
+	INTERPOLATE_LINEAR		: 0,	// Basing interpolation, without any smoothing.
+	INTERPOLATE_SMOOTH		: 1,	// Smooooooth!
+	INTERPOLATE_EASE_TO		: 2,	// Smoothes the end of the interpolation.
+	INTERPOLATE_EASE_FROM	: 3,	// Smoothes the beginning of the interpolation.
+	INTERPOLATE_BOUNCE		: 4,	// Bounces the interpolated value a bit before reaching the end.
 
-	REPEAT_MODE_ONCE		: 0,
-	REPEAT_MODE_LOOP		: 1,
-	REPEAT_MODE_BOUNCE		: 2,
+	REPEAT_MODE_ONCE		: 0,	// Just plays the thing once.
+	REPEAT_MODE_LOOP		: 1,	// When finished, start again from the beginning.
+	REPEAT_MODE_BOUNCE		: 2,	// Goes back and forth.
 
-	/** Key codes */
+	/** Key codes. */
 	KEY_A: 0x41, KEY_B: 0x42, KEY_C: 0x43, KEY_D: 0x44, KEY_E: 0x45, KEY_F: 0x46, KEY_G: 0x47, KEY_H: 0x48, KEY_I: 0x49, KEY_J: 0x4A, KEY_K: 0x4B, KEY_L: 0x4C, KEY_M: 0x4D, KEY_N: 0x4E, KEY_O: 0x4F, KEY_P: 0x50, KEY_Q: 0x51, KEY_R: 0x52, KEY_S: 0x53, KEY_T: 0x54, KEY_U: 0x55, KEY_V: 0x56, KEY_W: 0x57, KEY_X: 0x58, KEY_Y: 0x59, KEY_Z: 0x5A, KEY_0: 0x30, KEY_1: 0x31, KEY_2: 0x32, KEY_3: 0x33, KEY_4: 0x34, KEY_5: 0x35, KEY_6: 0x36, KEY_7: 0x37, KEY_8: 0x38, KEY_9: 0x39, KEY_0_PAD: 0x60, KEY_1_PAD: 0x61, KEY_2_PAD: 0x62, KEY_3_PAD: 0x63, KEY_4_PAD: 0x64, KEY_5_PAD: 0x65, KEY_6_PAD: 0x66, KEY_7_PAD: 0x67, KEY_8_PAD: 0x68, KEY_9_PAD: 0x69, KEY_F1: 0x70, KEY_F2: 0x71, KEY_F3: 0x72, KEY_F4: 0x73, KEY_F5: 0x74, KEY_F6: 0x75, KEY_F7: 0x76, KEY_F8: 0x77, KEY_F9: 0x78, KEY_F10: 0x79, KEY_F11: 0x7a, KEY_F12: 0x7b, KEY_ESC: 0x1B, KEY_TILDE: 0xc0, KEY_MINUS: 0xbd, KEY_EQUALS: 0xbb, KEY_BACKSPACE: 0x08, KEY_TAB: 0x09, KEY_OPENBRACE: 0xdb, KEY_CLOSEBRACE: 0xdd, KEY_ENTER: 0x0D, KEY_COLON: 0xba, KEY_QUOTE: 0xde, KEY_BACKSLASH: 0xdc, KEY_COMMA: 0xbc, KEY_STOP: 0xbe, KEY_SLASH: 0xBF, KEY_SPACE: 0x20, KEY_INSERT: 0x2D, KEY_DEL: 0x2E, KEY_HOME: 0x24, KEY_END: 0x23, KEY_PGUP: 0x21, KEY_PGDN: 0x22, KEY_LEFT: 0x25, KEY_RIGHT: 0x27, KEY_UP: 0x26, KEY_DOWN: 0x28, KEY_SLASH_PAD: 0x6F, KEY_ASTERISK: 0x6A, KEY_MINUS_PAD: 0x6D, KEY_PLUS_PAD: 0x6B, KEY_ENTER_PAD: 0x0D, KEY_PRTSCR: 0x2C, KEY_PAUSE: 0x13, KEY_EQUALS_PAD: 0x0C, KEY_LSHIFT: 0x10, KEY_RSHIFT: 0x10, KEY_LCONTROL: 0x11, KEY_RCONTROL: 0x11, KEY_ALT: 0x12, KEY_ALTGR: 0x12, KEY_LWIN: 0x5b, KEY_RWIN: 0x5c, KEY_MENU: 0x5d, KEY_SCRLOCK: 0x9d, KEY_NUMLOCK: 0x90, KEY_CAPSLOCK: 0x14,
 	
-	/** Basic 16 colors
+	/** Basic 16 colors.
 	 *
 	 * 0 = Black 			0xff000000
 	 * 1 = Blue 			0xff0000aa
@@ -50,6 +52,13 @@ var chao = {
 	/** Base64-encoded default font */
 	defaultFontData: "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AuP91hUHyjWWdL04hQHN/AVhBoFnuhUZ/W0wAqYAAAAAAwAq/q0FBAWVAA4AJAAoAAAJATYXFTc1MzcjNwcXIxMBByUHFzYeAQYuATcHHgI+AiYHNwMXAScDuf8AQ9Rtf0jGAXEBqvH8hlABXdAOUKohVqWLGmwHeLx/ZwiFaNunaAGeYgLL/dYVCMk1lXW+OIYBzgIudAHzBylUt20JtUdgNaMiR4nSegb7+e5hBoFnAAAAAAEAG//8A6cFMwAiAAASJyYnITcFByY3NiQWFzcuASQGCgESHgE2NycGJyYnITcFB9gEDwYCHLH9t4UMNk0BJm0NrQaE/tzJyzZhrvnrqhHA5K9LAc+x/bdTAi0PQTqtAZybeK8GiDByQ6QHcv6//ov+8MZUXvML029VoK0BYQAAAAABAAABagABADoAwAAFAJwAJgBR/54AKQAzAEUAKQA3AIcAKQA5AD0AKQA6AEkAKQA8AEIAKQBD/2IAKQBH/z4AKQBR/20AKQBX/54ALQBH//MALQBR//IAMABH/+cAMABR/+oAMwA3AB4AMwA8/7sAMwBD/54AMwBH/5oAMwBR/8IANwAzADwANwA3AF4ANwA5ADMANwA6AGkANwA8ADkANwBD/t4ANwBH/y8ANwBKAAwANwBR/wAANwBX/ukANwBb/xIAOQApADMAOQAzAFoAOQA3AJwAOQA5AFIAOQA6AIcAOQA8AFcAOQBD/0UAOQBH/0UAOQBL/9QAOQBR/20AOQBX/4MAOQBb/7MAOgA3ADsAOgBD/0UAOgBH/28AOgBL/+cAOgBR/1sAOgBX/7AAPAA6ADMAPABD/woAPABH/0wAPABL/8QAPABR/0EAPABX/zsASABH/8QASABI/44ASABLAAAASABR/9AAAAAAAAwAlgADAAEECQAAADYAAAADAAEECQABACIARAADAAEECQACAA4ANgADAAEECQADACwARAADAAEECQAEACIARAADAAEECQAFAAYAcAADAAEECQAGACAAdgADAAEECQAHACoAlgADAAEECQAIADgBIAADAAEECQAJAB4AwAADAAEECQAKAEIA3gADAAEECQAMADgBIABLAGUAdgBpAG4AIABLAGkAbgBnADoAIABLAGkAbgBnAHQAaABpAG4AZwBzACAAMgAwADAANwBSAGUAZwB1AGwAYQByAEsAaQBuAGcAdABoAGkAbgBnAHMAIABFAHgAZQB0AGUAcgAgADIAMAAwADcAMQAuADAASwBpAG4AZwB0AGgAaQBuAGcAcwBFAHgAZQB0AGUAcgBLAGkAbgBnAHQAaABpAG4AZwBzACAAQQBwAHIAaQBsACAAMgAwADAANwBLAGUAdgBpAG4AIABLAGkAbgBnACAAMgAwADAANwBDAGEAbABsAGkAZwByAGEAcABoAGkAYwAgAFIAbwB1AG4AZABoAGEAbgBkACAAcwBhAG4AcwAgAHMAZQByAGkAZgBrAGUAdgBpAG4AawBpAG4AZwBAAG0AeQBwAG8AcwB0AG8AZgBmAGkAYwBlAC4AYwBvAC4AdQBrAAAAAgAAAAAAAP9cADAAAAAAAAAAAAAAAAAAAAAAAAAAAABtAAABAgEDAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQAJQAmACcAKAApACoAKwAsAC0ALgAvADAAMQAyADMANAA1ADYANwA4ADkAOgA7ADwAPQA+AD8AQABCAEMARABFAEYARwBIAEkASgBLAEwATQBOAE8AUABRAFIAUwBUAFUAVgBXAFgAWQBaAFsAXABdAF4AYACFAIcAqwC0ALUAtgC3ALgA7wDwAPQA9QD2AQQFLm51bGwQbm9ubWFya2luZ3JldHVybgRFdXJvAAAAAf//AAI=",
 
+	/**
+	 * Inits the whole engine.
+	 *
+	 * @param width - target width of the viewport in pixels.
+	 * @param height - target height of the viewport in pixels.
+	 * @param scalingMode - defines how the canvas will scale in the window it's in. Use chao.SCALING_MODE_SOMETHING. Defaults to SCALING_MODE_NONE.
+	 */
 	init: function(width, height, scalingMode) {
 		// Some cross-browser compatibility stuff below
 		if (!Date.now) {
@@ -70,8 +79,9 @@ var chao = {
 
 		var context		= canvas.getContext("2d");
 		
-		context.imageSmoothingEnabled = false; // this is for pixel art games
+		context.imageSmoothingEnabled = false; // should be false for pixel-art games.
 
+		// Canvas object is organized like a regular chao image, for cohesion.
 		chao.canvas = {
 			canvas: 	canvas,
 			context: 	context,
@@ -91,81 +101,81 @@ var chao = {
 		window.addEventListener("keydown", chao.onKeyDown);
 		window.addEventListener("resize", chao.resize);
 
-		chao.loggingEnabled 	= true;
+		chao.loggingEnabled 	= true;										// Enable debug logging to browser's console.
 		
-		chao.screenWidth 		= width;
-		chao.screenHeight 		= height;
-		chao.scalingMode		= scalingMode || chao.SCALING_MODE_NONE;
+		chao.screenWidth 		= width;									// Viewport width in pixels. Can change dynamically in some scaling modes.
+		chao.screenHeight 		= height;									// Viewport height in pixels. Can change dynamically in some scaling modes.
+		chao.scalingMode		= scalingMode || chao.SCALING_MODE_NONE;	// Currently set scaling mode.
 
-		chao.screenScaleX		= 1.0;
-		chao.screenScaleY		= 1.0;
-		chao.baseScreenWidth	= width;
-		chao.baseScreenHeight	= height;
+		chao.screenScaleX		= 1.0;										// Current x scale of the viewport.
+		chao.screenScaleY		= 1.0;										// Current y scale of the viewport.
+		chao.baseScreenWidth	= width;									// Original width of the viewport, the one passed in the chao.init()
+		chao.baseScreenHeight	= height;									// Original height of the viewport, the one passed in the chao.init()
 
 		chao.installVisibilityHandler();
-		chao.hasFocus 			= true;
+		chao.hasFocus 			= true;										// Does the game window have focus at the moment.
 
-		chao.images				= [];
+		chao.images				= [];										// Array containing all the loaded images.
 
-		chao.pauseOnFadeEnabled	= true;
-		chao.imagePauseFade 	= null;
+		chao.pauseOnFadeEnabled	= true;										// Should the game pause when the window focus is lost.
+		chao.imagePauseFade 	= null;										// Image displayed when the game is paused because of the lost focus.
 		chao.updatePauseFadeImage();
 
-		chao.onAssetsLoaded		= undefined;
+		chao.onAssetsLoaded		= undefined;								// Internal - called when all the assets are finished loading.
 
-		chao.updateInterval 	= null;
-		chao.framerate 			= 60;
+		chao.updateInterval 	= null;										// Holds the engine's main loop.
+		chao.framerate 			= 60;										// How many times the game is supposed to be updated each second.
 		chao.setFPS(60);
-		chao.lastTime 			= Date.now();
-		chao.timeDelta 			= 0.0;
-		chao.timeScale 			= 1.0;
+		chao.lastTime 			= Date.now();								// Internal - remembers the epoch time from the last update cycle.
+		chao.timeDelta 			= 0.0;										// Miliseconds that passed since the last frame.
+		chao.timeScale 			= 1.0;										// Scale time returned by getTimeDelta function. Useful for slowing down or speeding things up.
 
-		chao.countFPS 			= false;
-		chao.currentFPS 		= 0;
-		chao.FPSCounter 		= 0;
-		chao.FPSTimer 			= 0;
+		chao.countFPS 			= false;									// Set to true and the engine will count how many frames it managed to process each second.
+		chao.currentFPS 		= 0;										// Number of frames processed during the last second.
+		chao.FPSCounter 		= 0;										// Internal - for FPS counting.
+		chao.FPSTimer 			= 0;										// Internal - for FPS counting.
 
 		if(AudioContext){
-			chao.audioContext 	= new AudioContext();
+			chao.audioContext 	= new AudioContext();						// Internal - audioContext used to play sounds.
 		}
-		chao.sounds 			= [];
-		chao.currentMusic 		= null;
-		chao.muted 				= false;
-		chao.muteOnFocusLost	= true;
-		chao.wasMutedOnFocusLost= false;
+		chao.sounds 			= [];										// Array containing all the loaded sounds.
+		chao.currentMusic 		= null;										// Sound that is currently playing as a music.
+		chao.muted 				= false;									// Are the sounds muted right now. Use chao.setMute to change this.
+		chao.muteOnFocusLost	= true;										// Is the game supposed to be silent when focus i lost.
+		chao.wasMutedOnFocusLost= false;									// Internal - helps to figuer out what to do with the sound when we get the focus back.
 
-		chao.keys 				= [];
-		chao.justPressed 		= [];
-		chao.justReleased 		= [];
+		chao.keys 				= [];										// Boolean values of all the keyboard keys presses. Eg. if(chao.keys[chao.KEY_SPACE]) checks if the space key is currently pressed.
+		chao.justPressed 		= [];										// Boolean values of all the keyboard keys presses. Eg. if(chao.keys[chao.KEY_SPACE]) checks if the space key was pressed in current frame.
+		chao.justReleased 		= [];										// Boolean values of all the keyboard keys releases. Eg. if(chao.keys[chao.KEY_SPACE]) checks if the space key was released in current frame.
 
-		chao.touches			= [];
+		chao.touches			= [];										// Array containing all the active touches. Each touch is an object with following values: "id" (unique id of the touch), "x", "y", "justPressed" (was this touch activated in the current frame). The first active touch is interpreted just as the left mouse button.
 
-		chao.mouse 						= {};
-		chao.mouse.x 					= -1;
-		chao.mouse.y 					= -1;
-		chao.mouse.wheelDelta 			= 0;
-		chao.mouse.pressed 				= false;
-		chao.mouse.justPressed			= false;
-		chao.mouse.justReleased			= false;
-		chao.mouse.pressedRight 		= false;
-		chao.mouse.justPressedRight		= false;
-		chao.mouse.justReleasedRight	= false;
-		chao.mouse.pressedMiddle 		= false;
-		chao.mouse.justPressedMiddle	= false;
-		chao.mouse.justReleasedMiddle	= false;
+		chao.mouse 						= {};								// All the mousey data.
+		chao.mouse.x 					= -1;								// X position of the mouse, from the left edge of the viewport.
+		chao.mouse.y 					= -1;								// Y position of the mouse, from the top edge of the viewport.
+		chao.mouse.wheelDelta 			= 0;								// How mouch the mouse wheel was scrolled since the last frame.
+		chao.mouse.pressed 				= false;							// Is the left mouse button pressed right now.
+		chao.mouse.justPressed			= false;							// Was the left mouse button just pressed in the current frame.
+		chao.mouse.justReleased			= false;							// Was the left mouse button just released in the current frame.
+		chao.mouse.pressedRight 		= false;							// Is the right mouse button pressed right now.
+		chao.mouse.justPressedRight		= false;							// Was the right mouse button just pressed in the current frame.
+		chao.mouse.justReleasedRight	= false;							// Was the right mouse button just released in the current frame.
+		chao.mouse.pressedMiddle 		= false;							// Is the middle mouse button pressed right now.
+		chao.mouse.justPressedMiddle	= false;							// Was the middle mouse button just pressed in the current frame.
+		chao.mouse.justReleasedMiddle	= false;							// Was the middle mouse button just released in the current frame.
 
 		chao.resetInput();
 
-		chao.loadedFontsNum 			= 0;
-		chao.font 						= chao.loadBase64Font(chao.defaultFontData);
+		chao.loadedFontsNum 			= 0;								// Total number of fonts loaded.
+		chao.font 						= chao.loadBase64Font(chao.defaultFontData); // Default chao font.
 
-		chao.tweens						= [];
+		chao.tweens						= [];								// Array containing all the active tweens.
 
-		chao.focusedEntity				= null;
-		chao.entitiesToDestroy			= [];
+		chao.entitiesToDestroy			= [];								// Internal - list of entities to be safely destroyed and removed from the hierarchy.
+		chao.focusedEntity				= null;								// Internal - entity currently processed by the mouse/touch inputs.
 
-		chao.currentState				= undefined;
-		chao.loadingState				= undefined;
+		chao.currentState				= undefined;						// Current state.
+		chao.loadingState				= undefined;						// State to be used when the assets are being loaded.
 
 		chao.setLoadingState({
 			draw: function(){
@@ -185,11 +195,19 @@ var chao = {
 
 	},
 
+	/**
+	 * Sets the update interval of the game.
+	 *
+	 * @param FPS - how many times per second shall the game be updated.
+	 */
 	setFPS: function(FPS){
 		chao.framerate = FPS;
 		chao.updateInterval = setInterval("chao.update()", 1000/FPS);
 	},
 
+	/**
+	 * Clears the whole canvas or fills it with chao.backgroundColor if it's set.
+	 */
 	clearScreen: function(){
 		if (chao.backgroundColor=="none") { 
 			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height); 
@@ -199,6 +217,11 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Called when the canvas loses/resumes focus.
+	 *
+	 * @param isFocused - is the game window active.
+	 */
 	onFocusChange: function(isFocused){
 		if(chao.hasFocus == isFocused){
 			return;
@@ -219,6 +242,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Resets all the input data.
+	 */
 	resetInput: function(){
 		for (var i = 0; i < 0x80; ++i) {
 			chao.keys[i] 			= false;
@@ -229,8 +255,13 @@ var chao = {
 		chao.mouse.pressed 				= false;
 		chao.mouse.pressedRight 		= false;
 		chao.mouse.pressedMiddle 		= false;
+
+		chao.focusedEntity 				= null;
 	},
 	 
+	/**
+	 * Main game loop.
+	 */
 	update: function(){
 
 		chao.clearScreen();
@@ -292,8 +323,14 @@ var chao = {
 		chao.entitiesToDestroy = [];
 	},
 
+	/**
+	 * Destroys current state, then init the given one and set it as the current.
+	 *
+	 * @param newState - state to be initialized and set as the current one.
+	 */
 	switchState: function(newState){
-		chao.focusedEntity = null;
+		chao.resetInput();
+		chao.clearTweens();
 
 		chao.destroyState(chao.currentState);
 		
@@ -305,6 +342,11 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Sets the state to be used when the assets are being loaded.
+	 *
+	 * @param newLoadingState - state to be initialized and set as a loading state.
+	 */
 	setLoadingState: function(newLoadingState){
 		chao.destroyState(chao.loadingState);
 
@@ -313,6 +355,11 @@ var chao = {
 		
 	},
 
+	/**
+	 * Inits given state. Called by switchState().
+	 *
+	 * @param state - state to be initialized.
+	 */
 	initState: function(state){
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
@@ -332,14 +379,27 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Internal wrapper for initState(), to be called when assets loading finishes.
+	 */
 	initCurrentState: function(){
 		chao.initState(chao.currentState);
 	},
 
+	/**
+	 * Returns the currently processed state.
+	 *
+	 * @return - currentState if assets are loaded and ready, loadingState otherwise.
+	 */
 	getCurrentState: function(){
 		return chao.getLoadingProgress() >= 1.0 ? chao.currentState : chao.loadingState;
 	},
 
+	/**
+	 * Destroys the current state. Called internally when needed.
+	 *
+	 * @param state - state to be destroyed.
+	 */
 	destroyState: function(state){
 		if(!state){
 			return;
@@ -352,11 +412,24 @@ var chao = {
 		state.rootEntity = null;
 	},
 
+	/**
+	 * Safely destroys the given entity and all its children. Also removes all the attached tweens.
+	 *
+	 * @param entity - entity to be destroyed.
+	 */
 	destroyEntity: function(entity){
 		chao.removeTweensFromEntity(entity);
 		chao.entitiesToDestroy.push(entity);
 	},
 
+	/**
+	 * Creates a blank image.
+	 *
+	 * @param key - string by which this image will be identified. Pass undefined if you don't want it to be booked by the engine by any name.
+	 * @param width - width of the image in pixels.
+	 * @param height - height of the image in pixels.
+	 * @return - created image.
+	 */
 	createImage: function(key, width, height){
 		var newCanvas 		= document.createElement("canvas");
 		var newContext 		= newCanvas.getContext("2d");
@@ -380,6 +453,13 @@ var chao = {
 		return newImage;
 	},
 
+	/**
+	 * Loads image from a file.
+	 *
+	 * @param key - string by which this image will be identified.
+	 * @param path - path to the file.
+	 * @return - loaded image.
+	 */
 	loadImage: function(key, path){
 		var img = new Image();
 		img.src = path;
@@ -411,6 +491,11 @@ var chao = {
 		return newImage;
 	},
 
+	/**
+	 * Adds image to the internal images array. Also makes sure that only one image with the given key exist at a time.
+	 *
+	 * @param image - image to be added.
+	 */
 	addImage: function(image){
 		var oldImage = -1;
 
@@ -428,6 +513,12 @@ var chao = {
 		chao.images.push(image);
 	},
 
+	/**
+	 * Gets the image object by the given key.
+	 *
+	 * @param key - string identifying the image we wish to get.
+	 * @return - image object if found. If not found, or if the key is not a string, the given key param will be returned. It's designed like this to make some internal stuff faster.
+	 */
 	getImage: function(key){
 		if(typeof key === "string" || key instanceof String){
 			var n = chao.images.length;
@@ -440,6 +531,18 @@ var chao = {
 		return key;
 	},
 
+	/**
+	 * Blits an image to the target image data.
+	 *
+	 * @param target - target bitmap to blit the image into.
+	 * @param image - image to be blitted.
+	 * @param x - x position to draw the image.
+	 * @param y - y position to draw the image.
+	 * @param alpha - opacity of the image.
+	 * @param scaleX - x scale of the image.
+	 * @param scaleY - y scale of the image.
+	 * @param angle - rotation of the image (in degrees).
+	 */
 	drawImage: function(target, image, x, y, alpha, scaleX, scaleY, angle){
 
 		alpha 	= alpha || 1;
@@ -466,6 +569,19 @@ var chao = {
 		target.context.restore();
 	},
 
+	/**
+	 * Blits a part of the image to the target image data.
+	 *
+	 * @param target - target bitmap to blit the image into.
+	 * @param image - image to be blitted.
+	 * @param x - x position to draw the image.
+	 * @param y - y position to draw the image.
+	 * @param rect - rect object describing what part of the image we wish to draw: {x, y, width, height}.
+	 * @param angle - rotation of the image (in degrees).
+	 * @param scaleX - x scale of the image.
+	 * @param scaleY - y scale of the image.
+	 * @param alpha - opacity of the image.
+	 */
 	drawImagePart: function(target, image, x, y, rect, angle, scaleX, scaleY, alpha){
 		angle 	= angle || 0;
 		alpha 	= alpha || 1;
@@ -499,6 +615,12 @@ var chao = {
 		target.context.restore();
 	},
 
+	/**
+	 * Set fill color for the given image.
+	 *
+	 * @param image - image to set the fill color for.
+	 * @param color - color in a form of hash of 0xFFFFFFFF.
+	 */
 	setFillStyle: function(image, color){
 		if(typeof color === "string"){
 			image.context.fillStyle = color;	
@@ -507,6 +629,13 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Set stroke color and width for the given image.
+	 *
+	 * @param image - image to set the stroke style for.
+	 * @param color - color in a form of hash or 0xFFFFFFFF hex.
+	 * @param width - width of the stroke in pixels.
+	 */
 	setStrokeStyle: function(image, color, width){
 		width = width || image.context.lineWidth;
 		image.context.lineWidth 	= width;
@@ -517,16 +646,40 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Creates a color in a 0xFFFFFFFF form.
+	 *
+	 * @param r - red value of the color (0-255)
+	 * @param g - green value of the color (0-255)
+	 * @param b - bluee value of the color (0-255)
+	 * @param a - alpha value of the color (0-255)
+	 * @return - int color.
+	 */
 	makeColor: function(r, g, b, a){
 		a = a || 255;
 		return (a<<24)|((r&0xff)<<16)|((g&0xff)<<8)|((b&0xff));
 	},
 
+	/**
+	 * Creates a color in a 0xFFFFFFFF form.
+	 *
+	 * @param r - red value of the color (0-1)
+	 * @param g - green value of the color (0-1)
+	 * @param b - bluee value of the color (0-1)
+	 * @param a - alpha value of the color (0-1)
+	 * @return - int color.
+	 */
 	makeColorf: function(r, g, b, a){
 		a = a || 1;
 		return chao.makeColor(a*255, r*255, g*255, b*255);
 	},
 
+	/**
+	 * Creates a color string in "rgba(r,g,b,a)" format.
+	 *
+	 * @param hexColor - int color value to create a string from.
+	 * @return - color string in "rgba(r,g,b,a)" format.
+	 */
 	getRGBAString: function(hexColor){
 		var r = (hexColor>>16)&0xff;
 		var g = (hexColor>>8)&0xff;
@@ -535,26 +688,64 @@ var chao = {
 		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
 	},
 
+	/**
+	 * Gets a pixel from an image.
+	 *
+	 * @param image - image to get the pixel from.
+	 * @param x - x position of the pixel
+	 * @param y - y position of the pixel
+	 * @return - color of the pixel.
+	 */
 	getPixel: function(image, x, y){
 		var data = image.context.getImageData(x, y, 1, 1).data;
 		return (data[3]<<24)|((data[0]&0xff)<<16)|((data[1]&0xff)<<8)|((data[2]&0xff));
 	},
 
+	/**
+	 * Puts a pixel on an image. Super slow!
+	 *
+	 * @param image - image to put the pixel on.
+	 * @param x - x position of the pixel
+	 * @param y - y position of the pixel
+	 * @param color - color of the pixel.
+	 */
 	putPixel: function(image, x, y, color){
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, 1, 1);
 	},
 
+	/**
+	 * Clears the given image.
+	 *
+	 * @param image - image to clear.
+	 */
 	clearImage: function(image){
 		image.context.clearRect(0, 0, image.width, image.height);
 	},
 
+	/**
+	 * Clears an image using the given color.
+	 *
+	 * @param image - image to clear.
+	 * @param color - color to fill the image with.
+	 */
 	clearToColor: function(image, color){
 		image.context.clearRect(0, 0, image.width, image.height);
 		chao.setFillStyle(image, color);
 		image.context.fillRect(0, 0, image.width, image.height);
 	},
 
+	/**
+	 * Draws a straight line between given point.
+	 *
+	 * @param image - image to draw the line upon.
+	 * @param x1 - x from.
+	 * @param y1 - y from.
+	 * @param x2 - x to.
+	 * @param y2 - y to.
+	 * @param color - color of the line.
+	 * @param width - width of the line.
+	 */
 	drawLine: function(image, x1, y1, x2, y2, color, width){
 		chao.setStrokeStyle(image, color, width);
 		image.context.beginPath();
@@ -564,16 +755,44 @@ var chao = {
 		image.context.stroke();
 	},
 
+	/**
+	 * Draws a rectangle.
+	 *
+	 * @param image - image to draw the rectangle upon.
+	 * @param x - x position of the rectangle.
+	 * @param y - y position of the rectangle.
+	 * @param w - width of the rectangle.
+	 * @param h - height of the rectangle.
+	 * @param color - color to draw with.
+	 * @param width - stroke width.
+	 */
 	drawRect: function(image, x, y, w, h, color, width){
 		chao.setStrokeStyle(image, color, width);
 		image.context.strokeRect(x, y, w, h);
 	},
 
+	/**
+	 * Draws a filled rectangle.
+	 *
+	 * @param image - image to draw the rectangle upon.
+	 * @param x - x position of the rectangle.
+	 * @param y - y position of the rectangle.
+	 * @param w - width of the rectangle.
+	 * @param h - height of the rectangle.
+	 * @param color - color to draw with.
+	 */
 	drawRectFill: function(image, x, y, w, h, color){
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, w, h);
 	},
 
+	/**
+	 * Draws lines used by polygons drawing functions.
+	 *
+	 * @param image - image to draw upon.
+	 * @param vertices - number of vertices of the polygon.
+	 * @param points - array of points the polygon consists of.
+	 */
 	drawPolygonLines: function(image, vertices, points){
 		image.context.beginPath();
 		for (var i = 0; i < vertices; i++){
@@ -586,18 +805,37 @@ var chao = {
 		image.context.closePath();
 	},
 
+	/**
+	 * Draws a polygon.
+	 *
+	 * @param image - image to draw upon.
+	 * @param vertices - number of vertices of the polygon.
+	 * @param points - array of points the polygon consists of.
+	 * @param color - color to stroke with.
+	 */
 	drawPolygon: function(image, vertices, points, color, width){
 		chao.setStrokeStyle(image, color, width);
 		chao.drawPolygonLines(image, vertices, points);
 		image.context.stroke();
 	},
 
+	/**
+	 * Draws a polygon.
+	 *
+	 * @param image - image to draw upon.
+	 * @param vertices - number of vertices of the polygon.
+	 * @param points - array of points the polygon consists of.
+	 * @param color - color to fill the polygon with.
+	 */
 	drawPolygonFill: function(image, vertices, points, color){
 		chao.setFillStyle(image, color);
 		chao.drawPolygonLines(image, vertices, points);
 		image.context.fill();
 	},
 
+	/**
+	 * Creates pause fade image. Called by the engine every time the viewport resolution changes to fill the whole canvas.
+	 */
 	updatePauseFadeImage: function(){
 		var playWidth 	= chao.screenWidth * 0.3;
 		var playHeight  = chao.screenWidth * 0.3;
@@ -613,6 +851,12 @@ var chao = {
 		chao.drawPolygonFill(chao.imagePauseFade, 3, points, chao.makeColor(255, 255, 255, 170));
 	},
 
+	/**
+	 * Loads font from the given path.
+	 *
+	 * @param path - path to the font file.
+	 * @return - loaded font object.
+	 */
 	loadFont: function(path){
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
@@ -623,6 +867,12 @@ var chao = {
 		return {element: s, name: fontname, type: "fnt"};
 	},
 
+	/**
+	 * Loads font from base64 data.
+	 *
+	 * @param data - base64 encoded font data.
+	 * @return - loaded font object.
+	 */
 	loadBase64Font: function(data){
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
@@ -633,6 +883,20 @@ var chao = {
 		return {element: s, name: fontname, type: "fnt"};
 	},
 
+	/**
+	 * Draws text on the image wit hthe given font.
+	 *
+	 * @param image - image to draw upon.
+	 * @param font - font to draw with.
+	 * @param text - text to draw.
+	 * @param x - x position of the text.
+	 * @param y - y position of the text.
+	 * @param size - size of the text.
+	 * @param color - text color.
+	 * @param align - align of the text: "left", "right" or "center".
+	 * @param outlineColor - color of the text outline.
+	 * @param outlineSize - size of the text outline.
+	 */
 	drawText: function(image, font, text, x, y, size, color, align, outlineColor, outlineSize){
 		color 			= color || 0xff000000;
 		align 			= align || "left";
@@ -652,6 +916,12 @@ var chao = {
 		}
 	},
 
+	/**
+	 * Measures the text dimensions.
+	 * @param image - with the set font.
+	 * @param text - text to be measured.
+	 * @return - object containing dimensions of the text: {width, height}.
+	 */
 	getTextSize: function(image, text){
 		return {
 			width: 	image.context.measureText(text).width,
@@ -659,16 +929,25 @@ var chao = {
 		};
 	},
 
+	/**
+	 * Internal method to test if the font was loaded.
+	 */
 	getTestStringSize: function(){
-		var testString = "giItT1WQy@!-/#";
+		var testString = "giItT1WQy@!-/#"; // this only looks like it's random, but it's not!
 	},
 
+	/**
+	 * Resume audio playback if it was suspended.
+	 */
 	resumeAudioPlayback: function(){
 		if(chao.audioContext && chao.audioContext.state == "suspended"){
 			chao.audioContext.resume();
 		}
 	},
 
+	/**
+	 * 
+	 */
 	loadSound: function(key, path, volume, looped){
 
 		if(!chao.audioContext){
@@ -721,6 +1000,9 @@ var chao = {
 		return sound;
 	},
 
+	/**
+	 *
+	 */
 	loadMusic: function(key, oggPath, fallbackFormatPath, volume){
 		var sound;
 		if(chao.canPlayOgg){
@@ -732,6 +1014,9 @@ var chao = {
 		sound.isMusic = true;
 	},
 
+	/**
+	 *
+	 */
 	getSound: function(key){
 		if(typeof key === "string" || key instanceof String){
 			var n = chao.sounds.length;
@@ -747,6 +1032,9 @@ var chao = {
 		return key;
 	},
 
+	/**
+	 *
+	 */
 	playSound: function(key){
 		if(!chao.audioContext){
 			return;
@@ -789,6 +1077,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	setMute: function(value){
 		if(chao.muted != value){
 			chao.muted = value;
@@ -813,10 +1104,16 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	toggleMute: function(){
 		chao.setMute(!chao.muted);
 	},
 
+	/**
+	 *
+	 */
 	stopSound: function(key){
 		if(!chao.audioContext){
 			return;
@@ -828,6 +1125,9 @@ var chao = {
 		sound.startOffset = 0;
 	},
 
+	/**
+	 *
+	 */
 	getSoundPosition: function(key){
 		if(!chao.audioContext){
 			return;
@@ -836,6 +1136,9 @@ var chao = {
 		return chao.audioContext.currentTime - sound.startTime;
 	},
 
+	/**
+	 *
+	 */
 	setSoundPosition: function(key, position){
 		if(!chao.audioContext){
 			return;
@@ -847,6 +1150,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	playSoundFrom: function(key, position){
 		if(!chao.audioContext){
 			return;
@@ -860,6 +1166,9 @@ var chao = {
 		playSound(sound);
 	},
 
+	/**
+	 *
+	 */
 	pauseSound: function(key){
 		if(!chao.audioContext){
 			return;
@@ -872,6 +1181,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	restartSound: function(key){
 		if(!chao.audioContext){
 			return;
@@ -884,6 +1196,9 @@ var chao = {
 		playSound(sound);
 	},
 
+	/**
+	 *
+	 */
 	updateMouse: function(e){
 		chao.mouse.wheelDelta 			= 0;
 		chao.mouse.justPressed			= false;
@@ -894,10 +1209,16 @@ var chao = {
 		chao.mouse.justReleasedMiddle	= false;
 	},
 
+	/**
+	 *
+	 */
 	getEntityUnderMouse: function(){
 		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
 	},
 
+	/**
+	 *
+	 */
 	handleMouseDown: function(button){
 
 		// Fix for mobile Safari and desktop Chrome after update 66: resume suspended audio context on user interaction
@@ -920,6 +1241,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	handleMouseUp: function(button){
 		switch(button){
 			case 1:
@@ -945,6 +1269,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	handleMouseMove: function(x, y){
 		chao.mouse.x = x;
 		chao.mouse.y = y;
@@ -964,36 +1291,57 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	onMouseDown: function(e){
 		chao.handleMouseDown(e.which);
 		e.preventDefault();
 	},
 
+	/**
+	 *
+	 */
 	onMouseUp: function(e){
 		chao.handleMouseUp(e.which);
 		e.preventDefault();
 	},
 
+	/**
+	 *
+	 */
 	onMouseMove: function(e){
 		chao.handleMouseMove(e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 	
+	/**
+	 *
+	 */
 	onMouseWheel: function(e){
 		chao.mouse.wheelDelta = e.deltaY;
 		e.preventDefault();
 	},
 
+	/**
+	 *
+	 */
 	setMouseVisibility: function(value){
 		canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
+	/**
+	 *
+	 */
 	updateTouches: function(){
 		for(var i = 0; i < chao.touches.length; ++i){
 			chao.touches[i].justPressed = false;
 		}
 	},
 
+	/**
+	 *
+	 */
 	onTouchStart: function(e){
 		var touches = e.changedTouches;
 		for(var i = 0; i < touches.length; ++i){
@@ -1019,6 +1367,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	onTouchMove: function(e){
 		var touches = e.changedTouches;
 		for(var i = 0; i < touches.length; ++i){
@@ -1038,6 +1389,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	onTouchEnd: function(e){
 		var touches = e.changedTouches;
 		for(var i = 0; i < touches.length; ++i){
@@ -1057,6 +1411,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	getTouch: function(id){
 		for(var i = 0; i < chao.touches.length; ++i){
 			if(chao.touches[i].id == id){
@@ -1066,6 +1423,9 @@ var chao = {
 		return null;
 	},
 
+	/**
+	 *
+	 */
 	getTouchPos: function(touch){
 		return {
 			x: (touch.pageX / chao.screenScaleX) - chao.canvas.canvas.offsetLeft,
@@ -1073,6 +1433,9 @@ var chao = {
 		};
 	},
 
+	/**
+	 *
+	 */
 	updateKeys: function(){
 		for (var i = 0; i < 0x80; ++i){
 			chao.justPressed[i] = false;
@@ -1080,6 +1443,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	onKeyDown: function(e){
 		if(!chao.keys[e.keyCode]){
 			chao.justPressed[e.keyCode] = true;
@@ -1089,6 +1455,9 @@ var chao = {
 		e.preventDefault();
 	},
 
+	/**
+	 *
+	 */
 	onKeyUp: function(e){
 		chao.justReleased[e.keyCode] = true;
 		chao.keys[e.keyCode] = false;
@@ -1096,6 +1465,9 @@ var chao = {
 		e.preventDefault();
 	},
 
+	/**
+	 *
+	 */
 	resize: function(e){
 		if(chao.scalingMode <= chao.SCALING_MODE_NONE || chao.scalingMode >= chao.SCALING_MODE_END){
 			return;
@@ -1180,6 +1552,9 @@ var chao = {
 
 	},
 
+	/**
+	 *
+	 */
 	setCanvasScale: function(x, y){
 		chao.screenScaleX = x;
 		chao.screenScaleY = y;
@@ -1200,6 +1575,9 @@ var chao = {
 		canvas.style.transform 			= "scale(" + x + "," + y + ")";
 	},
 
+	/**
+	 *
+	 */
 	getLoadingProgress: function(){
 		var allData 	= chao.images.length + chao.sounds.length;
 		var loadedData 	= 0;
@@ -1219,40 +1597,64 @@ var chao = {
 		return loadedData / allData;
 	},
 
+	/**
+	 *
+	 */
 	getTimeDelta : function() {
 		return this.timeDelta * this.timeScale;
 	},
 
+	/**
+	 *
+	 */
 	getUnscaledDelta : function() {
 		return this.timeDelta;
 	},
 
+	/**
+	 *
+	 */
 	getRandom: function(max){ 
 		max -= 1;
 		return Math.round(max*Math.random()); 
 	},
 
+	/**
+	 *
+	 */
 	rad2deg: function(radians){
 		return radians/(180/Math.PI);
 	},
 
+	/**
+	 *
+	 */
 	clamp: function(value, min, max){
 		if(value < min) value = min;
 		if(value > max) value = max;
 		return value;
 	},
 
+	/**
+	 *
+	 */
 	log: function(thingie){
 		if(chao.loggingEnabled){
 			console.log(thingie);
 		}
 	},
 
+	/**
+	 *
+	 */
 	logHierarchy: function(entity, indent){
 		var logString = chao.logEntity(entity, 0);
 		chao.log(logString);
 	},
 
+	/**
+	 *
+	 */
 	logEntity: function(entity, indent){
 
 		entity 	= entity || chao.getCurrentState().rootEntity;
@@ -1282,6 +1684,9 @@ var chao = {
 		return "\n" + entityLog;
 	},
 
+	/**
+	 *
+	 */
 	installVisibilityHandler: function(){
 
 		if(chao.visibilityHandlerInstalled){
@@ -1326,6 +1731,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	updateTweens: function(){
 		var tweensToRemove = [];
 
@@ -1410,6 +1818,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	addTween: function(target, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback){
 		var newTween = {
 			target: 			target,
@@ -1431,6 +1842,9 @@ var chao = {
 		return newTween;
 	},
 
+	/**
+	 *
+	 */
 	removeTween: function(tween){
 		var i = chao.tweens.indexOf(tween);
 		if(i != -1){
@@ -1438,6 +1852,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	removeTweensFromEntity: function(entity){
 		var tweensToRemove = [];
 
@@ -1453,6 +1870,9 @@ var chao = {
 		}
 	},
 
+	/**
+	 *
+	 */
 	finishAllTweens: function(includeLoops){
 		for(var i = 0; i < chao.tweens.length; ++i){
 			var tween = chao.tweens[i];
@@ -1464,17 +1884,23 @@ var chao = {
 
 	},
 
+	/**
+	 *
+	 */
 	clearTweens: function(){
 		chao.tweens = [];
 	},
 
+	/**
+	 * Sub-namespace containing some useful helper functions.
+	 */
 	helpers: {
-		createImage: function(name, image, x, y){
-			return (new Entity(name, x, y)).addComponent(new ComponentImage(image));
+		createImage: function(entityName, image, x, y){
+			return (new Entity(entityName, x, y)).addComponent(new ComponentImage(image));
 		},
 
-		createText: function(name, x, y, font, text, size){
-			return (new Entity(name, x, y)).addComponent(new ComponentText(font, text, size));
+		createText: function(entityName, x, y, font, text, size){
+			return (new Entity(entityName, x, y)).addComponent(new ComponentText(font, text, size));
 		},
 
 		fadeEntityOut: function(entity, time){
@@ -1496,26 +1922,25 @@ var chao = {
 /**
  * A basic game entity.
  *
- * @class
- * @param {float} x - horizontal position of the entity
- * @param {float} y - vertical position of the entity
+ * @param x - horizontal position of the entity
+ * @param y - vertical position of the entity
  */
 function Entity(name, x, y){
-	this.name 			= name || "Entity",
-	this.x 				= x || 0,
-	this.y 				= y || 0,
-	this.alpha 			= 1.0;
-	this.width 			= 0,
-	this.height 		= 0,
-	this.scaleX 		= 1.0;
-	this.scaleY 		= 1.0;
-	this.rotation 		= 0.0;
-	this.children 		= [],
-	this.components 	= [],
-	this.parent 		= null,
-	this.visible 		= true,
-	this.clickable 		= false,
-	this.keepClickFocus	= false; // When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
+	this.name 			= name || "Entity",	// Name by which this component is identified.
+	this.x 				= x || 0,			// Horizontal position of this entity, from the left edge of the viewport.
+	this.y 				= y || 0,			// Vertical position of this entity, from the top edge of the viewport.
+	this.alpha 			= 1.0;				// Entity's opacity.
+	this.width 			= 0,				// Width of the entity.
+	this.height 		= 0,				// Height of the enity.
+	this.scaleX 		= 1.0;				// Horizontal scale.
+	this.scaleY 		= 1.0;				// Vertical scale.
+	this.rotation 		= 0.0;				// Angle, in degrees.
+	this.children 		= [],				// Sub-entities attached to this entity. They will follow this entity's position and alpha values.
+	this.components 	= [],				// Components attached to this entity.
+	this.parent 		= null,				// Parent object.
+	this.visible 		= true,				// Is rendering enabled for this entity.
+	this.clickable 		= false,			// When true, this entity will receive mouse/touch input events.
+	this.keepClickFocus	= false; 			// When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
 
 	this.destroy = function(){
 		for(var i = 0; i < this.components.length; ++i){
@@ -1745,12 +2170,11 @@ function Entity(name, x, y){
 /**
  * Renders images, static and animated.
  *
- * @class
  * @param key - name/id of the image to be used
  */
 function ComponentImage(key, frameWidth, frameHeight){
-	this.name 				= "Image";
-	this.entity 			= null;
+	this.name 				= "Image"; 		// Name by which this component is identified.
+	this.entity 			= null; 		// The Entity this component is attached to.
 	this.image 				= null;
 	this.imageKey 			= key;
 
@@ -1906,16 +2330,19 @@ function ComponentImage(key, frameWidth, frameHeight){
 }
 
 /**
- * For text rendering.
+ * Text rendering entity.
+ * Use "\n" to break lines.
+ * You can colorize parts of the text using color codes, eg. `2 is a color code for green and `` removes the effect of the last color code. 
+ * Color codes are defined in colorCodes array in the chao namespace.
+ * Example: "This is a text\nwith a `14yellow`` word inside." will create a two-line text object with the "yellow" word colored yellow.
  *
- * @class
  * @param font - font used to display the text
  * @param text - text to be displayed
  * @param size - size of the text
  */
 function ComponentText(font, text, size){
-	this.name				= "Text";
-	this.entity				= null;
+	this.name				= "Text";		// Name by which this component is identified.
+	this.entity				= null;			// The Entity this component is attached to.
 	
 	this._text				= text;
 	this._font				= font;
@@ -2086,24 +2513,24 @@ ComponentText.prototype = {
 /**
  * Simple, clickable button.
  *
- * @class
- * @param image name/id of the image to be used
+ * @param image - name/id of the image to be used.
  */
 function ComponentButton(image){
-	this.name 			= "Button";
-	this.entity 		= null;
-	this.imageKey 		= image;
-	this.image 			= null;
-	this.imagePressed 	= null;
-	this.text 			= null;
+	this.name 			= "Button";		// Name by which this component is identified.
+	this.entity 		= null;			// The Entity this component is attached to.
+	this.imageKey 		= image;		// Name of the image used as this button's graphic.
+	this.image 			= null;			// Image used as this button's graphic.
+	this.imagePressed 	= null;			// Image used as this button's pressed state graphic.
+	this.text 			= null;			// Text displayed on top this button.
+
+	this.disableDim		= false;		// When false and imagePressed is not set, the button will react to a press by dimming itself.
+	this.disabled 		= false;		// When true, the button will ignore all input.
+
+	this.onPress 		= function(button) {};	// Function called when this button is pressed.
+	this.onHold 		= function(button) {};	// Function called when this button stays pressed.
+	this.onReleased 	= function(button) {};	// Function called when this button stops being pressed.
 
 	this.pressed 		= false;
-	this.dimDisabled	= false;
-	this.disabled 		= false;
-
-	this.onPress 		= function(button) {};
-	this.onHold 		= function(button) {};
-	this.onReleased 	= function(button) {};
 
 	this.create = function(){
 		this.setImage(this.imageKey);
@@ -2155,7 +2582,7 @@ function ComponentButton(image){
 		if(this.imagePressed){
 			this.image.entity.visible 			= buttonAlpha > 0.5;
 			this.imagePressed.entity.visible 	= buttonAlpha <= 0.5;
-		} else {
+		} else if(!this.disableDim){
 			this.image.entity.alpha = buttonAlpha;
 			if(this.text){
 				this.text.entity.alpha = buttonAlpha;
@@ -2219,12 +2646,10 @@ function ComponentButton(image){
 
 /**
  * A camera component.
- *
- * @class
  */
 function ComponentCamera(){
-	this.name 					= "Camera";
-	this.entity 				= null;
+	this.name 					= "Camera";		// Name by which this component is identified.
+	this.entity 				= null;			// The Entity this component is attached to.
 
 	this.trackedEntity			= null;
 	this.trackPositionBuffer	= [];
@@ -2353,12 +2778,11 @@ function ComponentCamera(){
 /**
  * A single, basic particle.
  *
- * @class
- * @param image name/id of the image to be used. Will try to use existing image component when ommited.
+ * @param image - name/id of the image to be used. Will try to use existing image component when ommited.
  */
 function ComponentParticle(image){
-	this.name 				= "Particle";
-	this.entity 			= null;
+	this.name 				= "Particle";	// Name by which this component is identified.
+	this.entity 			= null;			// The Entity this component is attached to.
 
 	this.image				= null;
 	this.imageKey			= image;
