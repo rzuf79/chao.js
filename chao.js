@@ -2425,8 +2425,8 @@ function ComponentImage(key, frameWidth, frameHeight){
 	this.flipX 				= false;
 	this.flipY 				= false;
 
-	this.scrollFactorX		= 1.0; // How much the Entity will be affected by the camera crolling horizontally (e.g. 0=no movement and 1=same movement as the camera
-	this.scrollFactorY		= 1.0; // How much the Entity will be affected by the camera crolling vertically (e.g. 0=no movement and 1=same movement as the camera
+	this.scrollFactorX		= 1.0; // How much the Entity will be affected by the camera crolling horizontally (e.g. 0=no movement and 1=same movement as the camera.
+	this.scrollFactorY		= 1.0; // How much the Entity will be affected by the camera crolling vertically (e.g. 0=no movement and 1=same movement as the camera.
 
 	this.anims 				= [];
 	this.currentAnim		= -1;
@@ -2435,7 +2435,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 	this.animPaused 		= false;
 	this.animFinished		= false;
 
-	this.updateOnImageLoad 	= false; // internal, handles the images that were not yet loaded
+	this.ready 				= true; // Syncs with the used image's "ready" state.
 
 	this.create = function(){
 		this.setImage(chao.getImage(this.imageKey), this.frameWidth, this.frameHeight);
@@ -2482,8 +2482,8 @@ function ComponentImage(key, frameWidth, frameHeight){
 
 	this.update = function(){
 
-		if(this.updateOnImageLoad && this.image.ready){
-			this.updateOnImageLoad = false;
+		if(!this.ready && this.image.ready){
+			this.ready = true;
 			if(this.entity.width == -1){
 				this.entity.width = this.image.width;
 			}
@@ -2525,7 +2525,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 		this.entity.height = frameHeight || this.image.height;
 
 		if(!this.image.ready && (!frameWidth || !frameHeight)){
-			this.updateOnImageLoad = true;
+			this.ready = false;
 		}
 	}
 
