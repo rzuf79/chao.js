@@ -68,8 +68,6 @@ var chao = {
 			Date.now = function now() { return new Date().getTime(); };
 		}
 
-		var AudioContext = window.AudioContext || window.webkitAudioContext || false;
-
 		var audioTest = document.createElement('audio');
 		chao.canPlayOgg = !!(audioTest.canPlayType && audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/no/, ''));
 
@@ -138,11 +136,10 @@ var chao = {
 		chao.FPSCounter 		= 0;										// Internal - for FPS counting.
 		chao.FPSTimer 			= 0;										// Internal - for FPS counting.
 
-		if(AudioContext){
-			chao.audioContext 	= new AudioContext();						// Internal - audioContext used to play sounds.
-		}
+		chao.maxSoundChannels	= 6;										// How many times a single sound can be played simultaneously.
 		chao.sounds 			= [];										// Array containing all the loaded sounds.
 		chao.currentMusic 		= null;										// Sound that is currently playing as a music.
+		chao.musicWasSupressed	= false;									// If music was supressed for some reason. Will try to play it again on the first user input.
 		chao.muted 				= false;									// Are the sounds muted right now. Use chao.setMute to change this.
 		chao.muteOnFocusLost	= true;										// Is the game supposed to be silent when focus i lost.
 		chao.wasMutedOnFocusLost= false;									// Internal - helps to figuer out what to do with the sound when we get the focus back.
@@ -1011,69 +1008,45 @@ var chao = {
 	},
 
 	/**
-	 * Resumes audio playback if it was suspended.
-	 */
-	resumeAudioPlayback: function(){
-		if(AudioContext && chao.audioContext && chao.audioContext.state === "suspended"){
-			chao.audioContext.resume();
-		}
-	},
-
-	/**
 	 * Loads a sound file.
 	 *
 	 * @param key - String by which this sound shall be identified.
 	 * @param path - Path to the sound file.
-	 * @param volume - Volume at which the sound will be played.
-	 * @param looped - Is the sound looped.
+	 * @param volume - Volume at which the sound will be played. Optional.
+	 * @param looped - Is the sound looped. Optional.
+	 * @param channels - How many times this sound could be played simultaneously. Optional.
 	 * @return - Loaded sound object.
 	 */
-	loadSound: function(key, path, volume, looped){
-
-		if(!chao.audioContext){
-			return;
+	loadSound: function(key, path, volume, looped, channels){
+		if(channels < 1){
+			chao.log("Can't add a sound with no channels, you silly goose.");
 		}
 
 		if(chao.getSound(key) !== null){
 			chao.log("There is already a sound loaded with this key: \"" + key + "\".");
 		}
 
-		var sound 	= {};
+		var sound 				= {};
 
-		sound.key 			= key;
-		sound.volumeNode 	= chao.audioContext.createGain();
-		sound.panNode 		= chao.audioContext.createStereoPanner ? chao.audioContext.createStereoPanner() : chao.audioContext.createPanner();
-		sound.soundNode 	= null;
-		sound.path 			= null;
-		sound.buffer 		= null;
-		sound.loop 			= false;
-		sound.playing 		= false;
-		sound.isMusic 		= false;
+		sound.key 				= key;
+		sound.channels			= [];
+		sound.currentChannel	= 0;
+		sound.isMusic 			= false;
+		sound.volume 			= volume || 1;
+		sound.ready 			= false;
 
-		sound.volume 		= volume || 1;
-		sound.pan 			= 0;
-		sound.startTime		= 0;
-		sound.startOffset 	= 0;
+		for(var i = 0; i < (channels || chao.maxSoundChannels); ++i){
+			sound.channels.push(new Audio(path));
 
-		sound.looped 		= looped || false;
+			if(looped){
+				sound.channels[i].addEventListener('ended', function(){ this.currentTime=0; }, false);
+				sound.channels[i].loop = true;
+			}
+		}
 
-		sound.ready 		= false;
-
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", path, true);
-		xhr.responseType = "arraybuffer";
-		xhr.addEventListener("load", function() {
-			chao.audioContext.decodeAudioData(
-				xhr.response, 
-				function(buffer){
-					sound.buffer 	= buffer;
-					sound.ready 	= true;
-				},
-				function(error){
-					chao.log("Sound could not be decoded: \"" + path + "\".");
-				});
-		});
-		xhr.send();
+		sound.channels[0].onloadeddata = function(){
+			sound.ready = true;
+		}
 
 		chao.sounds.push(sound);
 
@@ -1092,9 +1065,9 @@ var chao = {
 	loadMusic: function(key, oggPath, fallbackFormatPath, volume){
 		var sound;
 		if(chao.canPlayOgg){
-			sound = chao.loadSound(key, oggPath, volume, true);
+			sound = chao.loadSound(key, oggPath, volume, true, 1);
 		} else if(fallbackFormatPath){
-			sound = chao.loadSound(key, fallbackFormatPath, volume, true);
+			sound = chao.loadSound(key, fallbackFormatPath, volume, true, 1);
 		}
 
 		sound.isMusic = true;
@@ -1129,9 +1102,6 @@ var chao = {
 	 * @param key - Sound object of string id of the sound to be played.
 	 */
 	playSound: function(key){
-		if(!chao.audioContext){
-			return;
-		}
 		var sound = chao.getSound(key);
 		if(!sound){
 			chao.log("There is no loaded sound with this key: \"" + key + "\".");
@@ -1144,26 +1114,29 @@ var chao = {
 			chao.currentMusic = sound;
 		}
 
-		sound.soundNode 		= chao.audioContext.createBufferSource();
-		sound.soundNode.buffer 	= sound.buffer;
-		sound.soundNode.loop 	= sound.looped;
-		sound.soundNode.addEventListener("ended", function(){sound.playing = false;});
-		sound.playing 			= !chao.muted;
-
-		sound.startTime 		= chao.audioContext.currentTime;
-
-		sound.soundNode.connect(sound.volumeNode);
-		sound.volumeNode.connect(sound.panNode);
-		sound.panNode.connect(chao.audioContext.destination);
-
-		if(sound.volumeNode.gain.setValueAtTime){
-			sound.volumeNode.gain.setValueAtTime(sound.volume, 0);
-		} else {
-			sound.volumeNode.gain.value = sound.volume;
-		}
-
 		if(sound.isMusic || !chao.muted){
-			sound.soundNode.start(0, sound.startOffset % sound.buffer.duration);
+			// Play the sound. Don't if sound it muted, but if it's a music, play it regardless. It will be paused in the next lines. :)
+			
+			sound.currentChannel ++;
+			if(sound.currentChannel >= sound.channels.length){
+				sound.currentChannel = 0;
+			}
+
+			sound.channels[sound.currentChannel].volume = sound.volume;
+			var promise = sound.channels[sound.currentChannel].play();
+
+			if (promise !== undefined) {
+				promise.then(_ => {
+					// Whoa! We are fine!
+				}).catch(error => {
+					// Was unable to play sound. :(
+					// Prolly the browser is messing with audio permissions. Will try to remsume it on the first user's input.
+					if(sound.isMusic){
+						chao.musicWasSupressed = true;
+					}
+				});
+			}
+
 		}
 		if(sound.isMusic && chao.muted){
 			chao.pauseSound(sound);
@@ -1176,10 +1149,6 @@ var chao = {
 	 * @param value - True stops and prevents further audio playback, also pauses the music. Pass false to resume playback.
 	 */
 	setMute: function(value){
-		if(!chao.audioContext){
-			return;
-		}
-
 		if(chao.muted != value){
 			chao.muted = value;
 
@@ -1216,14 +1185,12 @@ var chao = {
 	 * @param key - Sound object or string id of the sound to stop.
 	 */
 	stopSound: function(key){
-		if(!chao.audioContext){
-			return;
-		}
 		var sound = chao.getSound(key);
-		if(sound.playing){
-			sound.soundNode.stop();
+		
+		for(var i = 0; i < sound.channels.length; ++i){
+			sound.channels[i].pause();
+			sound.channels[i].currentTime = 0;
 		}
-		sound.startOffset = 0;
 	},
 
 	/**
@@ -1233,11 +1200,8 @@ var chao = {
 	 * @return - Position of the sound.
 	 */
 	getSoundPosition: function(key){
-		if(!chao.audioContext){
-			return;
-		}
 		var sound = chao.getSound(key);
-		return chao.audioContext.currentTime - sound.startTime;
+		return sound.channels[sound.currentChannel].currentTime;
 	},
 
 	/**
@@ -1247,33 +1211,8 @@ var chao = {
 	 * @param position - Position to set.
 	 */
 	setSoundPosition: function(key, position){
-		if(!chao.audioContext){
-			return;
-		}
 		var sound = chao.getSound(key);
-		sound.startOffset = position;
-		if(sound.playing){
-			chao.playSoundFrom(key, position);
-		}
-	},
-
-	/**
-	 * Play a sound from given position.
-	 *
-	 * @param key - Sound object or string id of the sound.
-	 * @param position - Position to play from.
-	 */
-	playSoundFrom: function(key, position){
-		if(!chao.audioContext){
-			return;
-		}
-		var sound = chao.getSound(key);
-		
-		if(sound.playing){
-			sound.soundNode.stop(0);
-		}
-		sound.startOffset = position;
-		playSound(sound);
+		sound.channels[sound.currentChannel].currentTime = position;
 	},
 
 	/**
@@ -1282,32 +1221,18 @@ var chao = {
 	 * @param key - Sound object or string id of the sound.
 	 */
 	pauseSound: function(key){
-		if(!chao.audioContext){
-			return;
-		}
 		var sound = chao.getSound(key);
-		if(sound.playing){
-			sound.soundNode.stop();
-			sound.startOffset += chao.audioContext.currentTime - sound.startTime;
-			sound.playing = false;
-		}
+		sound.channels[sound.currentChannel].pause();
 	},
 
 	/**
-	 * Plays a sound fhrom the beginning.
-	 *
-	 * @param key - Sound object or string id of the sound.
+	 * Resumes the music playback if needed.
 	 */
-	restartSound: function(key){
-		if(!chao.audioContext){
-			return;
+	resumeMusicPlaybackIfNeeded: function(){
+		if(chao.musicWasSupressed){
+			chao.musicWasSupressed = false;
+			chao.playSound(chao.currentMusic);
 		}
-		var sound = chao.getSound(key);
-		if(sound.playing){
-			sound.soundNode.stop();
-		}
-		sound.startOffset = 0;
-		playSound(sound);
 	},
 
 	/**
@@ -1338,9 +1263,7 @@ var chao = {
 	 * @param button - Id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
 	 */
 	handleMouseDown: function(button){
-
-		// Fix for mobile Safari and desktop Chrome after update 66: resume suspended audio context on user interaction
-		chao.resumeAudioPlayback();
+		chao.resumeMusicPlaybackIfNeeded();
 
 		switch(button){
 			case 1:
