@@ -29,6 +29,7 @@
 		this.name 				= "Buba";
 
 		this.create = function(){
+			this.shaker = this.entity.addComponent(new ComponentShake(5, 0.25, false));
 			this.image = this.entity.addComponent(new ComponentImage("buba", 64, 64));
 
 			this.image.addAnim("idle", [0], 0, false);
@@ -71,6 +72,11 @@
 			if(direction.indexOf("e") != -1){
 				this.entity.x += currSpeed;
 				this.image.flipX = false;
+			}
+
+
+			if(chao.justPressed[chao.KEY_Z]){
+				this.shaker.shake();
 			}
 
 		}
@@ -199,7 +205,7 @@
 
 
 			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
-				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy",
+				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy\n[S] screen shAaaAaaAkeeEEeE!",
 				20);
 			this.add(debugInfo.entity);
 			debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
@@ -220,6 +226,10 @@
 			if(chao.justPressed[chao.KEY_SPACE]){
 				// chao.finishAllTweens(true);
 				this.camera.slideToPosition(0, 0, 2.5, chao.INTERPOLATE_BOUNCE);
+			}
+			if(chao.justPressed[chao.KEY_S]){
+				// chao.finishAllTweens(true);
+				chao.helpers.shake(this.camera.entity, 15, 0.5, true);
 			}
 
 			this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, 214, 610);

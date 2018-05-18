@@ -1014,7 +1014,7 @@ var chao = {
 	 * Resumes audio playback if it was suspended.
 	 */
 	resumeAudioPlayback: function(){
-		if(chao.audioContext && chao.audioContext.state === "suspended"){
+		if(AudioContext && chao.audioContext && chao.audioContext.state === "suspended"){
 			chao.audioContext.resume();
 		}
 	},
@@ -1176,6 +1176,10 @@ var chao = {
 	 * @param value - True stops and prevents further audio playback, also pauses the music. Pass false to resume playback.
 	 */
 	setMute: function(value){
+		if(!chao.audioContext){
+			return;
+		}
+
 		if(chao.muted != value){
 			chao.muted = value;
 
@@ -2018,9 +2022,9 @@ var chao = {
 			finishCallback: 	finishCallback,						// Function to be called when the tween has finished its job.
 
 			finished: 			false,								// Just in case you would like to know for any reason.
+			useUnscaledTime: 	false,								// If set, the unscaled time delta will be used.
 
 			timer: 				0,
-			useUnscaledTime: 	false,
 			direction: 			1,
 
 		}
@@ -2157,6 +2161,28 @@ var chao = {
 			chao.addTween(entity, "y", entity.y-amplitude/2, entity.y+amplitude/2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
 		},
 
+		/**
+		 * Shake an entity. This is done by adding a disposable ComponentShake to the entity that will vanish after the shake is performed.
+		 *
+		 * @param entity - An entity to be shaken.
+		 * @param force - Max shake range in pixels.
+		 * @param time - How long the the shaking will last, in seconds.
+		 * @param damped - Is the shake supposed to be damped over time.
+		 */
+		shake: function(entity, force, time, damped){
+			var shakerName = "Disposable Shake";
+
+			var oldShake = entity.getComponentByName(shakerName);
+			if(oldShake != null){
+				entity.removeComponent(oldShake);
+			}
+
+			var newShake 		= new ComponentShake(force, time, damped);
+			newShake.name 		= shakerName;
+			newShake.disposable = true;
+			entity.addComponent(newShake);
+			newShake.shake();
+		}
 	}
 
 };
@@ -3348,3 +3374,86 @@ function ComponentParticle(image){
 ComponentParticle.FADE_MODE_NONE		= 0; // No fade at all shall be applied.
 ComponentParticle.FADE_MODE_LINEAR		= 1; // The particle will progressively.
 ComponentParticle.FADE_MODE_LAST_SECOND	= 2; // The particle will fade in span of the last second of its life.
+
+/**
+ * Used to shake entities around.
+ *
+ * @param force - Max shake range in pixels.
+ * @param time - How long the the shaking will last, in seconds.
+ * @param damped - Is the shake supposed to be damped over time.
+ */
+function ComponentShake(force, time, damped){
+	this.name 					= "Shake";							// Name by which this component is identified.
+	this.entity 				= null;								// The Entity this component is attached to.
+
+	this.damped					= damped;							// Is the shake supposed to be damped over time.
+	this.force					= force || 0.0;						// Max shake range in pixels.
+	this.duration				= time || 0.0;						// How long the the shaking will last, in seconds.
+	this.useUnscaledTime		= false;							// If set, the unscaled time delta will be used.
+
+	this.disposable				= false;							// If true, this component will destroy itself after performing a single shake.
+
+	this.entityPosition 		= {x:0, y:0};						// Internal for remembering the original position of the entity.
+	this.shakenPosition 		= {x:0, y:0};						// Watches out for position changes that was not performed by this component.
+	this.timer					= 0.0;								// Internal timer.
+
+	/**
+	 * Called every frame if the entity is visible in the hierarchy.
+	 */
+	this.update = function(){
+		if(this.timer > 0.0){
+			this.timer -= this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
+			if(this.timer <= 0.0){
+				this.timer = 0.0;
+				this.entity.x = this.entityPosition.x;
+				this.entity.y = this.entityPosition.y;
+
+				if(this.disposable){
+					this.entity.removeComponent(this);
+				}
+
+				return;
+			}
+
+			// Put this component at the end if it's not. So we can take into account the position changes made by other components.
+			var id = this.entity.components.indexOf(this);
+			if(id != this.entity.components.length-1){
+				this.entity.components.splice(id, 1);
+				this.entity.components.push(this);
+			}
+
+			var range = this.force;
+			if(this.damped){
+				range *= this.timer / this.duration;
+			}
+
+			// check for entity movement since the last frame.
+			if(this.shakenPosition.x != this.entity.x || this.shakenPosition.y != this.entity.y){
+				this.entityPosition = {x:this.entity.x, y: this.entity.y};
+			}
+
+			var xChange = chao.getRandom(range * 2) - range;
+			var yChange = chao.getRandom(range * 2) - range;
+
+			this.entity.x = this.shakenPosition.x = this.entityPosition.x + xChange;
+			this.entity.y = this.shakenPosition.y = this.entityPosition.y + yChange;
+		}		
+	}
+
+	/**
+	 * Start the shake! You don't have to pass the arguments every time.
+	 */
+	this.shake = function(force, time, damped){
+		if(force) this.force = force;
+		if(time) this.duration = time;
+		if(damped) this.damped = damped;
+
+		if(this.timer <= 0.0){
+			this.entityPosition = {x:this.entity.x, y: this.entity.y};
+		}
+
+		this.timer = this.duration;
+	}
+
+
+}
