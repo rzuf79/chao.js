@@ -68,9 +68,6 @@ var chao = {
 			Date.now = function now() { return new Date().getTime(); };
 		}
 
-		var audioTest = document.createElement('audio');
-		chao.canPlayOgg = !!(audioTest.canPlayType && audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/no/, ''));
-
 		// Engine inits:
 		var canvas = document.createElement("canvas");
 		canvas.setAttribute("width", width);
@@ -1058,20 +1055,25 @@ var chao = {
 	 * Similar to the loadSound, but sets some music-specific thing up and allows passing a fallback file if the default one is not supported by current browser/device.
 	 *
 	 * @param key - String by which this sound shall be identified.
-	 * @param path - Path to the ogg audio file. (to simplify things up, ogg is the default music file format in chao)
-	 * @param fallbackFormatPath - Path to a fallback audio file, used if oggs cannot be played.
+	 * @param path - Path to the audio file.
+	 * @param fallbackFormatPath - Path to a fallback audio file, used if the main audio file cannot be played because the browser desen't support it.
 	 * @param volume - Volume at which the music will be played.
 	 * @return - Loaded sound object.
 	 */
-	loadMusic: function(key, oggPath, fallbackFormatPath, volume){
-		var sound;
-		if(chao.canPlayOgg){
-			sound = chao.loadSound(key, oggPath, volume, true, 1);
-		} else if(fallbackFormatPath){
+	loadMusic: function(key, path, fallbackFormatPath, volume){
+		var sound = null;
+		var mainExtension = path.split('.').pop();
+		var fallbackExtension = fallbackFormatPath ? fallbackFormatPath.split('.').pop() : "";  
+
+		if(chao.canPlayAudioType(mainExtension)){
+			sound = chao.loadSound(key, path, volume, true, 1);
+		} else if(chao.canPlayAudioType(fallbackExtension)){
 			sound = chao.loadSound(key, fallbackFormatPath, volume, true, 1);
 		}
 
-		sound.isMusic = true;
+		if(sound){
+			sound.isMusic = true;
+		}
 
 		return sound;
 	},
@@ -1243,6 +1245,53 @@ var chao = {
 			chao.musicWasSupressed = false;
 			chao.playSound(chao.currentMusic);
 		}
+	},
+
+	/**
+	 * Checks if a sound file of a given format can be played in the current environment.
+	 *
+	 * @param extension - String containing the file extension.
+	 * @return - True if a file of given extension can be played.
+	 */
+	canPlayAudioType: function(extension){
+		var audioTest = document.createElement('audio');
+		if(!audioTest || !audioTest.canPlayType){
+			return false;
+		}
+
+		switch(extension){
+			case "ogg": {
+				if(audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/, '')){
+				   return true;
+				}
+				break;
+			}
+			case "opus": {
+				if(audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '') || audioTest.canPlayType('audio/opus;').replace(/^no$/, '')){
+					return true;
+				}
+				break;
+			}
+			case "mp3": {
+				if(audioTest.canPlayType('audio/mpeg;').replace(/^no$/, '')){
+					return true;
+				}
+				break;
+			}
+			case "wav": {
+				if(audioTest.canPlayType('audio/wav; codecs="1"').replace(/^no$/, '')){
+					return true;
+				}
+				break;
+			}
+			case "m4a": {
+				if(audioTest.canPlayType('audio/x-m4a;') || audioTest.canPlayType('audio/aac;').replace(/^no$/, '')){
+					return true;
+				}
+			}
+		}
+
+		return false;
 	},
 
 	/**
@@ -2682,7 +2731,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 
 	/**
 	 * Sets the paused state of the current anim playback.
- 	 * @param value - A new pause state.
+	 * @param value - A new pause state.
 	 */
 	this.setAnimPause = function(value){
 		this.animPaused = value;
