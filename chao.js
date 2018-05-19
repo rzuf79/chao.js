@@ -89,18 +89,6 @@ var chao = {
 			width: 		width,
 			height: 	height,
 		};
-	 
-		canvas.addEventListener("mousedown", chao.onMouseDown);
-		window.addEventListener("mouseup", chao.onMouseUp);
-		canvas.addEventListener("mousemove", chao.onMouseMove);
-		window.addEventListener('contextmenu',function(e){e.preventDefault();});
-		window.addEventListener("wheel", chao.onMouseWheel);
-		canvas.addEventListener("touchstart", chao.onTouchStart);
-		canvas.addEventListener("touchmove", chao.onTouchMove);
-		window.addEventListener("touchend", chao.onTouchEnd);
-		window.addEventListener("keyup", chao.onKeyUp);
-		window.addEventListener("keydown", chao.onKeyDown);
-		window.addEventListener("resize", chao.resize);
 
 		chao.loggingEnabled 	= true;										// Enable debug logging to browser's console.
 		
@@ -136,7 +124,6 @@ var chao = {
 		chao.FPSCounter 		= 0;										// Internal - for FPS counting.
 		chao.FPSTimer 			= 0;										// Internal - for FPS counting.
 
-		chao.maxSoundChannels	= 6;										// How many times a single sound can be played simultaneously.
 		chao.sounds 			= [];										// Array containing all the loaded sounds.
 		chao.currentMusic 		= null;										// Sound that is currently playing as a music.
 		chao.musicWasSupressed	= false;									// If music was supressed for some reason. Will try to play it again on the first user input.
@@ -192,8 +179,21 @@ var chao = {
 				chao.drawRectFill(chao.canvas, barX, barY, barWidth * chao.getLoadingProgress(), barHeight, barColor)
 			},
 		});
+
 		chao.switchState({});
-		chao.resize();
+
+		// Install all the listeners.
+		canvas.addEventListener("mousedown", chao.onMouseDown);
+		window.addEventListener("mouseup", chao.onMouseUp);
+		canvas.addEventListener("mousemove", chao.onMouseMove);
+		window.addEventListener('contextmenu',function(e){e.preventDefault();});
+		window.addEventListener("wheel", chao.onMouseWheel);
+		canvas.addEventListener("touchstart", chao.onTouchStart);
+		canvas.addEventListener("touchmove", chao.onTouchMove);
+		window.addEventListener("touchend", chao.onTouchEnd);
+		window.addEventListener("keyup", chao.onKeyUp);
+		window.addEventListener("keydown", chao.onKeyDown);
+		window.addEventListener("resize", chao.resize);
 
 	},
 
@@ -265,7 +265,6 @@ var chao = {
 	 * Main game loop.
 	 */
 	update: function(){
-
 		if(chao.enableFontsLoadCheck){
 			chao.updateFontsLoading();
 		}
@@ -380,9 +379,7 @@ var chao = {
 		if(state.create){
 			state.create();
 		}
-		if(state.resize){
-			state.resize();
-		}
+		chao.resize();
 	},
 
 	/**
@@ -1012,9 +1009,9 @@ var chao = {
 	 *
 	 * @param key - String by which this sound shall be identified.
 	 * @param path - Path to the sound file.
-	 * @param volume - Volume at which the sound will be played. Optional.
-	 * @param looped - Is the sound looped. Optional.
-	 * @param channels - How many times this sound could be played simultaneously. Optional.
+	 * @param volume - Volume at which the sound will be played. Defaults to 1.0 when not provided.
+	 * @param looped - Is the sound looped. Defaults to false.
+	 * @param channels - How many times this sound could be played simultaneously. Defaults to 1.
 	 * @return - Loaded sound object.
 	 */
 	loadSound: function(key, path, volume, looped, channels){
@@ -1035,17 +1032,21 @@ var chao = {
 		sound.volume 			= volume || 1;
 		sound.ready 			= false;
 
-		for(var i = 0; i < (channels || chao.maxSoundChannels); ++i){
-			sound.channels.push(new Audio(path));
-
-			if(looped){
-				sound.channels[i].addEventListener('ended', function(){ this.currentTime=0; }, false);
-				sound.channels[i].loop = true;
-			}
-		}
+		sound.channels.push(new Audio(path));
 
 		sound.channels[0].onloadeddata = function(){
 			sound.ready = true;
+
+			for(var i = 0; i < (channels || 1); ++i){
+				if(i > 0){
+					sound.channels.push(new Audio(path));
+				}
+
+				if(looped){
+					sound.channels[i].addEventListener('ended', function(){ this.currentTime=0; }, false);
+					sound.channels[i].loop = true;
+				}
+			}
 		}
 
 		chao.sounds.push(sound);
@@ -1100,8 +1101,14 @@ var chao = {
 	 * Plays a sound.
 	 *
 	 * @param key - Sound object of string id of the sound to be played.
+	 * @param force - When true, the sound will be forcibly played from the start. Deafults to true.
 	 */
-	playSound: function(key){
+	playSound: function(key, force){
+
+		if(force === undefined){
+			force = true;
+		}
+
 		var sound = chao.getSound(key);
 		if(!sound){
 			chao.log("There is no loaded sound with this key: \"" + key + "\".");
@@ -1122,6 +1129,9 @@ var chao = {
 				sound.currentChannel = 0;
 			}
 
+			if(force){
+				sound.channels[sound.currentChannel].currentTime = 0;
+			}
 			sound.channels[sound.currentChannel].volume = sound.volume;
 			var promise = sound.channels[sound.currentChannel].play();
 
@@ -1166,7 +1176,7 @@ var chao = {
 				if(value){
 					chao.pauseSound(chao.currentMusic);
 				} else {
-					chao.playSound(chao.currentMusic);
+					chao.playSound(chao.currentMusic, false);
 				}
 			}
 		}
@@ -1612,17 +1622,20 @@ var chao = {
 				chao.canvas.canvas.style.minHeight = "100%";
 			}
 		}
-		chao.loadingState.rootEntity.width 	= chao.screenWidth;
-		chao.loadingState.rootEntity.height = chao.screenHeight;
-		chao.currentState.rootEntity.width 	= chao.screenWidth;
-		chao.currentState.rootEntity.height = chao.screenHeight;
-		if(chao.loadingState.resize){
-			chao.loadingState.resize();
+		if(chao.loadingState && chao.loadingState.rootEntity){
+			chao.loadingState.rootEntity.width 	= chao.screenWidth;
+			chao.loadingState.rootEntity.height = chao.screenHeight;
+			if(chao.loadingState.resize){
+				chao.loadingState.resize();
+			}
 		}
-		if(chao.currentState.resize){
-			chao.currentState.resize();
+		if(chao.currentState && chao.currentState.rootEntity){
+			chao.currentState.rootEntity.width 	= chao.screenWidth;
+			chao.currentState.rootEntity.height = chao.screenHeight;
+			if(chao.currentState.resize){
+				chao.currentState.resize();
+			}
 		}
-
 	},
 
 	/**
