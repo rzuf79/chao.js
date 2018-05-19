@@ -6,6 +6,7 @@
  * Global chao namespace.
  */
 var chao = {
+
 	/** Consts. */
 	VERSION					: "0.1",
 
@@ -63,6 +64,12 @@ var chao = {
 	 * @param scalingMode - Defines how the canvas will scale in the window it's in. Use chao.SCALING_MODE_SOMETHING. Defaults to SCALING_MODE_NONE.
 	 */
 	init: function(width, height, scalingMode) {
+
+		// useful for mobile browser debugging.
+		// window.onerror = function(error) {
+		// 	alert(error);
+		// };
+
 		// Some cross-browser compatibility stuff below
 		if (!Date.now) {
 			Date.now = function now() { return new Date().getTime(); };

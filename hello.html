@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>chao.js</title>
+<head>
+	<style type="text/css">
+		body {
+			margin: 0;
+			background-color: #202020
+		}
+	</style>
+</head>
+<body>
+	<center>
+<script src="chao.js"></script>
+<script>
+
+	chao.init(640, 480, chao.SCALING_MODE_KEEP_RATIO);
+	chao.loadImage("sticker", "sticker.png");
+
+	function StateGame(){
+		this.create = function(){
+			this.thingie = new Entity("Thingie", 100, 100);
+			this.thingie.addComponent(new ComponentImage("sticker"));
+			this.add(this.thingie);
+		}
+	}
+	
+	chao.switchState(new StateGame());
+
+
+
+</script>
+</body>
