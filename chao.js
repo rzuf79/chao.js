@@ -62,13 +62,9 @@ var chao = {
 	 * @param width - Target width of the viewport in pixels.
 	 * @param height - Target height of the viewport in pixels.
 	 * @param scalingMode - Defines how the canvas will scale in the window it's in. Use chao.SCALING_MODE_SOMETHING. Defaults to SCALING_MODE_NONE.
+	 * @param canvasId - Optional - id of the canvas element to put the game into.
 	 */
-	init: function(width, height, scalingMode) {
-
-		// useful for mobile browser debugging.
-		// window.onerror = function(error) {
-		// 	alert(error);
-		// };
+	init: function(width, height, scalingMode, canvasId) {
 
 		// Some cross-browser compatibility stuff below
 		if (!Date.now) {
@@ -76,15 +72,22 @@ var chao = {
 		}
 
 		// Engine inits:
-		var canvas = document.createElement("canvas");
-		canvas.setAttribute("width", width);
-		canvas.setAttribute("height", height);
-		canvas.style.backgroundColor = "black";
-		document.body.appendChild(canvas);
+		var canvas;
+		if(canvasId){
+			canvas = document.getElementById(canvasId);
+		} else {
+			canvas = document.createElement("canvas");
+			canvas.setAttribute("width", width);
+			canvas.setAttribute("height", height);
+			canvas.style.backgroundColor = "black";
+			document.body.appendChild(canvas);
+		}
 
 		var context		= canvas.getContext("2d");
 		
-		context.imageSmoothingEnabled = false; // should be false for pixel-art games.
+		context.mozImageSmoothingEnabled 	= false;
+		context.webkitImageSmoothingEnabled = false;
+		context.imageSmoothingEnabled 		= false;
 
 		// Canvas object is organized like a regular chao image, for cohesion.
 		chao.canvas = {
@@ -1833,7 +1836,8 @@ var chao = {
 	log: function(thingie){
 		if(chao.loggingEnabled){
 			if(chao.debugLogTarget){
-				chao.debugLogTarget.innerHTML += thingie + "<br/>";
+
+				chao.debugLogTarget.innerHTML += thingie.replace(/\n/g, "<br/>") + "<br/>";
 			} else {
 				console.log(thingie);
 			}

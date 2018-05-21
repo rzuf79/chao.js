@@ -7,14 +7,29 @@
 			margin: 0;
 			background-color: #202020
 		}
+
+		#debug {
+			text-align:left;
+			width:640px;
+			height:250px;
+			border:1px solid #888;
+			font: 16px monospace;
+			overflow: auto;
+			background-color:#f8fcff;
+			margin: 10px auto;
+			padding:10px;
+		}
 	</style>
 </head>
 <body>
 	<center>
+		<div id="debug"></div>
+		<canvas id="canvas_id" width="640" height="480"></canvas>
+
 <script src="chao.js"></script>
 <script>
 
-	chao.init(640, 480, chao.SCALING_MODE_NONE);
+	chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
 	chao.setupLogTarget("debug");
 	chao.backgroundColor = "#ffffff";
 	chao.pauseOnFadeEnabled	= false;
@@ -35,22 +50,6 @@
 
 	function ComponentLudzik(){
 		this.name 				= "Ludzik";
-
-		this.onClick = function(x, y){
-			chao.log("Clicky! " + x + "x" + y);
-		}
-
-		this.onRelease = function(x, y){
-			chao.log("onRelease! " + x + "x" + y);
-		}
-
-		this.onMove = function(x, y){
-			chao.log("Moovy! " + x + "x" + y);
-		}
-
-		this.onCancel = function(){
-			chao.log("Canceled! :o");
-		}
 
 		this.create = function(){
 			this.image = this.entity.addComponent(new ComponentImage("zbylut", 30, 30));
@@ -146,9 +145,7 @@
 			if(direction.indexOf("e") != -1){
 				this.entity.x += currSpeed;
 			}
-
 		}
-
 	}
 
 	var StateGame = {
@@ -237,6 +234,10 @@
 			this.thingie.scaleX 	= (0.8 + (Math.sin(this.bounceTimer) * 0.2));
 			this.thingie.scaleY 	= (0.8 + (Math.cos(this.bounceTimer) * 0.2));
 
+			if(chao.justPressed[chao.KEY_L]){
+				chao.logHierarchy(this.rootEntity);
+			}
+
 			//
 			// for(var i = 0; i < this.texts.length; ++i){
 			// 	this.texts[i].text = "" + chao.getRandom(99999) + "x" + chao.getRandom(99999);
@@ -270,9 +271,6 @@
 	
 	chao.switchState(StateGame);
 
-
-
 </script>
-<br><br><br><br><br>
-<div id="debug"></div>
+
 </body>
