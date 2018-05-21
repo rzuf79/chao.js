@@ -95,7 +95,7 @@ var chao = {
 		};
 
 		chao.loggingEnabled 	= true;										// Enable debug logging to browser's console.
-		
+
 		chao.screenWidth 		= width;									// Viewport width in pixels. Can change dynamically in some scaling modes.
 		chao.screenHeight 		= height;									// Viewport height in pixels. Can change dynamically in some scaling modes.
 		chao.scalingMode		= scalingMode || chao.SCALING_MODE_NONE;	// Currently set scaling mode.
@@ -1021,10 +1021,15 @@ var chao = {
 	loadSound: function(key, path, volume, looped, channels){
 		if(channels < 1){
 			chao.log("Can't add a sound with no channels, you silly goose.");
+			return null;
 		}
-
 		if(chao.getSound(key) !== null){
 			chao.log("There is already a sound loaded with this key: \"" + key + "\".");
+			return null;
+		}
+		if(!chao.canPlayAudioType(path.split('.').pop())){
+			chao.log("This browser will be unable to play this sound: " + path + ". Skipping!");
+			return null;
 		}
 
 		var sound 				= {};
@@ -1037,10 +1042,8 @@ var chao = {
 		sound.ready 			= false;
 
 		sound.channels.push(new Audio(path));
-
 		sound.channels[0].onloadeddata = function(){
 			sound.ready = true;
-
 			for(var i = 0; i < (channels || 1); ++i){
 				if(i > 0){
 					sound.channels.push(new Audio(path));
@@ -1051,6 +1054,18 @@ var chao = {
 					sound.channels[i].loop = true;
 				}
 			}
+		}
+		sound.channels[0].onerror = function(e){
+			var msg = "Loading the \"" + sound.key + "\" sound failed with error: ";
+			switch(e.currentTarget.error.code){
+				case 1: msg += "MEDIA_ERR_ABORTED"; break;
+				case 2: msg += "MEDIA_ERR_NETWORK"; break;
+				case 3: msg += "MEDIA_ERR_DECODE"; break;
+				case 4: msg += "MEDIA_ERR_SRC_NOT_SUPPORTED"; break;
+				case 5: msg += "MEDIA_ERR_ENCRYPTED"; break;
+			}
+			chao.log(msg);
+			sound.ready = true;
 		}
 
 		chao.sounds.push(sound);
@@ -1797,13 +1812,31 @@ var chao = {
 	},
 
 	/**
+	 * Sets up the place to put all the logs into.
+	 *
+	 * @param htmlElementId -  HTML element to insert all the logs into.
+	 */
+	setupLogTarget: function(htmlElementId){
+		chao.debugLogTarget = document.getElementById(htmlElementId);
+		window.addEventListener("error", function(e) {
+			var fa = e.filename.split("/");
+			fa.reverse();
+			chao.log("["+ fa[0]+":"+e.lineno+":"+e.colno+"] " + e.message);
+		});
+	},
+
+	/**
 	 * Log a thing to the browser's js console. Set chao.loggingEnabled to false to prevent the logging.
 	 * 
 	 * @param thingie - A thingie to put in the console.
 	 */
 	log: function(thingie){
 		if(chao.loggingEnabled){
-			console.log(thingie);
+			if(chao.debugLogTarget){
+				chao.debugLogTarget.innerHTML += thingie + "<br/>";
+			} else {
+				console.log(thingie);
+			}
 		}
 	},
 

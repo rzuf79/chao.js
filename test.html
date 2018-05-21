@@ -14,7 +14,8 @@
 <script src="chao.js"></script>
 <script>
 
-	chao.init(640, 480, chao.SCALING_MODE_EXTEND);
+	chao.init(640, 480, chao.SCALING_MODE_NONE);
+	chao.setupLogTarget("debug");
 	chao.backgroundColor = "#ffffff";
 	chao.pauseOnFadeEnabled	= false;
 	chao.muteOnFocusLost = false;
@@ -23,6 +24,7 @@
 	chao.loadSound("oh", "assets/oh.wav", 1.0, false, 6);
 	chao.loadSound("ugh", "assets/ugh.wav");
 	chao.loadSound("plum", "assets/plum.wav");
+	chao.loadSound("jump", "assets/jump.wav");
 
 	chao.loadImage("sticker", "sticker.png");
 	chao.loadImage("zbylut", "assets/zbylut.png");
@@ -271,4 +273,6 @@
 
 
 </script>
+<br><br><br><br><br>
+<div id="debug"></div>
 </body>
