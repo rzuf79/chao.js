@@ -23,14 +23,14 @@
 </head>
 <body>
 	<center>
-		<div id="debug"></div>
 		<canvas id="canvas_id" width="640" height="480"></canvas>
+		<div id="debug"></div>
 
 <script src="chao.js"></script>
 <script>
 
+	// chao.setupLogTarget("debug");
 	chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
-	chao.setupLogTarget("debug");
 	chao.backgroundColor = "#ffffff";
 	chao.pauseOnFadeEnabled	= false;
 	chao.muteOnFocusLost = false;
@@ -237,11 +237,6 @@
 			if(chao.justPressed[chao.KEY_L]){
 				chao.logHierarchy(this.rootEntity);
 			}
-
-			//
-			// for(var i = 0; i < this.texts.length; ++i){
-			// 	this.texts[i].text = "" + chao.getRandom(99999) + "x" + chao.getRandom(99999);
-			// }
 
 		},
 

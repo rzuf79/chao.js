@@ -433,6 +433,51 @@ var chao = {
 	},
 
 	/**
+	 * Returns all entities of given name in the entity and its children.
+	 *
+	 * @param name - Name of the entity to be found.
+	 * @param entity - Entity from which we will begin the search. Defaults to the rootEntity from currentState.
+	 * @param array - Used for recursion, just ignore it.
+	 */
+	findEntities: function(name, entity, array){
+		entity = entity || chao.currentState.rootEntity;
+		array = array || [];
+
+		if(entity.name === name){
+			array.push(entity);
+		}
+
+		for(var i = 0; i < entity.children.length; ++i){
+			chao.findEntities(name, entity.children[i], array);
+		}
+
+		return array;
+	},
+
+	/**
+	 * Returns all components of given name in the entity and its children.
+	 *
+	 * @param name - Name by which the components will be identified.
+	 * @param entity - Entity from which we will begin the search. Defaults to the rootEntity from currentState.
+	 * @param array - Used for recursion, just ignore it.
+	 */
+	findComponents: function(name, entity, array){
+		entity = entity || chao.currentState.rootEntity;
+		array = array || [];
+
+		var foundComponent = entity.getComponentByName(name);
+		if(foundComponent){
+			array.push(foundComponent);
+		}
+
+		for(var i = 0; i < entity.children.length; ++i){
+			chao.findComponents(name, entity.children[i], array);
+		}
+
+		return array;
+	},
+
+	/**
 	 * Creates a blank image.
 	 *
 	 * @param key - String by which this image will be identified. Pass undefined if you don't want it to be booked by the engine by any name.
@@ -1836,7 +1881,6 @@ var chao = {
 	log: function(thingie){
 		if(chao.loggingEnabled){
 			if(chao.debugLogTarget){
-
 				chao.debugLogTarget.innerHTML += thingie.replace(/\n/g, "<br/>") + "<br/>";
 			} else {
 				console.log(thingie);
