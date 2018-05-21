@@ -7,27 +7,43 @@
 			margin: 0;
 			background-color: #202020
 		}
+
+		#debug {
+			text-align:left;
+			width:640px;
+			height:250px;
+			border:1px solid #888;
+			font: 10px monospace;
+			overflow: auto;
+			background-color:#f8fcff;
+			margin: 10px auto;
+			padding:10px;
+		}
 	</style>
 </head>
 <body>
 	<center>
-<script src="chao.js"></script>
-<script>
+		<canvas id="canvas_id" width="640" height="480"></canvas>
+		<div id="debug"></div>
 
-	chao.init(640, 480, chao.SCALING_MODE_KEEP_RATIO);
-	chao.loadImage("sticker", "sticker.png");
+		<script src="chao.js"></script>
+		<script>
 
-	function StateGame(){
-		this.create = function(){
-			this.thingie = new Entity("Thingie", 100, 100);
-			this.thingie.addComponent(new ComponentImage("sticker"));
-			this.add(this.thingie);
-		}
-	}
-	
-	chao.switchState(new StateGame());
+			chao.setupLogTarget("debug");
+			chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
+			chao.loadImage("sticker", "sticker.png");
+
+			function StateGame(){
+				this.create = function(){
+					this.thingie = new Entity("Thingie", 100, 100);
+					this.thingie.addComponent(new ComponentImage("sticker"));
+					this.add(this.thingie);
+				}
+			}
+			
+			chao.switchState(new StateGame());
 
 
 
-</script>
+		</script>
 </body>
