@@ -1210,9 +1210,9 @@ var chao = {
 			var promise = sound.channels[sound.currentChannel].play();
 
 			if (promise !== undefined) {
-				promise.then(_ => {
+				promise.then( function() {
 					// Whoa! We are fine!
-				}).catch(error => {
+				}).catch(function() {
 					// Was unable to play sound. :(
 					// Prolly the browser is messing with audio permissions. Will try to remsume it on the first user's input.
 					if(sound.isMusic){
