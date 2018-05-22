@@ -2,6 +2,8 @@
  * chao.js
  */
 
+"use strict";
+
 /**
  * Global chao namespace.
  */
@@ -211,7 +213,7 @@ var chao = {
 	 */
 	setFPS: function(FPS){
 		chao.framerate = FPS;
-		chao.updateInterval = setInterval("chao.update()", 1000/FPS);
+		chao.updateInterval = setInterval(chao.update, 1000/FPS);
 	},
 
 	/**
