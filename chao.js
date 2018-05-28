@@ -564,7 +564,7 @@ var chao = {
 		}
 
 		if(oldImage != -1){
-			chao.images.splice(chao.images(1, 1));
+			chao.images.splice(oldImage, 1);
 		}
 
 		chao.images.push(image);
@@ -2352,12 +2352,18 @@ function Entity(name, x, y){
 	/**
 	 * Adds a child entity.
 	 *
-	 * @param child - A child entity to be added to the hierarchy.
+	 * @param child - A child entity to be added to the hierarchy. Could also be a component and this method will add the entity its sticked to.
 	 */
 	this.add = function(child){
 		if(child.parent === undefined){
-			chao.log("You are prolly trying to add a non-Entity object to the Entities hierarchy. Maybe it's a component? If so, try to add its \".entity\" var instead of itself. And here's the culprit:");
-			chao.log(child);
+			// trying to add a component maybe? let's try it anyways...
+			if(child.entity !== undefined){
+				this.add(child.entity);
+			} else {
+				chao.log("The object you are trying to add as an entity is not an Entity nor a Component.");
+				chao.log(child);
+				return;
+			}
 		}
 		this.children.push(child);
 		child.parent = this;
