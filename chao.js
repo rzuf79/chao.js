@@ -964,7 +964,7 @@ var chao = {
 		}
 
 		if(oldFont != -1){
-			chao.fonts.splice(chao.fonts(1, 1));
+			chao.fonts.splice(oldFont, 1);
 		}
 
 		// add text image for font ready state checking
