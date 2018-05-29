@@ -1559,8 +1559,6 @@ var chao = {
 		var touches = e.changedTouches;
 		for(var i = 0; i < touches.length; ++i){
 			var touchPos = chao.getTouchPos(touches[i]);
-			chao.log(touchPos);
-			chao.log(touches[i]);
 			var newTouch = {
 				id: touches[i].identifier,
 				x: touchPos.x,
