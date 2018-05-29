@@ -77,8 +77,12 @@ var chao = {
 		var canvas;
 		if(canvasId){
 			canvas = document.getElementById(canvasId);
-		} else {
+		}
+		if(!canvas){
 			canvas = document.createElement("canvas");
+			if(canvasId){
+				canvas.setAttribute("id", canvasId);
+			}
 			canvas.setAttribute("width", width);
 			canvas.setAttribute("height", height);
 			canvas.style.backgroundColor = "black";
@@ -174,6 +178,7 @@ var chao = {
 
 		chao.currentState				= undefined;						// Current state.
 		chao.loadingState				= undefined;						// State to be used when the assets are being loaded.
+		chao.newState					= undefined;						// Internal - state we are bount to switch to.
 
 		chao.setLoadingState({
 			draw: function(){
@@ -335,6 +340,12 @@ var chao = {
 			}
 		}
 		chao.entitiesToDestroy = [];
+
+
+		if(chao.newState !== undefined){
+			chao.destroyCurrentStateAndInitNewOne(chao.newState);
+			chao.newState = undefined;
+		}
 	},
 
 	/**
@@ -343,6 +354,19 @@ var chao = {
 	 * @param newState - State to be initialized and set as the current one.
 	 */
 	switchState: function(newState){
+		if(chao.currentState === undefined){
+			chao.destroyCurrentStateAndInitNewOne(newState);
+		} else {
+			chao.newState = newState;
+		}
+	},
+
+	/**
+	 * Immediately destroy the old state and init new one.
+	 *
+	 * @param newState - State to be initialized and set as the current one.
+	 */
+	destroyCurrentStateAndInitNewOne: function(newState){
 		chao.resetInput();
 		chao.clearTweens();
 
@@ -1535,6 +1559,8 @@ var chao = {
 		var touches = e.changedTouches;
 		for(var i = 0; i < touches.length; ++i){
 			var touchPos = chao.getTouchPos(touches[i]);
+			chao.log(touchPos);
+			chao.log(touches[i]);
 			var newTouch = {
 				id: touches[i].identifier,
 				x: touchPos.x,
@@ -1626,8 +1652,8 @@ var chao = {
 	 */
 	getTouchPos: function(touch){
 		return {
-			x: (touch.pageX / chao.screenScaleX) - chao.canvas.canvas.offsetLeft,
-			y: (touch.pageY / chao.screenScaleY) - chao.canvas.canvas.offsetTop
+			x: (touch.pageX - touch.target.offsetLeft) / chao.screenScaleX,
+			y: (touch.pageY - touch.target.offsetTop) / chao.screenScaleY
 		};
 	},
 
@@ -1717,7 +1743,7 @@ var chao = {
 					chao.screenWidth	= chao.baseScreenWidth + (missingPixs / scale);
 					chao.screenHeight	= chao.baseScreenHeight;
 				} else {
-					// extend the viewport vertivally
+					// extend the viewport vertically
 					var missingPixs 	= window.innerHeight - (chao.baseScreenHeight * scale);
 					chao.screenWidth	= chao.baseScreenWidth;
 					chao.screenHeight	= chao.baseScreenHeight + (missingPixs / scale);
@@ -1883,7 +1909,7 @@ var chao = {
 	log: function(thingie){
 		if(chao.loggingEnabled){
 			if(chao.debugLogTarget){
-				chao.debugLogTarget.innerHTML += thingie.replace(/\n/g, "<br/>") + "<br/>";
+				chao.debugLogTarget.innerHTML += String(thingie).replace(/\n/g, "<br/>") + "<br/>";
 			} else {
 				console.log(thingie);
 			}
@@ -2282,6 +2308,7 @@ function Entity(name, x, y){
 	this.components 	= [],				// Components attached to this entity.
 	this.parent 		= null,				// Parent object.
 	this.visible 		= true,				// Is rendering enabled for this entity.
+	this.paused			= false,			// When true, no updates will happen for this entity, its components and all the children.
 	this.clickable 		= false,			// When true, this entity will receive mouse/touch input events.
 	this.keepClickFocus	= false; 			// When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
 
@@ -2334,6 +2361,10 @@ function Entity(name, x, y){
 	 * Updates this entity, components and all the children.
 	 */
 	this.update = function(){
+		if(this.paused){
+			return;
+		}
+
 		var componentsNum = this.components.length;
 		for(var i = 0; i < componentsNum; ++i){
 			if(this.components[i].update){
@@ -2356,17 +2387,13 @@ function Entity(name, x, y){
 	 */
 	this.add = function(child){
 		if(child.parent === undefined){
-			// trying to add a component maybe? let's try it anyways...
-			if(child.entity !== undefined){
-				this.add(child.entity);
-			} else {
-				chao.log("The object you are trying to add as an entity is not an Entity nor a Component.");
-				chao.log(child);
-				return;
-			}
+			chao.log("The object you are trying to add as an entity is not an Entity.");
+			chao.log(child);
+			return;
 		}
 		this.children.push(child);
 		child.parent = this;
+		return child;
 	}
 
 	/**
@@ -2377,6 +2404,7 @@ function Entity(name, x, y){
 	this.remove = function(child){
 		if(child.parent === this){
 			this.children.splice(this.children.indexOf(child), 1);
+			return child;
 		}
 	}
 
@@ -3061,6 +3089,7 @@ function ComponentButton(image){
 
 	this.disableDim		= false;		// When false and imagePressed is not set, the button will react to a press by dimming itself.
 	this.disabled 		= false;		// When true, the button will ignore all input.
+	this.dimInactive 	= true;			// When true, the button will be dimmed when disabled.
 
 	this.onPress 		= function(button) {};	// Function called when this button is pressed.
 	this.onHold 		= function(button) {};	// Function called when this button stays pressed.
