@@ -2359,7 +2359,7 @@ function Entity(name, x, y){
 	 * Updates this entity, components and all the children.
 	 */
 	this.update = function(){
-		if(this.paused){
+		if(this.paused || !this.visible){
 			return;
 		}
 
@@ -2688,7 +2688,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 	 * A constructor of sorts. Called when the component is added to an entity.
 	 */
 	this.create = function(){
-		this.setImage(chao.getImage(this.imageKey), this.frameWidth, this.frameHeight);
+		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
 	}
 
 	/**
@@ -2786,7 +2786,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 			return;
 		}
 
-		this.image = image
+		this.image = chao.getImage(image);
 
 		this.entity.width 	= frameWidth || this.image.width;
 		this.entity.height = frameHeight || this.image.height;
@@ -2908,6 +2908,10 @@ function ComponentText(font, text, size){
 	 * @param alpha - Opacity the parent of the entity this component is sticked to.
 	 */
 	this.draw = function(x, y, alpha){
+		if(this.text === ""){
+			return;
+		}
+
 		var drawX 		= this.entity.x + x;
 		var drawY 		= this.entity.y + y;
 		var drawAlpha	= this.entity.alpha * alpha;
@@ -3060,7 +3064,7 @@ ComponentText.prototype = {
 	get size() { return this._size; },
 	set size(newSize){ this._size = newSize; this.changeText(); },
 	get color() { return this._color; },
-	set color(newcolor){ this._color = newText; this.changeText(); },
+	set color(newcolor){ this._color = newcolor; this.changeText(); },
 	get backgroundColor() { return this._backgroundColor; },
 	set backgroundColor(newBackgroundColor){ this._backgroundColor = newBackgroundColor; this.changeText(); },
 	get align() { return this._align; },
