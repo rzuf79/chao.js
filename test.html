@@ -183,12 +183,12 @@
 			this.add(this.buttonMute.entity);
 
 			this.buttonSound = (new Entity("Button Sound", chao.screenWidth-300, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
-			this.buttonSound.setText(chao.font, "Hmmm!", 20);
+			this.buttonSound.setText("Hmmm!", chao.font, 20);
 			this.buttonSound.onRelease = this.playSound;
 			this.add(this.buttonSound.entity);
 
 			this.buttonLog = (new Entity("Button Log", chao.screenWidth-500, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
-			this.buttonLog.setText(chao.font, "Log things", 20);
+			this.buttonLog.setText("Log things", chao.font, 20);
 			this.buttonLog.onReleased = function() { chao.logHierarchy(); }
 			this.add(this.buttonLog.entity);
 

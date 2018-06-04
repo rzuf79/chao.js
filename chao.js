@@ -1216,6 +1216,9 @@ var chao = {
 			if(sound == chao.currentMusic && sound.playing){
 				return;
 			}
+			if(chao.currentMusic){
+				chao.stopSound(chao.currentMusic);
+			}
 			chao.currentMusic = sound;
 		}
 
@@ -1937,7 +1940,7 @@ var chao = {
 
 		var entityLog = "";
 		for(var i = 0; i < indent; ++i){
-			entityLog += "- ";
+			entityLog += "  ";
 		}
 		entityLog += entity.name;
 		if(entity.components.length > 0){
@@ -2205,7 +2208,7 @@ var chao = {
 		 * Creates an entity and sticks ComponentImage to it.
 		 *
 		 * @param entityName - Name for the created entity.
-		 * @param image - Image of its id.
+		 * @param image - Image or it's id.
 		 * @param x - X position of the entity.
 		 * @param y - Y position of the entity.
 		 * @return - Created ComponentImage component.
@@ -2230,13 +2233,41 @@ var chao = {
 		},
 
 		/**
+		 * Creates an entity and sticks ComponentButton to it.
+		 *
+		 * @param entityName - Name for the created entity.
+		 * @param x - X position of the entity.
+		 * @param y - Y position of the entity.
+		 * @param image - Button image or it's id.
+		 * @param imagePressed - Image to be used for the button's pressed state.
+		 * @param font - Font to use as the label for this button.
+		 * @param text - Text that will be displayed as a label.
+		 * @param size - Size of the text.
+		 * @return - Created ComponentText component.
+		 */
+		createButton: function(entityName, x, y, image, imagePressed, font, fontSize, text){
+			var newButton = (new Entity(entityName, x, y)).addComponent(new ComponentButton(image));
+
+			if(imagePressed){
+				newButton.setImagePressed(imagePressed);
+			}
+
+			if(font && fontSize && text){
+				newButton.setText(text, font, fontSize);
+			}
+
+			return newButton;
+		},
+
+		/**
 		 * Fades out the entity.
 		 *
 		 * @param entity - Entity to fade out.
 		 * @param time - Seconds the fade will take.
+		 * @param delay - Seconds before the fade will start.
 		 */
-		fadeEntityOut: function(entity, time){
-			chao.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
+		fadeEntityOut: function(entity, time, delay){
+			chao.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
 		/**
@@ -2244,9 +2275,10 @@ var chao = {
 		 *
 		 * @param entity - Entity to fade in.
 		 * @param time - Seconds the fade will take.
+		 * @param delay - Seconds before the fade will start.
 		 */
-		fadeEntityIn: function(entity, time){
-			chao.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, 0.0);
+		fadeEntityIn: function(entity, time, delay){
+			chao.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
 		/**
@@ -3199,11 +3231,11 @@ function ComponentButton(image){
 	/**
 	 * Sets a text that will be displayed on top of the button object.
 	 *
-	 * @param font - Font to use for the text.
 	 * @param text - Text to be displayed.
+	 * @param font - Font to use for the text.
 	 * @param size - Size of the text.
 	 */ 
-	this.setText = function(font, text, size){
+	this.setText = function(text, font, size){
 		if(!this.text){
 			this.text = (new Entity("Button Text", 0, 0)).addComponent(new ComponentText(font, text, size));
 			this.text.align = "left";
