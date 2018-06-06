@@ -626,14 +626,14 @@ var chao = {
 	 */
 	drawImage: function(target, image, x, y, alpha, scaleX, scaleY, angle){
 
-		alpha 	= alpha || 1;
-		scaleX 	= scaleX || 1;
-		scaleY 	= scaleY || 1;
+		alpha 	= alpha === undefined ? 1 : alpha;
+		scaleX 	= scaleX === undefined ? 1 : scaleX;
+		scaleY 	= scaleY === undefined ? 1 : scaleY;
 		angle	= angle || 0;
 
 		target.context.save();
 		
-		target.context.globalAlpha = alpha || 1.0;
+		target.context.globalAlpha = alpha;
 
 		var rotationPivot	= {
 			x:(x+((image.width*scaleX)/2)),
@@ -665,9 +665,9 @@ var chao = {
 	 */
 	drawImagePart: function(target, image, x, y, rect, angle, scaleX, scaleY, alpha){
 		angle 	= angle || 0;
-		alpha 	= alpha || 1;
-		scaleX 	= scaleX || 1;
-		scaleY 	= scaleY || 1;
+		alpha 	= alpha === undefined ? 1 : alpha;
+		scaleX 	= scaleX === undefined ? 1 : scaleX;
+		scaleY 	= scaleY === undefined ? 1 : scaleY;
 
 		var w 				= rect.width;// * scaleX;
 		var h 				= rect.height;// * scaleY;
@@ -1040,8 +1040,6 @@ var chao = {
 
 		image.context.font 		= size.toFixed() + "px " + font.name;
 		image.context.textAlign = align;
-
-		// var textSize = image.context.measureText(text); // for later
 
 		chao.setFillStyle(image, color);
 		image.context.fillText(text, x, y + size);
@@ -2643,7 +2641,7 @@ function Entity(name, x, y){
 	 * @return - If this entity or one of its children were found at given coords, you will get them. If this is not the case, you get a null.
 	 */
 	this.getEntityAt = function(x, y){
-		if(!this.visible){
+		if(!this.visible || this.alpha <= 0){
 			return null;
 		}
 
@@ -2951,11 +2949,6 @@ function ComponentText(font, text, size){
 		if(!this.ready && this.font.ready){
 			this.ready = true;
 			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
-		}
-
-		switch(this.align){
-			case "center": drawX -= this.entity.width / 2; break;
-			case "right": drawX -= this.entity.width; break;
 		}
 
 		chao.drawImage(chao.canvas, this.image, 
