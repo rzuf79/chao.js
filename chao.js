@@ -2951,6 +2951,11 @@ function ComponentText(font, text, size){
 			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
 		}
 
+		switch(this.align){
+			case "center": drawX -= this.entity.width / 2; break;
+			case "right": drawX -= this.entity.width; break;
+		}
+
 		chao.drawImage(chao.canvas, this.image, 
 			drawX, drawY, 
 			drawAlpha, 
