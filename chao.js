@@ -163,6 +163,7 @@ var chao = {
 		chao.mouse.pressedMiddle 		= false;							// Is the middle mouse button pressed right now.
 		chao.mouse.justPressedMiddle	= false;							// Was the middle mouse button just pressed in the current frame.
 		chao.mouse.justReleasedMiddle	= false;							// Was the middle mouse button just released in the current frame.
+		chao.mouse.suppressUntilUp		= false;							// Internal - mouse input will be ignored until its button is released. To avoid accidental clicks when returning from focus pause.
 
 		chao.resetInput();
 
@@ -245,7 +246,10 @@ var chao = {
 		if(isFocused){
 			chao.hasFocus 	= true;
 			chao.lastTime 	= Date.now();
+
+			chao.mouse.suppressUntilUp = true;
 			chao.resetInput();
+			
 			if(chao.muteOnFocusLost){
 				chao.setMute(chao.wasMutedOnFocusLost);
 			}
@@ -1214,7 +1218,7 @@ var chao = {
 			if(sound == chao.currentMusic && sound.playing){
 				return;
 			}
-			if(chao.currentMusic){
+			if(chao.currentMusic && sound != chao.currentMusic){
 				chao.stopSound(chao.currentMusic);
 			}
 			chao.currentMusic = sound;
@@ -1421,6 +1425,10 @@ var chao = {
 	handleMouseDown: function(button){
 		chao.resumeMusicPlaybackIfNeeded();
 
+		if(chao.mouse.suppressUntilUp){
+			return;
+		}
+
 		switch(button){
 			case 1:
 				chao.mouse.pressed = chao.mouse.justPressed = true;
@@ -1444,6 +1452,11 @@ var chao = {
 	 * @param button - Id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
 	 */
 	handleMouseUp: function(button){
+
+		if(chao.mouse.suppressUntilUp){
+			chao.mouse.suppressUntilUp = false;
+		}
+
 		switch(button){
 			case 1:
 				chao.mouse.pressed 				= false;
@@ -2206,7 +2219,7 @@ var chao = {
 		 * Creates an entity and sticks ComponentImage to it.
 		 *
 		 * @param entityName - Name for the created entity.
-		 * @param image - Image or it's id.
+		 * @param image - Image or its id.
 		 * @param x - X position of the entity.
 		 * @param y - Y position of the entity.
 		 * @return - Created ComponentImage component.
@@ -2236,7 +2249,7 @@ var chao = {
 		 * @param entityName - Name for the created entity.
 		 * @param x - X position of the entity.
 		 * @param y - Y position of the entity.
-		 * @param image - Button image or it's id.
+		 * @param image - Button image or its id.
 		 * @param imagePressed - Image to be used for the button's pressed state.
 		 * @param font - Font to use as the label for this button.
 		 * @param text - Text that will be displayed as a label.
@@ -2359,7 +2372,7 @@ function Entity(name, x, y){
 	}
 
 	/**
-	 * Draws this entity, it's components and all the children.
+	 * Draws this entity, its components and all the children.
 	 *
 	 * @param x - X position that parent of this entity is displayed.
 	 * @param y - Y position that parent of this entity is displayed.
@@ -2788,7 +2801,7 @@ function ComponentImage(key, frameWidth, frameHeight){
 			this.animTimer += chao.getTimeDelta();
 
 			if(this.animTimer >= anim.delay){
-				this.animTimer -= anim.delay;//= 0;
+				this.animTimer -= anim.delay;
 
 				this.currentFrame ++;
 				if(this.currentFrame >= anim.frames.length){
