@@ -101,7 +101,7 @@ var chao = {
 			context: 	context,
 			width: 		width,
 			height: 	height,
-		};
+		}
 
 		chao.loggingEnabled 	= true;										// Enable debug logging to browser's console.
 
@@ -191,7 +191,7 @@ var chao = {
 
 				chao.clearToColor(chao.canvas, chao.makeColor(30, 30, 30));
 				chao.drawRect(chao.canvas, barX - 4, barY - 4, barWidth + 8, barHeight + 8, barColor);
-				chao.drawRectFill(chao.canvas, barX, barY, barWidth * chao.getLoadingProgress(), barHeight, barColor)
+				chao.drawRectFill(chao.canvas, barX, barY, barWidth * chao.getLoadingProgress(), barHeight, barColor);
 			},
 		});
 
@@ -1491,18 +1491,18 @@ var chao = {
 		chao.mouse.x = x;
 		chao.mouse.y = y;
 
-		if(chao.focusedEntity != null){
-			if(!chao.focusedEntity.keepClickFocus){
-				var currentEntity = chao.getEntityUnderMouse();
-				if(currentEntity != chao.focusedEntity){
-					chao.focusedEntity.onCancel();
-					chao.focusedEntity = currentEntity;
-				}
+		var currentEntity = chao.getEntityUnderMouse();
+		if(currentEntity != chao.focusedEntity){
+			if(chao.focusedEntity && !chao.focusedEntity.keepClickFocus){
+				chao.focusedEntity.onCancel();
 			}
+			if(!chao.focusedEntity || !chao.focusedEntity.keepClickFocus){
+				chao.focusedEntity = currentEntity;
+			}
+		}
 
-			if(chao.focusedEntity != null){
-				chao.focusedEntity.onMove();
-			}
+		if(chao.focusedEntity){
+			chao.focusedEntity.onMove();
 		}
 	},
 
@@ -2021,7 +2021,7 @@ var chao = {
 	},
 
 	/**
-	 * Updates all tween sanims. Called in chao.update().
+	 * Updates all tween anims. Called in chao.update().
 	 */
 	updateTweens: function(){
 		var tweensToRemove = [];
@@ -2254,7 +2254,7 @@ var chao = {
 		 * @param font - Font to use as the label for this button.
 		 * @param text - Text that will be displayed as a label.
 		 * @param size - Size of the text.
-		 * @return - Created ComponentText component.
+		 * @return - Created ComponentButton component.
 		 */
 		createButton: function(entityName, x, y, image, imagePressed, font, fontSize, text){
 			var newButton = (new Entity(entityName, x, y)).addComponent(new ComponentButton(image));
@@ -3165,8 +3165,7 @@ function ComponentButton(image){
 		var buttonAlpha = 1.0; 
 
 		if(mouseOver && !this.disabled){
-			if(chao.mouse.justReleased && this.pressed){
-
+			if(chao.mouse.justReleased){
 				this.pressed = false;
 				buttonAlpha = 1.0;
 				if(this.onReleased){
