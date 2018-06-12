@@ -1584,9 +1584,8 @@ var chao = {
 
 			if(newTouch.isMouse){
 				chao.handleMouseDown(1);
+				chao.handleMouseMove(newTouch.x, newTouch.y);
 			}
-
-			chao.mouse.x = newTouch.x;
 		}
 
 		if(e.cancelable){
