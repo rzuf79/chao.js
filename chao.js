@@ -875,16 +875,15 @@ var chao = {
 	 * Draws lines used by polygons drawing functions.
 	 *
 	 * @param image - Image to draw upon.
-	 * @param vertices - Number of vertices of the polygon.
 	 * @param points - Array of points the polygon consists of.
 	 */
-	drawPolygonLines: function(image, vertices, points){
+	drawPolygonLines: function(image, points){
 		image.context.beginPath();
-		for (var i = 0; i < vertices; i++){
+		for (var i = 0; i < points.length; i++){
 			if(i) {
-				image.context.lineTo(points[i*2],points[i*2+1]);
+				image.context.lineTo(points[i].x, points[i].y);
 			} else {
-				image.context.moveTo(points[i*2],points[i*2+1]);
+				image.context.moveTo(points[i].x, points[i].y);
 			}
 		}
 		image.context.closePath();
@@ -894,13 +893,12 @@ var chao = {
 	 * Draws a polygon.
 	 *
 	 * @param image - Image to draw upon.
-	 * @param vertices - Number of vertices of the polygon.
 	 * @param points - Array of points the polygon consists of.
 	 * @param color - Color to stroke with.
 	 */
-	drawPolygon: function(image, vertices, points, color, width){
+	drawPolygon: function(image, points, color, width){
 		chao.setStrokeStyle(image, color, width);
-		chao.drawPolygonLines(image, vertices, points);
+		chao.drawPolygonLines(image, points);
 		image.context.stroke();
 	},
 
@@ -908,13 +906,12 @@ var chao = {
 	 * Draws a polygon.
 	 *
 	 * @param image - Image to draw upon.
-	 * @param vertices - Number of vertices of the polygon.
 	 * @param points - Array of points the polygon consists of.
 	 * @param color - Color to fill the polygon with.
 	 */
-	drawPolygonFill: function(image, vertices, points, color){
+	drawPolygonFill: function(image, points, color){
 		chao.setFillStyle(image, color);
-		chao.drawPolygonLines(image, vertices, points);
+		chao.drawPolygonLines(image, points);
 		image.context.fill();
 	},
 
@@ -926,14 +923,15 @@ var chao = {
 		var playHeight  = chao.screenWidth * 0.3;
 		var center 		= { x: chao.screenWidth/2, y: chao.screenHeight/2 };
 
-		var points	= [
+		var poly = chao.makePolygon([
 			center.x - playWidth/2, center.y - playHeight/2,
 			center.x + playWidth/2, center.y,
 			center.x - playWidth/2, center.y + playHeight/2
-		];
+		]);
+		
 		chao.imagePauseFade = chao.createImage(undefined, chao.screenWidth, chao.screenHeight);
 		chao.clearToColor(chao.imagePauseFade, chao.makeColor(0, 0, 0, 160));
-		chao.drawPolygonFill(chao.imagePauseFade, 3, points, chao.makeColor(255, 255, 255, 170));
+		chao.drawPolygonFill(chao.imagePauseFade, poly.points, chao.makeColor(255, 255, 255, 170));
 	},
 
 	/**
@@ -1851,7 +1849,7 @@ var chao = {
 	 *
 	 * @return - Milliseconds that passed since the last frame.
 	 */
-	getTimeDelta : function() {
+	getTimeDelta: function() {
 		return chao.timeDelta * chao.timeScale;
 	},
 
@@ -1860,8 +1858,92 @@ var chao = {
 	 *
 	 * @return - Milliseconds that passed since the last frame.
 	 */
-	getUnscaledDelta : function() {
+	getUnscaledDelta: function() {
 		return chao.timeDelta;
+	},
+
+	/**
+	 * Creates a point object.
+	 *
+	 * @param x - X component of the point.
+	 * @param y - Y component of the point.
+	 * @return Created point object.
+	 */
+	makePoint: function(x, y) {
+	 	return {x: x, y: y};
+	},
+
+	/**
+	 * Creates a vector out of two given points
+	 *
+	 * @param pointFrom - The beginning point of the vector.
+	 * @param pointTo - The end point of the vector.
+	 * @return Created vector object.
+	 */
+	makeVector: function(pointFrom, pointTo){
+	 	return { x: pointTo.x - pointFrom.x, y : pointTo.y - pointFrom.y };
+	},
+
+	/**
+	 * Calculates length of the given vector.
+	 *
+	 * @param vec - Vector object, in {x, y} format.
+	 * @return Length of the vector.
+	 */
+	getVectorLength: function(vec){
+		return Math.sqrt((vec.x*vec.x) + (vec.y*vec.y));
+	},
+
+	/**
+	 * Normalizes the given vector.
+	 *
+	 * @param vec - Vector object to normalize, in {x, y} format.
+	 */
+	normalizeVector: function(vec){
+		var len = chao.getVectorLength(vec);
+		vec.x /= len;
+		vec.y /= len;
+	},
+
+	/**
+	 * Creates an object describing a polygon.
+	 *
+	 * @param points - All the points shaping the polygon. Can be array of points (see makePoint()) or just a simple array built like this: [x1, y1, x2, y2, ...].
+	 * @return An object with polygon data in it!
+	 */
+	makePolygon: function(points){
+		if(!Array.isArray(points) || points.length < 1){
+			chao.log("makePolygon: points param is not an array or has no elements. :(");
+			return;
+		}
+
+		if(typeof points[0] != "object"){
+			var newPoints = [];
+			for(var i = 0; i < points.length/2; ++i){
+				newPoints.push({x: points[i*2], y: points[i*2+1]});
+			}
+			points = newPoints;
+		}
+
+		var left 	= Number.MAX_VALUE;
+		var right 	= -Number.MAX_VALUE;
+		var top 	= Number.MAX_VALUE;
+		var bottom 	= -Number.MAX_VALUE;
+
+		for(var i = 0; i < points.length; ++i){
+			if(points[i].x < left) 		left 	= points[i].x;
+			if(points[i].x > right) 	right 	= points[i].x;
+			if(points[i].y < top) 		top 	= points[i].y;
+			if(points[i].y > bottom) 	bottom 	= points[i].y;
+		}
+
+		return {
+			points: points,	// Points shaping the poly
+			left: left,		// The far left point
+			right: right,	// The far right point
+			top: top,		// Highest point
+			bottom: bottom	// Lowest point
+		};
 	},
 
 	/**
@@ -3607,6 +3689,4 @@ function ComponentShake(force, time, damped){
 
 		this.timer = this.duration;
 	}
-
-
 }
