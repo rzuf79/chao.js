@@ -928,7 +928,7 @@ var chao = {
 			center.x + playWidth/2, center.y,
 			center.x - playWidth/2, center.y + playHeight/2
 		]);
-		
+
 		chao.imagePauseFade = chao.createImage(undefined, chao.screenWidth, chao.screenHeight);
 		chao.clearToColor(chao.imagePauseFade, chao.makeColor(0, 0, 0, 160));
 		chao.drawPolygonFill(chao.imagePauseFade, poly.points, chao.makeColor(255, 255, 255, 170));
@@ -1874,7 +1874,7 @@ var chao = {
 	},
 
 	/**
-	 * Creates a vector out of two given points
+	 * Creates a vector out of two given points.
 	 *
 	 * @param pointFrom - The beginning point of the vector.
 	 * @param pointTo - The end point of the vector.
@@ -1903,6 +1903,26 @@ var chao = {
 		var len = chao.getVectorLength(vec);
 		vec.x /= len;
 		vec.y /= len;
+	},
+
+	/**
+	 * Checks there is an intersection between the two lines.
+	 *
+	 * @param line1a - Beginning of the first line.
+	 * @param line1b - End of the first line.
+	 * @param line2a - Beginning of the second line.
+	 * @param line2b - End of the second line.
+	 * @return True if the two lines interset, false if there is no intersection or lines are the same/collinear.
+	 */
+	areLinesIntersecting: function(line1a, line1b, line2a, line2b){
+		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y) - (line2b.x - line2a.x) * (line1b.y - line1a.y);
+		if(det === 0){
+			return false;
+		}
+    
+		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x) + (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
+		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x) + (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
+		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
 	/**
@@ -1944,6 +1964,40 @@ var chao = {
 			top: top,		// Highest point
 			bottom: bottom	// Lowest point
 		};
+	},
+
+	/**
+	 * Checks if a point {x,y} is inside a polygon.
+	 *
+	 * @param point - The beginning point of the vector.
+	 * @param polygon - The end point of the vector.
+	 * @return True if the point is indeed inside the polygon.
+	 */
+	isPointInsidePolygon: function(point, polygon){
+		if(point.x < polygon.left || point.x > polygon.right || point.y < polygon.top || point.y > polygon.bottom){
+			return false;
+		}
+
+		var intersections 	= 0
+		var raycastOrigin 	= {x: polygon.left - 1, y: point.y};
+		var pointsNum 		= polygon.points.length;
+		var polyLineA;
+		var polyLineB;
+
+		for(var i = 0; i < pointsNum; ++i){
+			polyLineA = polygon.points[i];
+			polyLineB = i === 0 ? polygon.points[pointsNum-1] : polygon.points[i-1];
+
+			if(chao.areLinesIntersecting(raycastOrigin, point, polyLineA, polyLineB)){
+				intersections ++;
+			}
+		}
+
+		if(intersections & 1 == 1){
+			return true;
+		}
+
+		return false;
 	},
 
 	/**
