@@ -10,7 +10,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION					: "0.1",
+	VERSION					: "0.21",
 
 	SCALING_MODE_NONE		: 0,	// Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH	: 1,	// Scales the canvas to fill the whole viewport.
@@ -90,10 +90,6 @@ var chao = {
 		}
 
 		var context		= canvas.getContext("2d");
-		
-		context.mozImageSmoothingEnabled 	= false;
-		context.webkitImageSmoothingEnabled = false;
-		context.imageSmoothingEnabled 		= false;
 
 		// Canvas object is organized like a regular chao image, for cohesion.
 		chao.canvas = {
@@ -118,6 +114,8 @@ var chao = {
 		chao.hasFocus 			= true;										// Does the game window have focus at the moment.
 
 		chao.images				= [];										// Array containing all the loaded images.
+		chao.smoothing			= true;										// Is images smoothing enabled.
+		chao.setImagesSmoothing(chao.smoothing);
 
 		chao.pauseOnFadeEnabled	= true;										// Should the game pause when the window focus is lost.
 		chao.imagePauseFade 	= null;										// Image displayed when the game is paused because of the lost focus.
@@ -531,6 +529,8 @@ var chao = {
 			ready: 			true,
 		};
 
+		chao.setSmoothingForImage(newImage, chao.smoothing);
+
 		if(key){
 			chao.addImage(newImage);
 		}
@@ -559,6 +559,7 @@ var chao = {
 			rotationOrigin:	{x:0.5, y:0.5}, // {0.0 - 1.0}
 			ready: 			false,
 		};
+
 		
 		if(key){
 			chao.addImage(newImage);
@@ -567,6 +568,7 @@ var chao = {
 		img.onload = function(){
 			newImage.canvas.width 	= img.width;
 			newImage.canvas.height 	= img.height;
+			chao.setSmoothingForImage(newImage, chao.smoothing);
 			newImage.context.drawImage(img, 0, 0);
 			newImage.width 	= img.width;
 			newImage.height = img.height;
@@ -617,6 +619,35 @@ var chao = {
 	},
 
 	/**
+	 * Enables or disables images smoothing. Won't affect already loaded images that are not stored in the chao.images array.
+	 *
+	 * @param value - True for smooth images, false for crispy, edgy pixels.
+	 */
+	setImagesSmoothing: function(value){
+		chao.smoothing = value;
+
+		chao.setSmoothingForImage(chao.canvas, value);
+
+		var n = chao.images.length;
+		for(var i = 0; i < n; ++i){
+			chao.setSmoothingForImage(chao.images[i], value);
+		}
+	},
+
+	/**
+	 * Enables or disables smoothing for a single image.
+	 *
+	 * @param value - True for smooth images, false for crispy, edgy pixels.
+	 */
+	setSmoothingForImage: function(image, value){
+		image.context.mozImageSmoothingEnabled 		= value;
+		image.context.webkitImageSmoothingEnabled 	= value;
+		image.context.msImageSmoothingEnabled		= value;
+		image.context.oImageSmoothingEnabled		= value;
+		image.context.imageSmoothingEnabled 		= value;
+	},
+
+	/**
 	 * Blits an image to the target image data.
 	 *
 	 * @param target - Target bitmap to blit the image into.
@@ -634,6 +665,10 @@ var chao = {
 		scaleX 	= scaleX === undefined ? 1 : scaleX;
 		scaleY 	= scaleY === undefined ? 1 : scaleY;
 		angle	= angle || 0;
+
+		if(typeof image === "string"){
+			image = chao.getImage(image);
+		}
 
 		target.context.save();
 		
@@ -672,6 +707,10 @@ var chao = {
 		alpha 	= alpha === undefined ? 1 : alpha;
 		scaleX 	= scaleX === undefined ? 1 : scaleX;
 		scaleY 	= scaleY === undefined ? 1 : scaleY;
+
+		if(typeof image === "string"){
+			image = chao.getImage(image);
+		}
 
 		var w 				= rect.width;// * scaleX;
 		var h 				= rect.height;// * scaleY;
