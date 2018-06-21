@@ -632,6 +632,7 @@ var chao = {
 		for(var i = 0; i < n; ++i){
 			chao.setSmoothingForImage(chao.images[i], value);
 		}
+
 	},
 
 	/**
@@ -645,6 +646,17 @@ var chao = {
 		image.context.msImageSmoothingEnabled		= value;
 		image.context.oImageSmoothingEnabled		= value;
 		image.context.imageSmoothingEnabled 		= value;
+
+		if(value){
+			image.canvas.style['image-rendering'] = 'auto';
+			image.canvas.style.msInterpolationMode = 'bicubic';
+		} else {
+			var renderTypes = [ 'optimizeSpeed', 'crisp-edges', '-moz-crisp-edges', '-webkit-optimize-contrast', 'optimize-contrast', 'pixelated' ];
+			for(var i = 0; i < renderTypes.length; ++i){
+				image.canvas.style['image-rendering'] = renderTypes[i];
+			}
+	        image.canvas.style.msInterpolationMode = 'nearest-neighbor';
+		}
 	},
 
 	/**
