@@ -619,6 +619,23 @@ var chao = {
 	},
 
 	/**
+	 * Permanently tints the given image with a color.
+	 *
+	 * @param image - image object or image key.
+	 * @param color - String identifying the image we wish to get.
+	 */
+	tintImage: function(image, color){
+		image = chao.getImage(image);
+
+		var tintImage = chao.createImage(undefined, image.width, image.height);
+		chao.clearToColor(tintImage, color);
+
+		image.context.globalCompositeOperation = "source-atop";
+		image.context.drawImage(tintImage.canvas, 0, 0, image.width, image.height);
+		tintImage.context.globalCompositeOperation = "destination-atop";
+	},
+
+	/**
 	 * Enables or disables images smoothing. Won't affect already loaded images that are not stored in the chao.images array.
 	 *
 	 * @param value - True for smooth images, false for crispy, edgy pixels.
@@ -678,9 +695,7 @@ var chao = {
 		scaleY 	= scaleY === undefined ? 1 : scaleY;
 		angle	= angle || 0;
 
-		if(typeof image === "string"){
-			image = chao.getImage(image);
-		}
+		image = chao.getImage(image);
 
 		target.context.save();
 		
@@ -720,12 +735,10 @@ var chao = {
 		scaleX 	= scaleX === undefined ? 1 : scaleX;
 		scaleY 	= scaleY === undefined ? 1 : scaleY;
 
-		if(typeof image === "string"){
-			image = chao.getImage(image);
-		}
+		image = chao.getImage(image);
 
-		var w 				= rect.width;// * scaleX;
-		var h 				= rect.height;// * scaleY;
+		var w 				= rect.width;
+		var h 				= rect.height;
 		var rotationPivot	= {
 			x:(x+(w*image.rotationOrigin.x)),
 			y:(y+(h*image.rotationOrigin.y))
