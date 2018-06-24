@@ -3417,6 +3417,7 @@ function ComponentButton(image){
 		this.imageKey = key;
 
 		this.image = (new Entity("Button Image")).addComponent(new ComponentImage(this.imageKey));
+		this.image.entity.clickable = false;
 		this.entity.add(this.image.entity);
 
 		this.updateSize();
@@ -3433,6 +3434,7 @@ function ComponentButton(image){
 		}
 
 		this.imagePressed = (new Entity("Button Image Pressed")).addComponent(new ComponentImage(key));
+		this.imagePressed.entity.clickable = false;
 		this.entity.add(this.imagePressed.entity);
 		this.imagePressed.entity.visible = false;
 	}
@@ -3448,6 +3450,7 @@ function ComponentButton(image){
 		if(!this.text){
 			this.text = (new Entity("Button Text", 0, 0)).addComponent(new ComponentText(font, text, size));
 			this.text.align = "left";
+			this.text.entity.clickable = false;
 			this.entity.add(this.text.entity);
 		} else {
 			if(font) this.text.font = font;
