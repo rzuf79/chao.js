@@ -2549,7 +2549,7 @@ function Entity(name, x, y){
 	this.parent 		= null,				// Parent object.
 	this.visible 		= true,				// Is rendering enabled for this entity.
 	this.paused			= false,			// When true, no updates will happen for this entity, its components and all the children.
-	this.clickable 		= false,			// When true, this entity will receive mouse/touch input events.
+	this.clickable 		= true,				// When true, this entity will receive mouse/touch input events.
 	this.keepClickFocus	= false; 			// When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
 
 	/**
@@ -2734,8 +2734,8 @@ function Entity(name, x, y){
 	 * Called when this entity is clicked. Tries to call onClick on all its children.
 	 */
 	this.onClick = function(){
-		var relativeX = chao.mouse.x - this.x;
-		var relativeY = chao.mouse.y - this.y;
+		var relativeX = chao.mouse.x - this.getScreenX();
+		var relativeY = chao.mouse.y - this.getScreenY();
 		for(var i = 0; i < this.components.length; ++i){
 			if(this.components[i].onClick){
 				this.components[i].onClick(relativeX, relativeY);
@@ -2747,8 +2747,8 @@ function Entity(name, x, y){
 	 * Called when this entity is clicked and the pointer moves around. Tries to call onMove on all its children.
 	 */
 	this.onMove = function(){
-		var relativeX = chao.mouse.x - this.x;
-		var relativeY = chao.mouse.y - this.y;
+		var relativeX = chao.mouse.x - this.getScreenX();
+		var relativeY = chao.mouse.y - this.getScreenY();
 		for(var i = 0; i < this.components.length; ++i){
 			if(this.components[i].onMove){
 				this.components[i].onMove(relativeX, relativeY);
@@ -2771,8 +2771,8 @@ function Entity(name, x, y){
 	 * Called when the mouse/touch input on this entity is released. Tries to call onRelease on all its children.
 	 */
 	this.onRelease = function(){
-		var relativeX = chao.mouse.x - this.x;
-		var relativeY = chao.mouse.y - this.y;
+		var relativeX = chao.mouse.x - this.getScreenX();
+		var relativeY = chao.mouse.y - this.getScreenY();
 		for(var i = 0; i < this.components.length; ++i){
 			if(this.components[i].onRelease){
 				this.components[i].onRelease(relativeX, relativeY);
