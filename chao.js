@@ -3512,6 +3512,7 @@ function ComponentCamera(){
 	 */
 	this.update = function(){
 		if(this.trackedEntity == null){
+			this.clampToBounds(this.entity);
 			this.addPositionToBuffer(this.entity.x, this.entity.y);
 			return;
 		}
@@ -3560,12 +3561,7 @@ function ComponentCamera(){
 		}
 
 		// clamping camera position to the set bounds
-		if(this.bounds.width > 0){
-			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x+this.bounds.width)-chao.screenWidth);
-		}
-		if(this.bounds.height > 0){
-			cameraPos.y = -chao.clamp(-cameraPos.y, this.bounds.y, (this.bounds.y+this.bounds.height)-chao.screenHeight);
-		}
+		this.clampToBounds(cameraPos);
 
 		// smoothing the camera movement
 		this.addPositionToBuffer(cameraPos.x, cameraPos.y);
@@ -3642,6 +3638,15 @@ function ComponentCamera(){
 		this.trackPositionBuffer.push( {x:x, y:y} );
 		while(this.trackPositionBuffer.length > this.trackSmoothness){
 			this.trackPositionBuffer.splice(0, 1);
+		}
+	}
+
+	this.clampToBounds = function(cameraPos){
+		if(this.bounds.width > 0){
+			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x+this.bounds.width)-chao.screenWidth);
+		}
+		if(this.bounds.height > 0){
+			cameraPos.y = -chao.clamp(-cameraPos.y, this.bounds.y, (this.bounds.y+this.bounds.height)-chao.screenHeight);
 		}
 	}
 }
