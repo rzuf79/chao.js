@@ -10,7 +10,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION					: "0.21",
+	VERSION					: "0.22",
 
 	SCALING_MODE_NONE		: 0,	// Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH	: 1,	// Scales the canvas to fill the whole viewport.
@@ -1553,18 +1553,20 @@ var chao = {
 		chao.mouse.x = x;
 		chao.mouse.y = y;
 
-		var currentEntity = chao.getEntityUnderMouse();
-		if(currentEntity != chao.focusedEntity){
-			if(chao.focusedEntity && !chao.focusedEntity.keepClickFocus){
-				chao.focusedEntity.onCancel();
+		if(chao.mouse.pressed){
+			var currentEntity = chao.getEntityUnderMouse();
+			if(currentEntity != chao.focusedEntity){
+				if(chao.focusedEntity && !chao.focusedEntity.keepClickFocus){
+					chao.focusedEntity.onCancel();
+				}
+				if(!chao.focusedEntity || !chao.focusedEntity.keepClickFocus){
+					chao.focusedEntity = currentEntity;
+				}
 			}
-			if(!chao.focusedEntity || !chao.focusedEntity.keepClickFocus){
-				chao.focusedEntity = currentEntity;
-			}
-		}
 
-		if(chao.focusedEntity){
-			chao.focusedEntity.onMove();
+			if(chao.focusedEntity){
+				chao.focusedEntity.onMove();
+			}
 		}
 	},
 
@@ -2549,7 +2551,7 @@ function Entity(name, x, y){
 	this.parent 		= null,				// Parent object.
 	this.visible 		= true,				// Is rendering enabled for this entity.
 	this.paused			= false,			// When true, no updates will happen for this entity, its components and all the children.
-	this.clickable 		= true,				// When true, this entity will receive mouse/touch input events.
+	this.clickable 		= false,			// When true, this entity will receive mouse/touch input events.
 	this.keepClickFocus	= false; 			// When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
 
 	/**
@@ -2877,6 +2879,20 @@ function Entity(name, x, y){
 		}
 
 		return null;
+	}
+
+	/**
+	 * Checks if this entity is visible. Takes visibility of the parent entities into consideration.
+	 *
+	 * @return - True if this entity is visible in the hierarchy.
+	 */
+	this.isVisible = function(){
+
+		if(this.parent != null){
+			return this.visible && this.parent.isVisible();
+		}
+
+		return this.visible;
 	}
 
 	/**
@@ -3324,22 +3340,22 @@ ComponentText.prototype = {
  * @param image - Name/id of the image to be used.
  */
 function ComponentButton(image){
-	this.name 			= "Button";		// Name by which this component is identified.
-	this.entity 		= null;			// The Entity this component is attached to.
-	this.imageKey 		= image;		// Name of the image used as this button's graphic.
-	this.image 			= null;			// Image used as this button's graphic.
-	this.imagePressed 	= null;			// Image used as this button's pressed state graphic.
-	this.text 			= null;			// Text displayed on top this button.
+	this.name 					= "Button";		// Name by which this component is identified.
+	this.entity 				= null;			// The Entity this component is attached to.
+	this.imageKey 				= image;		// Name of the image used as this button's graphic.
+	this.image 					= null;			// Image used as this button's graphic.
+	this.imagePressed 			= null;			// Image used as this button's pressed state graphic.
+	this.text 					= null;			// Text displayed on top this button.
 
-	this.disableDim		= false;		// When false and imagePressed is not set, the button will react to a press by dimming itself.
-	this.disabled 		= false;		// When true, the button will ignore all input.
-	this.dimInactive 	= true;			// When true, the button will be dimmed when disabled.
+	this.disableDim				= false;		// When false and imagePressed is not set, the button will react to a press by dimming itself.
+	this.disabled 				= false;		// When true, the button will ignore all input.
+	this.dimInactive 			= true;			// When true, the button will be dimmed when disabled.
 
-	this.onPress 		= function(button) {};	// Function called when this button is pressed.
-	this.onHold 		= function(button) {};	// Function called when this button stays pressed.
-	this.onReleased 	= function(button) {};	// Function called when this button stops being pressed.
+	this.onPress 				= function(button) {};	// Function called when this button is pressed.
+	this.onHold 				= function(button) {};	// Function called when this button stays pressed.
+	this.onReleased 			= function(button) {};	// Function called when this button stops being pressed.
 
-	this.pressed 		= false;
+	this.pressed 				= false;
 
 	/**
 	 * A constructor of sorts. Called when the component is added to an entity.
@@ -3369,6 +3385,8 @@ function ComponentButton(image){
 				buttonAlpha = 1.0;
 				if(this.onReleased){
 					this.onReleased(this);
+					// hacky supress any other releases
+					chao.mouse.justReleased = false;
 				}
 			}
 
@@ -3483,7 +3501,7 @@ function ComponentButton(image){
 			return false;
 		}
 
-		return this.entity.getEntityAt(x, y) === this.entity;
+		return chao.getCurrentState().rootEntity.getEntityAt(x, y) === this.entity;
 	}
 
 }
