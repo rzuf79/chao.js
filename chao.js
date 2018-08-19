@@ -10,7 +10,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION					: "0.22",
+	VERSION					: "0.23",
 
 	SCALING_MODE_NONE		: 0,	// Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH	: 1,	// Scales the canvas to fill the whole viewport.
@@ -1483,8 +1483,10 @@ var chao = {
 	 * Handles mouse clicks and the first touch input, which is handled like the left mouse button.
 	 *
 	 * @param button - Id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
+	 * @param x - X position of the pointer, from the left edge of the viewport.
+	 * @param y - Y position of the pointer, from the top edge of the viewport.
 	 */
-	handleMouseDown: function(button){
+	handleMouseDown: function(button, x, y){
 		chao.resumeMusicPlaybackIfNeeded();
 
 		if(chao.mouse.suppressUntilUp){
@@ -1576,7 +1578,7 @@ var chao = {
 	 * @param e - Event passed by the Event Listener.
 	 */
 	onMouseDown: function(e){
-		chao.handleMouseDown(e.which);
+		chao.handleMouseDown(e.which, e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 
@@ -2167,8 +2169,16 @@ var chao = {
 		entityLog += " p:" + Math.ceil(entity.x) + "x" + Math.ceil(entity.y);
 		entityLog += " s:" + Math.ceil(entity.width) + "x" + Math.ceil(entity.height);
 
-		for(var i = 0; i < entity.children.length; ++i){
-			entityLog += chao.logEntity(entity.children[i], indent + 1);
+		if(!entity.foldInLog){
+			for(var i = 0; i < entity.children.length; ++i){
+				entityLog += chao.logEntity(entity.children[i], indent + 1);
+			}
+		} else {
+			entityLog += "\n";
+			for(var i = 0; i < indent + 1; ++i){
+				entityLog += "  ";
+			}
+			entityLog += "(...)";
 		}
 
 		return "\n" + entityLog;
@@ -2464,7 +2474,8 @@ var chao = {
 				newButton.setImagePressed(imagePressed);
 			}
 
-			if(font && fontSize && text){
+			if(font && fontSize){
+				text = text || "";
 				newButton.setText(text, font, fontSize);
 			}
 
@@ -2553,6 +2564,8 @@ function Entity(name, x, y){
 	this.paused			= false,			// When true, no updates will happen for this entity, its components and all the children.
 	this.clickable 		= false,			// When true, this entity will receive mouse/touch input events.
 	this.keepClickFocus	= false; 			// When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
+
+	this.foldInLog		= false;			// When true, the chao.logEntity method won't print this entity's children.
 
 	/**
 	 * Destroys all children and components sticked to this entity.
