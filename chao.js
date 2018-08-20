@@ -10,7 +10,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION					: "0.23",
+	VERSION					: "0.23b",
 
 	SCALING_MODE_NONE		: 0,	// Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH	: 1,	// Scales the canvas to fill the whole viewport.
@@ -1649,7 +1649,7 @@ var chao = {
 			chao.touches.push(newTouch);
 
 			if(newTouch.isMouse){
-				chao.handleMouseDown(1);
+				chao.handleMouseDown(1, newTouch.x, newTouch.y);
 				chao.handleMouseMove(newTouch.x, newTouch.y);
 			}
 		}
@@ -3764,7 +3764,7 @@ function ComponentParticle(image){
 	}
 }
 ComponentParticle.FADE_MODE_NONE		= 0; // No fade at all shall be applied.
-ComponentParticle.FADE_MODE_LINEAR		= 1; // The particle will progressively.
+ComponentParticle.FADE_MODE_LINEAR		= 1; // The particle will fade progressively.
 ComponentParticle.FADE_MODE_LAST_SECOND	= 2; // The particle will fade in span of the last second of its life.
 
 /**
@@ -3807,7 +3807,7 @@ function ComponentShake(force, time, damped){
 				return;
 			}
 
-			// Put this component at the end if it's not. So we can take into account the position changes made by other components.
+			// Put this component at the end if it's not already. So we can take the position changes made by other components into account.
 			var id = this.entity.components.indexOf(this);
 			if(id != this.entity.components.length-1){
 				this.entity.components.splice(id, 1);
