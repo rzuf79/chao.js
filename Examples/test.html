@@ -52,23 +52,23 @@
 		this.name 				= "Ludzik";
 
 		this.create = function(){
-			this.image = this.entity.addComponent(new ComponentImage("zbylut", 30, 30));
+			this.sprite = this.entity.addComponent(new ComponentSprite("zbylut", 30, 30));
 
 			this.entity.keepClickFocus = true;
 
-			this.image.addAnim("idle_n", [4], 0, false);
-			this.image.addAnim("idle_s", [0], 0, false);
-			this.image.addAnim("idle_w", [8], 0, false);
-			this.image.addAnim("idle_nw", [16], 0, false);
-			this.image.addAnim("idle_sw", [12], 0, false);
+			this.sprite.addAnim("idle_n", [4], 0, false);
+			this.sprite.addAnim("idle_s", [0], 0, false);
+			this.sprite.addAnim("idle_w", [8], 0, false);
+			this.sprite.addAnim("idle_nw", [16], 0, false);
+			this.sprite.addAnim("idle_sw", [12], 0, false);
 
-			this.image.addAnim("run_n", [5, 4, 6, 4], 0.2, true);
-			this.image.addAnim("run_s", [1, 0, 2, 0], 0.2, true);
-			this.image.addAnim("run_w", [9, 8], 0.2, true);
-			this.image.addAnim("run_nw", [17, 16, 18, 16], 0.2, true);
-			this.image.addAnim("run_sw", [13, 12, 14, 12], 0.2, true);
+			this.sprite.addAnim("run_n", [5, 4, 6, 4], 0.2, true);
+			this.sprite.addAnim("run_s", [1, 0, 2, 0], 0.2, true);
+			this.sprite.addAnim("run_w", [9, 8], 0.2, true);
+			this.sprite.addAnim("run_nw", [17, 16, 18, 16], 0.2, true);
+			this.sprite.addAnim("run_sw", [13, 12, 14, 12], 0.2, true);
 
-			this.image.playAnim("idle_s");
+			this.sprite.playAnim("idle_s");
 		}
 
 		this.update = function(){
@@ -91,46 +91,46 @@
 				switch(direction){
 					case "n" : 
 						animName 			= "run_n";
-						this.image.flipX 	= false;
+						this.sprite.flipX 	= false;
 						break;
 					case "s" : 
 						animName 			= "run_s";
-						this.image.flipX 	= false;
+						this.sprite.flipX 	= false;
 						break;
 					case "w" : 
 						animName 			= "run_w";
-						this.image.flipX 	= false;
+						this.sprite.flipX 	= false;
 						break;
 					case "e" : 
 						animName 			= "run_w";
-						this.image.flipX 	= true;
+						this.sprite.flipX 	= true;
 						break;
 					case "nw" : 
 						animName 			= "run_nw";
-						this.image.flipX 	= false;
+						this.sprite.flipX 	= false;
 						break;
 					case "ne" : 
 						animName 			= "run_nw";
-						this.image.flipX 	= true;
+						this.sprite.flipX 	= true;
 						break;
 					case "sw" : 
 						animName 			= "run_sw";
-						this.image.flipX 	= false;
+						this.sprite.flipX 	= false;
 						break;
 					case "se" : 
 						animName 			= "run_sw";
-						this.image.flipX 	= true;
+						this.sprite.flipX 	= true;
 				}
 			}
 
 			if(animName === "idle"){
-				animName = this.image.getCurrentAnim().key;
+				animName = this.sprite.getCurrentAnim().key;
 
 				var dashPos = animName.indexOf("_");
 				animName = "idle" + animName.substr(dashPos);
 			}
 
-			this.image.playAnim(animName, false);
+			this.sprite.playAnim(animName, false);
 
 			var currSpeed = chao.getTimeDelta() * 80;
 			if(direction.indexOf("n") != -1){
@@ -158,7 +158,7 @@
 			chao.countFPS = true;
 
 			this.thingie = new Entity("Thingie", 100, 100);
-			this.thingie.addComponent(new ComponentImage("sticker"));
+			this.thingie.addComponent(new ComponentSprite("sticker"));
 			this.thingie.clickable = true;
 			this.add(this.thingie);
 

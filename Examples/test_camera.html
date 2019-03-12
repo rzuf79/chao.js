@@ -30,11 +30,11 @@
 
 		this.create = function(){
 			this.shaker = this.entity.addComponent(new ComponentShake(5, 0.25, false));
-			this.image = this.entity.addComponent(new ComponentImage("buba", 64, 64));
+			this.sprite = this.entity.addComponent(new ComponentSprite("buba", 64, 64));
 
-			this.image.addAnim("idle", [0], 0, false);
-			this.image.addAnim("run", [1, 0, 2, 0], 0.2, true);
-			this.image.playAnim("idle");
+			this.sprite.addAnim("idle", [0], 0, false);
+			this.sprite.addAnim("run", [1, 0, 2, 0], 0.2, true);
+			this.sprite.playAnim("idle");
 		}
 
 		this.update = function(){
@@ -56,7 +56,7 @@
 				animName = "run";
 			}
 
-			this.image.playAnim(animName, false);
+			this.sprite.playAnim(animName, false);
 
 			var currSpeed = chao.getTimeDelta() * 80;
 			if(direction.indexOf("n") != -1){
@@ -67,11 +67,11 @@
 			}
 			if(direction.indexOf("w") != -1){
 				this.entity.x -= currSpeed;
-				this.image.flipX = true;
+				this.sprite.flipX = true;
 			}
 			if(direction.indexOf("e") != -1){
 				this.entity.x += currSpeed;
-				this.image.flipX = false;
+				this.sprite.flipX = false;
 			}
 
 
@@ -94,19 +94,19 @@
 			for(var i = 0; i < 1000; ++i){
 				chao.putPixel(background, chao.getRandom(background.width), chao.getRandom(background.height), "#f9f7c7");
 			}
-			this.add(chao.helpers.createImage("Sky", background, 0, 0).entity);
+			this.add(chao.helpers.createSprite("Sky", background, 0, 0).entity);
 
 			this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 			this.add(this.camera.entity);
 
-			var bouncyIsle = chao.helpers.createImage("Small Island", "island_small1", -64, -64);
+			var bouncyIsle = chao.helpers.createSprite("Small Island", "island_small1", -64, -64);
 			this.camera.entity.add(bouncyIsle.entity);
 			chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 
 			var smallerIslands = [];
 			for(var i = 0; i < 25; ++i){
 				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-				var newIsle = chao.helpers.createImage("Smaller Island", imgName, 0, 0);
+				var newIsle = chao.helpers.createSprite("Smaller Island", imgName, 0, 0);
 				var tries = 0;
 				while(tries < 108){
 					newIsle.entity.x = chao.getRandom(800); newIsle.entity.y = chao.getRandom(800);
@@ -131,7 +131,7 @@
 			var islands = [];
 			for(var i = 0; i < 15; ++i){
 				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-				var newIsle = chao.helpers.createImage("Small Island", imgName, 0, 0);
+				var newIsle = chao.helpers.createSprite("Small Island", imgName, 0, 0);
 				var tries = 0;
 				while(tries < 108){
 					newIsle.entity.x = chao.getRandom(800); newIsle.entity.y = chao.getRandom(800);
@@ -154,7 +154,7 @@
 
 			var clouds = [];
 			for(var i = 0; i < 15; ++i){
-				var newCloud = chao.helpers.createImage("Cloud", "cloud", 0, 0);
+				var newCloud = chao.helpers.createSprite("Cloud", "cloud", 0, 0);
 				var tries = 0;
 				while(tries < 108){
 					newCloud.entity.x = chao.getRandom(800); newCloud.entity.y = chao.getRandom(800);
@@ -176,7 +176,7 @@
 				this.camera.entity.add(newCloud.entity);
 			}
 
-			this.camera.entity.add(chao.helpers.createImage("Island", "island_large", 200, 200).entity);
+			this.camera.entity.add(chao.helpers.createSprite("Island", "island_large", 200, 200).entity);
 
 
 			this.gameObjects = new Entity("Game Objects");
@@ -185,8 +185,8 @@
 			this.ludzik = (new Entity("Buba", 400, 400)).addComponent(new ComponentLudzik());
 			this.gameObjects.add(this.ludzik.entity);
 
-			this.gameObjects.add(chao.helpers.createImage("Kurzyk", "cloudy", 300, 300).entity);
-			this.gameObjects.add(chao.helpers.createImage("Kurzyk", "cloudy", 360, 330).entity);
+			this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", 300, 300).entity);
+			this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", 360, 330).entity);
 
 
 			this.camera.follow(this.ludzik.entity, chao.framerate);
