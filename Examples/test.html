@@ -31,6 +31,7 @@
 
 	chao.setupLogTarget("debug");
 	chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
+	chao.setImagesSmoothing(false);
 	chao.backgroundColor = "#ffffff";
 	chao.pauseOnFadeEnabled	= false;
 	chao.muteOnFocusLost = false;
@@ -80,7 +81,7 @@
 			}else if(chao.keys[chao.KEY_DOWN]){
 				direction += "s";
 			}
-			
+
 			if(chao.keys[chao.KEY_LEFT]){
 				direction += "w";
 			}else if(chao.keys[chao.KEY_RIGHT]){
@@ -89,35 +90,35 @@
 
 			if(direction.length > 0){
 				switch(direction){
-					case "n" : 
+					case "n" :
 						animName 			= "run_n";
 						this.sprite.flipX 	= false;
 						break;
-					case "s" : 
+					case "s" :
 						animName 			= "run_s";
 						this.sprite.flipX 	= false;
 						break;
-					case "w" : 
+					case "w" :
 						animName 			= "run_w";
 						this.sprite.flipX 	= false;
 						break;
-					case "e" : 
+					case "e" :
 						animName 			= "run_w";
 						this.sprite.flipX 	= true;
 						break;
-					case "nw" : 
+					case "nw" :
 						animName 			= "run_nw";
 						this.sprite.flipX 	= false;
 						break;
-					case "ne" : 
+					case "ne" :
 						animName 			= "run_nw";
 						this.sprite.flipX 	= true;
 						break;
-					case "sw" : 
+					case "sw" :
 						animName 			= "run_sw";
 						this.sprite.flipX 	= false;
 						break;
-					case "se" : 
+					case "se" :
 						animName 			= "run_sw";
 						this.sprite.flipX 	= true;
 				}
@@ -215,12 +216,12 @@
 			var text = "Bacon impsum dolor\nsit pork chop";
 			// var text = "" + chao.screenScaleX + "x" + chao.screenScaleY;
 
-			chao.drawText(chao.canvas, 
-				chao.font, 
-				text, 
-				0, 0, 
-				30, 
-				chao.makeColor(255, 255, 255), 
+			chao.drawText(chao.canvas,
+				chao.font,
+				text,
+				0, 0,
+				30,
+				chao.makeColor(255, 255, 255),
 				"left",
 				chao.makeColor(0, 0, 0),
 				2);
@@ -254,16 +255,16 @@
 		playSound: function(button){
 			chao.playSound("oh");
 			for(var i = 0; i < 23; ++i){
-				chao.currentState.spawnParticle("cloudy", 
-					chao.screenWidth/2, chao.screenHeight/2, 
-					-60 + chao.getRandom(120), 
-					-80 - chao.getRandom(40), 
+				chao.currentState.spawnParticle("cloudy",
+					chao.screenWidth/2, chao.screenHeight/2,
+					-60 + chao.getRandom(120),
+					-80 - chao.getRandom(40),
 					100);
 			}
 		},
 
 	};
-	
+
 	chao.switchState(StateGame);
 
 </script>
