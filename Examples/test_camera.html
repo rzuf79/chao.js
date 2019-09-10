@@ -161,7 +161,7 @@
 					tries ++;
 					var collide = false;
 					for(var j = 0; j < clouds.length; ++j) {
-						if(newCloud.entity.checkCollision(clouds[j])){ 
+						if(newCloud.entity.checkCollision(clouds[j])){
 							collide = true; break;
 						}
 					}
@@ -200,11 +200,11 @@
 			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
 			this.add(this.textLogo.entity);
 			this.textLogo.entity.alignToParentHorizontally();
-			chao.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7, 
+			chao.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7,
 				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
 
-			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font, 
+			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font,
 				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy\n[S] screen shAaaAaaAkeeEEeE!",
 				20);
 			this.add(debugInfo.entity);
@@ -252,17 +252,16 @@
 		},
 
 		draw: function(){
-			// // debuggy camera deadzone display
-			// chao.drawRect(chao.canvas, 
-			// 	this.camera.deadzone.x, this.camera.deadzone.y, 
+			// debuggy camera deadzone display
+			// chao.drawRect(chao.canvas,
+			// 	this.camera.deadzone.x, this.camera.deadzone.y,
 			// 	this.camera.deadzone.width, this.camera.deadzone.height,
 			// 	chao.colorCodes[2], 2);
-
 		}
 
 
 	};
-	
+
 	chao.switchState(StateGame);
 
 

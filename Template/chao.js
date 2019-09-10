@@ -27,7 +27,7 @@
 var chao = {
 
   /** Consts. */
-  VERSION: "0.31",
+  VERSION: "0.32",
 
   SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
   SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -51,22 +51,22 @@ var chao = {
 
   /** Basic 16 colors.
    *
-   * 0 = Black 			0xff000000
-   * 1 = Blue 			0xff0000aa
-   * 2 = Green 			0xff00aa00
-   * 3 = Cyan 			0xff00aaaa
-   * 4 = Red 				0xffaa0000
-   * 5 = Magenta 			0xff800080
-   * 6 = Brown 			0xff995500
-   * 7 = White 			0xffaaaaaa
-   * 8 = Gray				0xff555555
-   * 9 = LightBlue 		0xff5555ff
-   * 10 = LightGreen		0xff54ff3f
-   * 11 = LightCyan		0xff55ffff
-   * 12 = LightRed		0xffff5555
-   * 13 = LightMagenta	0xffff55ff
-   * 14 = Yellow 			0xffffff55
-   * 15 = BrightWhite		0xffffffff
+   * 0 = Black 0xff000000
+   * 1 = Blue 0xff0000aa
+   * 2 = Green 0xff00aa00
+   * 3 = Cyan 0xff00aaaa
+   * 4 = Red 0xffaa0000
+   * 5 = Magenta 0xff800080
+   * 6 = Brown 0xff995500
+   * 7 = White 0xffaaaaaa
+   * 8 = Gray 0xff555555
+   * 9 = LightBlue 0xff5555ff
+   * 10 = LightGreen 0xff54ff3f
+   * 11 = LightCyan 0xff55ffff
+   * 12 = LightRed 0xffff5555
+   * 13 = LightMagenta 0xffff55ff
+   * 14 = Yellow 0xffffff55
+   * 15 = BrightWhite 0xffffffff
    */
   colorCodes: [0xff000000, 0xff0000aa, 0xff00ff00, 0xff00aaaa, 0xffaa0000, 0xff800080, 0xff995500, 0xffaaaaaa, 0xff555555, 0xff5555ff, 0xff54ff3f, 0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff],
 
@@ -1115,7 +1115,7 @@ var chao = {
    */
   getFont: function(key) {
     if (typeof key === "string" || key instanceof String) {
-      var n = chao.fonts.length;
+    	var n = chao.fonts.length;
       for (var i = 0; i < n; ++i) {
         if (chao.fonts[i].key == key) {
           return chao.fonts[i];
@@ -1358,7 +1358,7 @@ var chao = {
           // Whoa! We are fine!
         }).catch(function() {
           // Was unable to play sound. :(
-          // Prolly the browser is messing with audio permissions. Will try to remsume it on the first user's input.
+          // Prolly the browser is messing with audio permissions. Will try to resume it on the first input.
           if (sound.isMusic) {
             chao.musicWasSupressed = true;
           }
@@ -2154,6 +2154,16 @@ var chao = {
     return radians / (180 / Math.PI);
   },
 
+	/**
+	 * Converts degrees to radians.
+	 *
+	 * @param degrees - degrees to convert.
+	 * @return - Angle in radians.
+	 */
+	deg2rad: function(degres) {
+		return degrees * (Math.PI / 180);
+	},
+
   /**
    * Clamps the given value between min (inclusive) and max (inclusive).
    *
@@ -2167,6 +2177,105 @@ var chao = {
     if (value > max) value = max;
     return value;
   },
+
+	/**
+   * Moves from a to b by max_step.
+   *
+   * @param a - Current value.
+   * @param b - Target value.
+   * @param maxStep - Max how much a will change to move towards b.
+   * @return - Suprise! A clamped value!
+   */
+	moveTowards: function(a, b, maxStep) {
+		if(b > a) {
+			a += maxStep;
+			if(a > b) {
+				a = b;
+			}
+		} else if(b < a) {
+			a -= maxStep
+			if(a < b) {
+				a = b;
+			}
+		}
+		return a;
+	},
+
+	/**
+	 * Interpolates between a and b by v using specified interpolation method.
+	 *
+	 * @param a - Start value.
+	 * @param b - End value.
+	 * @param v - Interpolation value between a and b.
+	 * @param interpolationType - Type of interpolation. Use the chao.INTERPOLATE_* consts. Defaults to chao.INTERPOLATE_LINEAR.
+	 * @return - Interpolated value.
+	 */
+	interpolate: function(a, b, v, interpolationType) {
+		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR
+		v = chao.clamp(v, 0.0, 1.0)
+
+		switch (interpolationType) {
+      case chao.INTERPOLATE_SMOOTH: {
+        v = v * v * (3 - 2 * v);
+        break;
+      }
+      case chao.INTERPOLATE_EASE_TO: {
+        v = 1 - (1 - v) * (1 - v);
+        break;
+      }
+      case chao.INTERPOLATE_EASE_FROM: {
+        v = v * v;
+        break;
+      }
+      case chao.INTERPOLATE_BOUNCE: {
+        if (v < (1.0 / 2.75)) {
+          v = 7.5625 * v * v;
+        } else if (v < (2.0 / 2.75)) {
+          v = 7.5625 * (v -= (1.5 / 2.75)) * v + 0.75;
+        } else if (v < (2.5 / 2.75)) {
+          v = 7.5625 * (v -= (2.25 / 2.75)) * v + 0.9375;
+        } else {
+          v = 7.5625 * (v -= (2.625 / 2.75)) * v + 0.984375;
+        }
+				break;
+      }
+			case chao.INTERPOLATE_ELASTIC: {
+				var amplitude = 0.0;
+				var period	= 0.3;
+				if(v == 0){
+					v = 0;
+				} else if(v == 1.0){
+					v = 1;
+				} else {
+					var s = period / 4.0;
+					if(amplitude < 1.0){
+						amplitude = 1.0;
+					} else {
+						s = period * Math.sin(1.0 / amplitude) / (2 * Math.PI);
+					}
+					v = (amplitude * Math.pow(2.0, -10.0*v) * Math.sin((v - s) * (2.0 * Math.PI) / period) + 1.0);
+				}
+			}
+    }
+
+		return (b * v) + (a * (1.0 - v))
+	},
+
+	/**
+	 * Interpolates between vector a and vector b by v using specified interpolation method.
+	 *
+	 * @param a - Start vector.
+	 * @param b - Target vector.
+	 * @param v - Interpolation value between a and b.
+	 * @param interpolationType - Type of interpolation. Use the chao.INTERPOLATE_* consts. Defaults to chao.INTERPOLATE_LINEAR.
+	 * @return - Interpolated value.
+	 */
+	interpolateVector: function(a, b, v, interpolationType) {
+		return {
+			x: chao.interpolate(a.x, b.x, v, interpolationType),
+			y: chao.interpolate(a.y, b.y, v, interpolationType)
+		};
+	},
 
   /**
    * Sets up the place to put all the logs into.
@@ -2346,51 +2455,8 @@ var chao = {
       if (tween.direction < 0) {
         v = 1 - v;
       }
-      switch (tween.interpolationType) {
-        case chao.INTERPOLATE_SMOOTH: {
-          v = v * v * (3 - 2 * v);
-          break;
-        }
-        case chao.INTERPOLATE_EASE_TO: {
-          v = 1 - (1 - v) * (1 - v);
-          break;
-        }
-        case chao.INTERPOLATE_EASE_FROM: {
-          v = v * v;
-          break;
-        }
-        case chao.INTERPOLATE_BOUNCE: {
-          if (v < (1.0 / 2.75)) {
-            v = 7.5625 * v * v;
-          } else if (v < (2.0 / 2.75)) {
-            v = 7.5625 * (v -= (1.5 / 2.75)) * v + 0.75;
-          } else if (v < (2.5 / 2.75)) {
-            v = 7.5625 * (v -= (2.25 / 2.75)) * v + 0.9375;
-          } else {
-            v = 7.5625 * (v -= (2.625 / 2.75)) * v + 0.984375;
-          }
-					break;
-        }
-				case chao.INTERPOLATE_ELASTIC: {
-					var amplitude = 0.0;
-					var period	= 0.3;
-					if(v == 0){
-						v = 0;
-					} else if(v == 1.0){
-						v = 1;
-					} else {
-						var s = period / 4.0;
-						if(amplitude < 1.0){
-							amplitude = 1.0;
-						} else {
-							s = period * Math.sin(1.0 / amplitude) / (2 * Math.PI);
-						}
-						v = (amplitude * Math.pow(2.0, -10.0*v) * Math.sin((v - s) * (2.0 * Math.PI) / period) + 1.0);
-					}
-				}
 
-      }
-      tween.target[tween.varName] = (tween.to * v) + (tween.from * (1 - v));
+      tween.target[tween.varName] = chao.interpolate(tween.from, tween.to, v, tween.interpolationType);
     }
 
     // bring out your dead!
@@ -3790,7 +3856,6 @@ function ComponentCamera() {
     // and after a hard day's work, finally setting the camera position!
     this.entity.x = smoothedPos.x;
     this.entity.y = smoothedPos.y;
-
   }
 
   /**
