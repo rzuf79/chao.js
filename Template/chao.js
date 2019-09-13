@@ -3271,8 +3271,8 @@ function ComponentSprite(key, frameWidth, frameHeight) {
     this.anims.push({
       key: key,
       frames: frames,
-      delay: delay,
-      loop: loop,
+      delay: delay || 0,
+      loop: loop || true,
     });
   }
 
