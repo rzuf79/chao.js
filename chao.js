@@ -3668,7 +3668,7 @@ function ComponentButton(image) {
       this.pressed = false;
     }
 
-    if (this.imagePressed) {
+    if (this.spritePressed) {
       this.sprite.entity.visible = buttonAlpha > 0.5;
       this.sprite.entity.visible = buttonAlpha <= 0.5;
     } else if (!this.disableDim) {
@@ -3686,7 +3686,7 @@ function ComponentButton(image) {
    */
   this.setImage = function(key) {
     if (this.sprite) {
-      this.entity.remove(this.image.entity);
+      this.entity.remove(this.sprite.entity);
     }
 
     this.imageKey = key;
@@ -3704,14 +3704,14 @@ function ComponentButton(image) {
    * @param key - String id of an image or an image object to be used.
    */
   this.setImagePressed = function(key) {
-    if (this.imagePressed) {
-      this.entity.remove(this.imagePressed.entity);
+    if (this.spritePressed) {
+      this.entity.remove(this.spritePressed.entity);
     }
 
-    this.imagePressed = (new Entity("Button Image Pressed")).addComponent(new ComponentSprite(key));
-    this.imagePressed.entity.clickable = false;
-    this.entity.add(this.imagePressed.entity);
-    this.imagePressed.entity.visible = false;
+    this.spritePressed = (new Entity("Button Image Pressed")).addComponent(new ComponentSprite(key));
+    this.spritePressed.entity.clickable = false;
+    this.entity.add(this.spritePressed.entity);
+    this.spritePressed.entity.visible = false;
   }
 
   /**
