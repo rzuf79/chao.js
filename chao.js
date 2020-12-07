@@ -1,22 +1,7 @@
 /**
-
 	-----------------
 	------- chao.js -
 	-----------------
-
-	Changelog:
-
-	0.3
-		- Changed name of the ComponentImage to ComponentSprite to avoid con usion with the chao Image object
-		- Added option to set permanent anchors for the Entities.
-		- Fixed some typos
-
-	0.23
-		- Released after porting Cursed Islands to chao.js so it's a first actually functional version
-
-	0.1
-		- Initial version
-
  */
 
 "use strict";
@@ -27,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.32",
+	VERSION: "0.4",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -76,14 +61,6 @@ var chao = {
 	/** String for testing if a font was loaded. */
 	fontTestString: "giItT1WQy@!-/#", // this only looks like it's random, but it's not!
 
-	/**
-	 * Inits the whole engine.
-	 *
-	 * @param width - Target width of the viewport in pixels.
-	 * @param height - Target height of the viewport in pixels.
-	 * @param scalingMode - Defines how the canvas will scale in the window it's in. Use chao.SCALING_MODE_SOMETHING. Defaults to SCALING_MODE_NONE.
-	 * @param canvasId - Optional - id of the canvas element to put the game into.
-	 */
 	init: function(width, height, scalingMode, canvasId) {
 
 		// Some cross-browser compatibility stuff below
@@ -119,83 +96,84 @@ var chao = {
 			height: height,
 		}
 
-		chao.loggingEnabled = true; // Enable debug logging to browser's console.
+		// Whole lotta vars
+		chao.loggingEnabled = true;
 
-		chao.screenWidth = width; // Viewport width in pixels. Can change dynamically in some scaling modes.
-		chao.screenHeight = height; // Viewport height in pixels. Can change dynamically in some scaling modes.
-		chao.scalingMode = scalingMode || chao.SCALING_MODE_NONE; // Currently set scaling mode.
+		chao.screenWidth = width;
+		chao.screenHeight = height;
+		chao.scalingMode = scalingMode || chao.SCALING_MODE_NONE;
 
-		chao.screenScaleX = 1.0; // Current x scale of the viewport.
-		chao.screenScaleY = 1.0; // Current y scale of the viewport.
-		chao.baseScreenWidth = width; // Original width of the viewport, the one passed in the chao.init()
-		chao.baseScreenHeight = height; // Original height of the viewport, the one passed in the chao.init()
+		chao.screenScaleX = 1.0;
+		chao.screenScaleY = 1.0;
+		chao.baseScreenWidth = width;
+		chao.baseScreenHeight = height;
 
 		chao.installVisibilityHandler();
-		chao.hasFocus = true; // Does the game window have focus at the moment.
+		chao.hasFocus = true;
 
-		chao.images = []; // Array containing all the loaded images.
-		chao.smoothing = true; // Is images smoothing enabled.
+		chao.images = [];
+		chao.smoothing = true;
 		chao.setImagesSmoothing(chao.smoothing);
 
-		chao.pauseOnFadeEnabled = true; // Should the game pause when the window focus is lost.
-		chao.imagePauseFade = null; // Image displayed when the game is paused because of the lost focus.
+		chao.pauseOnFadeEnabled = true;
+		chao.imagePauseFade = null;
 		chao.updatePauseFadeImage();
 
-		chao.onAssetsLoaded = undefined; // Internal - called when all the assets are finished loading.
+		chao.onAssetsLoaded = undefined;
 
-		chao.updateInterval = null; // Holds the engine's main loop.
-		chao.framerate = 60; // How many times the game is supposed to be updated each second.
+		chao.updateInterval = null;
+		chao.framerate = 60;
 		chao.setFPS(60);
-		chao.lastTime = Date.now(); // Internal - remembers the epoch time from the last update cycle.
-		chao.timeDelta = 0.0; // milliseconds that passed since the last frame.
-		chao.timeScale = 1.0; // Scale time returned by getTimeDelta function. Useful for slowing down or speeding things up.
+		chao.lastTime = Date.now();
+		chao.timeDelta = 0.0;
+		chao.timeScale = 1.0;
 
-		chao.countFPS = false; // Set to true and the engine will count how many frames it managed to process each second.
-		chao.currentFPS = 0; // Number of frames processed during the last second.
-		chao.FPSCounter = 0; // Internal - for FPS counting.
-		chao.FPSTimer = 0; // Internal - for FPS counting.
+		chao.countFPS = false;
+		chao.currentFPS = 0;
+		chao.FPSCounter = 0;
+		chao.FPSTimer = 0;
 
-		chao.sounds = []; // Array containing all the loaded sounds.
-		chao.currentMusic = null; // Sound that is currently playing as a music.
-		chao.musicWasSupressed = false; // If music was supressed for some reason. Will try to play it again on the first user input.
-		chao.muted = false; // Are the sounds muted right now. Use chao.setMute to change this.
-		chao.muteOnFocusLost = true; // Is the game supposed to be silent when focus i lost.
-		chao.wasMutedOnFocusLost = false; // Internal - helps to figuer out what to do with the sound when we get the focus back.
+		chao.sounds = [];
+		chao.currentMusic = null;
+		chao.musicWasSupressed = false;
+		chao.muted = false;
+		chao.muteOnFocusLost = true;
+		chao.wasMutedOnFocusLost = false;
 
-		chao.keys = []; // Boolean values of all the keyboard keys presses. Eg. if(chao.keys[chao.KEY_SPACE]) checks if the space key is currently pressed.
-		chao.justPressed = []; // Boolean values of all the keyboard keys presses. Eg. if(chao.keys[chao.KEY_SPACE]) checks if the space key was pressed in current frame.
-		chao.justReleased = []; // Boolean values of all the keyboard keys releases. Eg. if(chao.keys[chao.KEY_SPACE]) checks if the space key was released in current frame.
+		chao.keys = [];
+		chao.justPressed = [];
+		chao.justReleased = [];
 
-		chao.touches = []; // Array containing all the active touches. Each touch is an object with following values: "id" (unique id of the touch), "x", "y", "justPressed" (was this touch activated in the current frame). The first active touch is interpreted just as the left mouse button.
+		chao.touches = [];
 
-		chao.mouse = {}; // All the mousey data.
-		chao.mouse.x = -1; // X position of the mouse, from the left edge of the viewport.
-		chao.mouse.y = -1; // Y position of the mouse, from the top edge of the viewport.
-		chao.mouse.wheelDelta = 0; // How mouch the mouse wheel was scrolled since the last frame.
-		chao.mouse.pressed = false; // Is the left mouse button pressed right now.
-		chao.mouse.justPressed = false; // Was the left mouse button just pressed in the current frame.
-		chao.mouse.justReleased = false; // Was the left mouse button just released in the current frame.
-		chao.mouse.pressedRight = false; // Is the right mouse button pressed right now.
-		chao.mouse.justPressedRight = false; // Was the right mouse button just pressed in the current frame.
-		chao.mouse.justReleasedRight = false; // Was the right mouse button just released in the current frame.
-		chao.mouse.pressedMiddle = false; // Is the middle mouse button pressed right now.
-		chao.mouse.justPressedMiddle = false; // Was the middle mouse button just pressed in the current frame.
-		chao.mouse.justReleasedMiddle = false; // Was the middle mouse button just released in the current frame.
-		chao.mouse.suppressUntilUp = false; // Internal - mouse input will be ignored until its button is released. To avoid accidental clicks when returning from focus pause.
+		chao.mouse = {};
+		chao.mouse.x = -1;
+		chao.mouse.y = -1;
+		chao.mouse.wheelDelta = 0;
+		chao.mouse.pressed = false;
+		chao.mouse.justPressed = false;
+		chao.mouse.justReleased = false;
+		chao.mouse.pressedRight = false;
+		chao.mouse.justPressedRight = false;
+		chao.mouse.justReleasedRight = false;
+		chao.mouse.pressedMiddle = false;
+		chao.mouse.justPressedMiddle = false;
+		chao.mouse.justReleasedMiddle = false;
+		chao.mouse.suppressUntilUp = false;
 
 		chao.resetInput();
 
-		chao.fonts = []; // All loaded font objects.
-		chao.loadedFontsNum = 0; // Total number of fonts loaded.
-		chao.enableFontsLoadCheck = true; // Enable wonky fonts loading state checks.
-		chao.font = chao.loadBase64Font(undefined, chao.defaultFontData); // Default chao font.
+		chao.fonts = [];
+		chao.loadedFontsNum = 0;
+		chao.enableFontsLoadCheck = true;
+		chao.font = chao.loadBase64Font(undefined, chao.defaultFontData);
 
-		chao.entitiesToDestroy = []; // Internal - list of entities to be safely destroyed and removed from the hierarchy.
-		chao.focusedEntity = null; // Internal - entity currently processed by the mouse/touch inputs.
+		chao.entitiesToDestroy = [];
+		chao.focusedEntity = null;
 
-		chao.currentState = undefined; // Current state.
-		chao.loadingState = undefined; // State to be used when the assets are being loaded.
-		chao.newState = undefined; // Internal - state we are bount to switch to.
+		chao.currentState = undefined;
+		chao.loadingState = undefined;
+		chao.newState = undefined;
 
 		// A default loading state that can be overwritten 
 		chao.setLoadingState({
@@ -231,19 +209,11 @@ var chao = {
 
 	},
 
-	/**
-	 * Sets the update interval of the game.
-	 *
-	 * @param FPS - How many times per second shall the game be updated.
-	 */
 	setFPS: function(FPS) {
 		chao.framerate = FPS;
 		chao.updateInterval = setInterval(chao.update, 1000 / FPS);
 	},
 
-	/**
-	 * Clears the whole canvas or fills it with chao.backgroundColor if it's set.
-	 */
 	clearScreen: function() {
 		if (chao.backgroundColor == "none") {
 			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height);
@@ -253,11 +223,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Called when the canvas loses/resumes focus.
-	 *
-	 * @param isFocused - Is the game window active.
-	 */
 	onFocusChange: function(isFocused) {
 		if (chao.hasFocus == isFocused) {
 			return;
@@ -281,9 +246,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Resets all the input data.
-	 */
 	resetInput: function() {
 		for (var i = 0; i < 0x80; ++i) {
 			chao.keys[i] = false;
@@ -298,9 +260,6 @@ var chao = {
 		chao.focusedEntity = null;
 	},
 
-	/**
-	 * Main game loop.
-	 */
 	update: function() {
 		if (chao.enableFontsLoadCheck) {
 			chao.updateFontsLoading();
@@ -369,11 +328,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Destroys current state, then init the given one and set it as the current.
-	 *
-	 * @param newState - State to be initialized and set as the current one.
-	 */
 	switchState: function(newState) {
 		if (chao.currentState === undefined) {
 			chao.destroyCurrentStateAndInitNewOne(newState);
@@ -382,11 +336,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Immediately destroy the old state and init new one.
-	 *
-	 * @param newState - State to be initialized and set as the current one.
-	 */
 	destroyCurrentStateAndInitNewOne: function(newState) {
 		chao.resetInput();
 
@@ -400,11 +349,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Sets the state to be used when the assets are being loaded.
-	 *
-	 * @param newLoadingState - State to be initialized and set as a loading state.
-	 */
 	setLoadingState: function(newLoadingState) {
 		chao.destroyState(chao.loadingState);
 
@@ -413,11 +357,6 @@ var chao = {
 
 	},
 
-	/**
-	 * Inits given state. Called by switchState().
-	 *
-	 * @param state - State to be initialized.
-	 */
 	initState: function(state) {
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
@@ -435,27 +374,14 @@ var chao = {
 		chao.resize();
 	},
 
-	/**
-	 * Internal wrapper for initState(), to be called when assets loading finishes.
-	 */
 	initCurrentState: function() {
 		chao.initState(chao.currentState);
 	},
 
-	/**
-	 * Returns the currently processed state.
-	 *
-	 * @return - CurrentState if assets are loaded and ready, loadingState otherwise.
-	 */
 	getCurrentState: function() {
 		return chao.getLoadingProgress() >= 1.0 ? chao.currentState : chao.loadingState;
 	},
 
-	/**
-	 * Destroys the current state. Called internally when needed.
-	 *
-	 * @param state - State to be destroyed.
-	 */
 	destroyState: function(state) {
 		if (!state) {
 			return;
@@ -468,22 +394,10 @@ var chao = {
 		state.rootEntity = null;
 	},
 
-	/**
-	 * Safely destroys the given entity and all its children. Also removes all the attached tweens.
-	 *
-	 * @param entity - Entity to be destroyed.
-	 */
 	destroyEntity: function(entity) {
 		chao.entitiesToDestroy.push(entity);
 	},
 
-	/**
-	 * Returns all entities of given name in the entity and its children.
-	 *
-	 * @param name - Name of the entity to be found.
-	 * @param entity - Entity from which we will begin the search. Defaults to the rootEntity from currentState.
-	 * @param array - Used for recursion, just ignore it.
-	 */
 	findEntities: function(name, entity, array) {
 		entity = entity || chao.currentState.rootEntity;
 		array = array || [];
@@ -499,13 +413,6 @@ var chao = {
 		return array;
 	},
 
-	/**
-	 * Returns all components of given name in the entity and its children.
-	 *
-	 * @param name - Name by which the components will be identified.
-	 * @param entity - Entity from which we will begin the search. Defaults to the rootEntity from currentState.
-	 * @param array - Used for recursion, just ignore it.
-	 */
 	findComponents: function(name, entity, array) {
 		entity = entity || chao.currentState.rootEntity;
 		array = array || [];
@@ -520,14 +427,6 @@ var chao = {
 		return array;
 	},
 
-	/**
-	 * Creates a blank image.
-	 *
-	 * @param key - String by which this image will be identified. Pass undefined if you don't want it to be booked by the engine by any name.
-	 * @param width - Width of the image in pixels.
-	 * @param height - Height of the image in pixels.
-	 * @return - Created image.
-	 */
 	createImage: function(key, width, height) {
 		var newCanvas = document.createElement("canvas");
 		var newContext = newCanvas.getContext("2d");
@@ -556,13 +455,6 @@ var chao = {
 		return newImage;
 	},
 
-	/**
-	 * Loads image from a file.
-	 *
-	 * @param key - String by which this image will be identified.
-	 * @param path - Path to the file.
-	 * @return - Loaded image.
-	 */
 	loadImage: function(key, path) {
 		var img = new Image();
 		img.src = path;
@@ -598,11 +490,6 @@ var chao = {
 		return newImage;
 	},
 
-	/**
-	 * Adds image to the internal images array. Also makes sure that only one image with the given key exist at a time.
-	 *
-	 * @param image - Image to be added.
-	 */
 	addImage: function(image) {
 		var oldImage = -1;
 
@@ -621,12 +508,6 @@ var chao = {
 		chao.images.push(image);
 	},
 
-	/**
-	 * Gets the image object by the given key.
-	 *
-	 * @param key - String identifying the image we wish to get.
-	 * @return - Image object if found. If not found, or if the key is not a string, the given key param will be returned. It's designed like this to make some internal stuff faster.
-	 */
 	getImage: function(key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.images.length;
@@ -639,12 +520,6 @@ var chao = {
 		return key;
 	},
 
-	/**
-	 * Permanently tints the given image with a color.
-	 *
-	 * @param image - Image object or image key.
-	 * @param color - Color to tint the image with.
-	 */
 	tintImage: function(image, color) {
 		image = chao.getImage(image);
 
@@ -655,11 +530,6 @@ var chao = {
 		image.context.drawImage(tint.canvas, 0, 0, image.width, image.height);
 	},
 
-	/**
-	 * Enables or disables images smoothing. Won't affect already loaded images that are not stored in the chao.images array.
-	 *
-	 * @param value - True for smooth images, false for crispy, edgy pixels.
-	 */
 	setImagesSmoothing: function(value) {
 		chao.smoothing = value;
 
@@ -672,11 +542,6 @@ var chao = {
 
 	},
 
-	/**
-	 * Enables or disables smoothing for a single image.
-	 *
-	 * @param value - True for smooth images, false for crispy, edgy pixels.
-	 */
 	setSmoothingForImage: function(image, value) {
 		image.context.mozImageSmoothingEnabled = value;
 		image.context.webkitImageSmoothingEnabled = value;
@@ -696,18 +561,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Blits an image to the target image data.
-	 *
-	 * @param target - Target bitmap to blit the image into.
-	 * @param image - Image to be blitted.
-	 * @param x - X position to draw the image.
-	 * @param y - Y position to draw the image.
-	 * @param alpha - Opacity of the image.
-	 * @param scaleX - X scale of the image.
-	 * @param scaleY - Y scale of the image.
-	 * @param angle - Rotation of the image (in degrees).
-	 */
 	drawImage: function(target, image, x, y, alpha, scaleX, scaleY, angle) {
 
 		alpha = alpha === undefined ? 1 : alpha;
@@ -736,19 +589,6 @@ var chao = {
 		target.context.restore();
 	},
 
-	/**
-	 * Blits a part of the image to the target image data.
-	 *
-	 * @param target - Target bitmap to blit the image into.
-	 * @param image - Image to be blitted.
-	 * @param x - X position to draw the image.
-	 * @param y - Y position to draw the image.
-	 * @param rect - Rect object describing what part of the image we wish to draw: {x, y, width, height}.
-	 * @param angle - Rotation of the image (in degrees).
-	 * @param scaleX - X scale of the image.
-	 * @param scaleY - Y scale of the image.
-	 * @param alpha - Opacity of the image.
-	 */
 	drawImagePart: function(target, image, x, y, rect, angle, scaleX, scaleY, alpha) {
 		angle = angle || 0;
 		alpha = alpha === undefined ? 1 : alpha;
@@ -784,12 +624,6 @@ var chao = {
 		target.context.restore();
 	},
 
-	/**
-	 * Set fill color for the given image.
-	 *
-	 * @param image - Image to set the fill color for.
-	 * @param color - Color in a form of hash or 0xFFFFFFFF hex.
-	 */
 	setFillStyle: function(image, color) {
 		if (typeof color === "string") {
 			image.context.fillStyle = color;
@@ -798,13 +632,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Set stroke color and width for the given image.
-	 *
-	 * @param image - Image to set the stroke style for.
-	 * @param color - Color in a form of hash or 0xFFFFFFFF hex.
-	 * @param width - Width of the stroke in pixels.
-	 */
 	setStrokeStyle: function(image, color, width) {
 		width = width || image.context.lineWidth;
 		image.context.lineWidth = width;
@@ -815,40 +642,19 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Creates a color in a 0xFFFFFFFF form.
-	 *
-	 * @param r - Red value of the color (0-255)
-	 * @param g - Green value of the color (0-255)
-	 * @param b - Bluee value of the color (0-255)
-	 * @param a - Alpha value of the color (0-255)
-	 * @return - Int color.
-	 */
+	// Creates a color in a 0xFFFFFFFF form. Values in 0-255 range.
 	makeColor: function(r, g, b, a) {
 		a = a || 255;
 		return (a << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | ((b & 0xff));
 	},
 
-	/**
-	 * Creates a color in a 0xFFFFFFFF form.
-	 *
-	 * @param r - Red value of the color (0-1)
-	 * @param g - Green value of the color (0-1)
-	 * @param b - Bluee value of the color (0-1)
-	 * @param a - Alpha value of the color (0-1)
-	 * @return - Int color.
-	 */
+	// Creates a color in a 0xFFFFFFFF form. Values in 0-1 range.
 	makeColorf: function(r, g, b, a) {
 		a = a || 1;
 		return chao.makeColor(a * 255, r * 255, g * 255, b * 255);
 	},
 
-	/**
-	 * Creates a color string in "rgba(r,g,b,a)" format.
-	 *
-	 * @param hexColor - Int color value to create a string from.
-	 * @return - Color string in "rgba(r,g,b,a)" format.
-	 */
+	// Creates a color string in "rgba(r,g,b,a)" format.
 	getRGBAString: function(hexColor) {
 		var r = (hexColor >> 16) & 0xff;
 		var g = (hexColor >> 8) & 0xff;
@@ -857,64 +663,26 @@ var chao = {
 		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
 	},
 
-	/**
-	 * Gets a pixel from an image.
-	 *
-	 * @param image - Image to get the pixel from.
-	 * @param x - X position of the pixel
-	 * @param y - Y position of the pixel
-	 * @return - Color of the pixel.
-	 */
 	getPixel: function(image, x, y) {
 		var data = image.context.getImageData(x, y, 1, 1).data;
 		return (data[3] << 24) | ((data[0] & 0xff) << 16) | ((data[1] & 0xff) << 8) | ((data[2] & 0xff));
 	},
 
-	/**
-	 * Puts a pixel on an image. Super slow!
-	 *
-	 * @param image - Image to put the pixel on.
-	 * @param x - X position of the pixel
-	 * @param y - Y position of the pixel
-	 * @param color - Color of the pixel.
-	 */
 	putPixel: function(image, x, y, color) {
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, 1, 1);
 	},
 
-	/**
-	 * Clears the given image.
-	 *
-	 * @param image - Image to clear.
-	 */
 	clearImage: function(image) {
 		image.context.clearRect(0, 0, image.width, image.height);
 	},
 
-	/**
-	 * Clears an image using the given color.
-	 *
-	 * @param image - Image to clear.
-	 * @param color - Color to fill the image with.
-	 */
 	clearToColor: function(image, color) {
 		image.context.clearRect(0, 0, image.width, image.height);
 		chao.setFillStyle(image, color);
 		image.context.fillRect(0, 0, image.width, image.height);
 	},
 
-	/**
-	 * Draws a straight line between given point.
-	 *
-	 * @param image - Image to draw the line upon.
-	 * @param x1 - X from.
-	 * @param y1 - Y from.
-	 * @param x2 - X to.
-	 * @param y2 - Y to.
-	 * @param color - Color of the line.
-	 * @param width - Width of the line.
-	 */
 	drawLine: function(image, x1, y1, x2, y2, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		image.context.beginPath();
@@ -924,43 +692,16 @@ var chao = {
 		image.context.stroke();
 	},
 
-	/**
-	 * Draws a rectangle.
-	 *
-	 * @param image - Image to draw the rectangle upon.
-	 * @param x - X position of the rectangle.
-	 * @param y - Y position of the rectangle.
-	 * @param w - Width of the rectangle.
-	 * @param h - Height of the rectangle.
-	 * @param color - Color to draw with.
-	 * @param width - Stroke width.
-	 */
 	drawRect: function(image, x, y, w, h, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		image.context.strokeRect(x, y, w, h);
 	},
 
-	/**
-	 * Draws a filled rectangle.
-	 *
-	 * @param image - Image to draw the rectangle upon.
-	 * @param x - X position of the rectangle.
-	 * @param y - Y position of the rectangle.
-	 * @param w - Width of the rectangle.
-	 * @param h - Height of the rectangle.
-	 * @param color - Color to draw with.
-	 */
 	drawRectFill: function(image, x, y, w, h, color) {
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, w, h);
 	},
 
-	/**
-	 * Draws lines used by polygons drawing functions.
-	 *
-	 * @param image - Image to draw upon.
-	 * @param points - Array of points the polygon consists of.
-	 */
 	drawPolygonLines: function(image, points) {
 		image.context.beginPath();
 		for (var i = 0; i < points.length; i++) {
@@ -973,35 +714,18 @@ var chao = {
 		image.context.closePath();
 	},
 
-	/**
-	 * Draws a polygon.
-	 *
-	 * @param image - Image to draw upon.
-	 * @param points - Array of points the polygon consists of.
-	 * @param color - Color to stroke with.
-	 */
 	drawPolygon: function(image, points, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		chao.drawPolygonLines(image, points);
 		image.context.stroke();
 	},
 
-	/**
-	 * Draws a polygon.
-	 *
-	 * @param image - Image to draw upon.
-	 * @param points - Array of points the polygon consists of.
-	 * @param color - Color to fill the polygon with.
-	 */
 	drawPolygonFill: function(image, points, color) {
 		chao.setFillStyle(image, color);
 		chao.drawPolygonLines(image, points);
 		image.context.fill();
 	},
 
-	/**
-	 * Creates pause fade image. Called by the engine every time the viewport resolution changes to fill the whole canvas.
-	 */
 	updatePauseFadeImage: function() {
 		var playWidth = chao.screenWidth * 0.3;
 		var playHeight = chao.screenWidth * 0.3;
@@ -1021,13 +745,6 @@ var chao = {
 		chao.drawPolygonFill(chao.imagePauseFade, poly.points, chao.makeColor(255, 255, 255, 170));
 	},
 
-	/**
-	 * Loads font from the given path.
-	 *
-	 * @param key - String to identify this font with.
-	 * @param path - Path to the font file.
-	 * @return - Loaded font object.
-	 */
 	loadFont: function(key, path) {
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
@@ -1047,13 +764,6 @@ var chao = {
 		return newFont;
 	},
 
-	/**
-	 * Loads font from base64 data.
-	 *
-	 * @param key - String to identify this font with.
-	 * @param data - Base64 encoded font data.
-	 * @return - Loaded font object.
-	 */
 	loadBase64Font: function(key, data) {
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
@@ -1073,11 +783,6 @@ var chao = {
 		return newFont;
 	},
 
-	/**
-	 * Adds a font to the chao fonts array.
-	 *
-	 * @param font - Font to be added.
-	 */
 	addFont: function(font) {
 		var oldFont = -1;
 
@@ -1101,12 +806,6 @@ var chao = {
 		chao.fonts.push(font);
 	},
 
-	/**
-	 * Gets the font object by the given key.
-	 *
-	 * @param key - String identifying the font we wish to get.
-	 * @return - Font object if found. If not found, or if the key is not a string, the given key param will be returned. It's designed like this to make some internal stuff faster.
-	 */
 	getFont: function(key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.fonts.length;
@@ -1119,20 +818,6 @@ var chao = {
 		return key;
 	},
 
-	/**
-	 * Draws text on the image wit hthe given font.
-	 *
-	 * @param image - Image to draw upon.
-	 * @param font - Font to draw with.
-	 * @param text - Text to draw.
-	 * @param x - X position of the text.
-	 * @param y - Y position of the text.
-	 * @param size - Size of the text.
-	 * @param color - Text color.
-	 * @param align - Align of the text: "left", "right" or "center".
-	 * @param outlineColor - Color of the text outline.
-	 * @param outlineSize - Size of the text outline.
-	 */
 	drawText: function(image, font, text, x, y, size, color, align, outlineColor, outlineSize) {
 		color = color || 0xff000000;
 		align = align || "left";
@@ -1150,12 +835,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Measures the text dimensions.
-	 * @param image - With the set font.
-	 * @param text - Text to be measured.
-	 * @return - Object containing dimensions of the text: {width, height}.
-	 */
 	getTextSize: function(image, text) {
 		return {
 			width: image.context.measureText(text).width,
@@ -1163,9 +842,6 @@ var chao = {
 		};
 	},
 
-	/**
-	 * Updates the "ready" state of all fonts.
-	 */
 	updateFontsLoading: function() {
 		var n = chao.fonts.length;
 		var currentSize = 0;
@@ -1181,16 +857,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Loads a sound file.
-	 *
-	 * @param key - String by which this sound shall be identified.
-	 * @param path - Path to the sound file.
-	 * @param volume - Volume at which the sound will be played. Defaults to 1.0 when not provided.
-	 * @param looped - Is the sound looped. Defaults to false.
-	 * @param channels - How many times this sound could be played simultaneously. Defaults to 1.
-	 * @return - Loaded sound object.
-	 */
 	loadSound: function(key, path, volume, looped, channels) {
 		if (channels < 1) {
 			chao.log("Can't add a sound with no channels, you silly goose.");
@@ -1258,15 +924,6 @@ var chao = {
 		return sound;
 	},
 
-	/**
-	 * Similar to the loadSound, but sets some music-specific thing up and allows passing a fallback file if the default one is not supported by current browser/device.
-	 *
-	 * @param key - String by which this sound shall be identified.
-	 * @param path - Path to the audio file.
-	 * @param fallbackFormatPath - Path to a fallback audio file, used if the main audio file cannot be played because the browser doesn't support it.
-	 * @param volume - Volume at which the music will be played.
-	 * @return - Loaded sound object.
-	 */
 	loadMusic: function(key, path, fallbackFormatPath, volume) {
 		var sound = null;
 		var mainExtension = path.split('.').pop();
@@ -1285,12 +942,6 @@ var chao = {
 		return sound;
 	},
 
-	/**
-	 * Gets the sound object by the given key.
-	 *
-	 * @param key - String identifying the sound we wish to get.
-	 * @return - Sound object if found. If not found, or if the key is not a string, the given key param will be returned. It's designed like this to make some internal stuff faster.
-	 */
 	getSound: function(key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.sounds.length;
@@ -1306,12 +957,6 @@ var chao = {
 		return key;
 	},
 
-	/**
-	 * Plays a sound.
-	 *
-	 * @param key - Sound object of string id of the sound to be played.
-	 * @param force - When true, the sound will be forcibly played from the start. Deafults to true.
-	 */
 	playSound: function(key, force) {
 
 		if (force === undefined) {
@@ -1365,11 +1010,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Mute or resume the audio playback.
-	 *
-	 * @param value - True stops and prevents further audio playback, also pauses the music. Pass false to resume playback.
-	 */
 	setMute: function(value) {
 		if (chao.muted != value) {
 			chao.muted = value;
@@ -1394,18 +1034,10 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Toggles between muted and unmuted state.
-	 */
 	toggleMute: function() {
 		chao.setMute(!chao.muted);
 	},
 
-	/**
-	 * Stops playback of the given sound object.
-	 *
-	 * @param key - Sound object or string id of the sound to stop.
-	 */
 	stopSound: function(key) {
 		var sound = chao.getSound(key);
 
@@ -1415,41 +1047,21 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Returns sound position.
-	 *
-	 * @param key - Sound object or string id of the sound.
-	 * @return - Position of the sound.
-	 */
 	getSoundPosition: function(key) {
 		var sound = chao.getSound(key);
 		return sound.channels[sound.currentChannel].currentTime;
 	},
 
-	/**
-	 * Sets sound position.
-	 *
-	 * @param key - Sound object or string id of the sound.
-	 * @param position - Position to set.
-	 */
 	setSoundPosition: function(key, position) {
 		var sound = chao.getSound(key);
 		sound.channels[sound.currentChannel].currentTime = position;
 	},
 
-	/**
-	 * Pauses a sound.
-	 *
-	 * @param key - Sound object or string id of the sound.
-	 */
 	pauseSound: function(key) {
 		var sound = chao.getSound(key);
 		sound.channels[sound.currentChannel].pause();
 	},
 
-	/**
-	 * Resumes the music playback if needed.
-	 */
 	resumeMusicPlaybackIfNeeded: function() {
 		if (chao.musicWasSupressed) {
 			chao.musicWasSupressed = false;
@@ -1457,12 +1069,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Checks if a sound file of a given format can be played in the current environment.
-	 *
-	 * @param extension - String containing the file extension.
-	 * @return - True if a file of given extension can be played.
-	 */
 	canPlayAudioType: function(extension) {
 		var audioTest = document.createElement('audio');
 		if (!audioTest || !audioTest.canPlayType) {
@@ -1504,9 +1110,6 @@ var chao = {
 		return false;
 	},
 
-	/**
-	 * Updates the mouse inputs. Called in chao.update().
-	 */
 	updateMouse: function() {
 		chao.mouse.wheelDelta = 0;
 		chao.mouse.justPressed = false;
@@ -1517,22 +1120,10 @@ var chao = {
 		chao.mouse.justReleasedMiddle = false;
 	},
 
-	/**
-	 * Finds an entity that happens to be under the mouse cursor.
-	 *
-	 * @return - An entity under the mouse cursor. If none were found, you get a sweet null.
-	 */
 	getEntityUnderMouse: function() {
 		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
 	},
 
-	/**
-	 * Handles mouse clicks and the first touch input, which is handled like the left mouse button.
-	 *
-	 * @param button - Id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
-	 * @param x - X position of the pointer, from the left edge of the viewport.
-	 * @param y - Y position of the pointer, from the top edge of the viewport.
-	 */
 	handleMouseDown: function(button, x, y) {
 		chao.resumeMusicPlaybackIfNeeded();
 
@@ -1557,11 +1148,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Handles mouse and the first touch input releases.
-	 *
-	 * @param button - Id of a button that is being handled. (1 - left, 2 - middle, 3 - right)
-	 */
 	handleMouseUp: function(button) {
 
 		if (chao.mouse.suppressUntilUp) {
@@ -1592,12 +1178,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Handles mouse and the first touch input movement.
-	 *
-	 * @param x - X position of the pointer, from the left edge of the viewport.
-	 * @param y - Y position of the pointer, from the top edge of the viewport.
-	 */
 	handleMouseMove: function(x, y) {
 		chao.mouse.x = x;
 		chao.mouse.y = y;
@@ -1619,69 +1199,36 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Mouse down callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onMouseDown: function(e) {
 		chao.handleMouseDown(e.which, e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 
-	/**
-	 * Mouse up callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onMouseUp: function(e) {
 		chao.handleMouseUp(e.which);
 		e.preventDefault();
 	},
 
-	/**
-	 * Mouse move callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onMouseMove: function(e) {
 		chao.handleMouseMove(e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 
-	/**
-	 * Mouse wheel callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onMouseWheel: function(e) {
 		chao.mouse.wheelDelta = e.deltaY;
 		e.preventDefault();
 	},
 
-	/**
-	 * Sets the visibility of the default system cursor.
-	 *
-	 * @param value - True if we want to see it, false otherwise.
-	 */
 	setMouseVisibility: function(value) {
 		canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
-	/**
-	 * Updates touch inputs. Called in chao.update();
-	 */
 	updateTouches: function() {
 		for (var i = 0; i < chao.touches.length; ++i) {
 			chao.touches[i].justPressed = false;
 		}
 	},
 
-	/**
-	 * Touch start callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onTouchStart: function(e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
@@ -1706,11 +1253,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Touch move callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onTouchMove: function(e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
@@ -1730,11 +1272,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Touch end callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onTouchEnd: function(e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
@@ -1754,12 +1291,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Finds and returns a touch object.
-	 *
-	 * @param id - Unique id of the touch.
-	 * @return - A touch object if found or false if none exists with the given id.
-	 */
 	getTouch: function(id) {
 		for (var i = 0; i < chao.touches.length; ++i) {
 			if (chao.touches[i].id == id) {
@@ -1769,11 +1300,6 @@ var chao = {
 		return null;
 	},
 
-	/**
-	 * Internal helper to convert the convoluted touch coords to a reasonable ones.
-	 *
-	 * @param touch - Touch object to get fixed coords from.
-	 */
 	getTouchPos: function(touch) {
 		return {
 			x: (touch.pageX - touch.target.offsetLeft) / chao.screenScaleX,
@@ -1781,9 +1307,6 @@ var chao = {
 		};
 	},
 
-	/**
-	 * Updates keyboard inputs. Called in chao.update().
-	 */
 	updateKeys: function() {
 		for (var i = 0; i < 0x80; ++i) {
 			chao.justPressed[i] = false;
@@ -1791,11 +1314,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Keyboard key down callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onKeyDown: function(e) {
 		if (!chao.keys[e.keyCode]) {
 			chao.justPressed[e.keyCode] = true;
@@ -1805,11 +1323,6 @@ var chao = {
 		e.preventDefault();
 	},
 
-	/**
-	 * Keyboard key up callback.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	onKeyUp: function(e) {
 		chao.justReleased[e.keyCode] = true;
 		chao.keys[e.keyCode] = false;
@@ -1817,11 +1330,6 @@ var chao = {
 		e.preventDefault();
 	},
 
-	/**
-	 * Called when game window is resized. Applies scaling modes.
-	 *
-	 * @param e - Event passed by the Event Listener.
-	 */
 	resize: function(e) {
 		if (chao.scalingMode <= chao.SCALING_MODE_NONE || chao.scalingMode >= chao.SCALING_MODE_END) {
 			return;
@@ -1910,12 +1418,6 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Stretches the game viewport canvas to given scale.
-	 *
-	 * @param x - Horizontal scale of the canvas.
-	 * @param y - Vertical scale of the canvas.
-	 */
 	setCanvasScale: function(x, y) {
 		chao.screenScaleX = x;
 		chao.screenScaleY = y;
@@ -1936,11 +1438,6 @@ var chao = {
 		canvas.style.transform = "scale(" + x + "," + y + ")";
 	},
 
-	/**
-	 * Counts loading progress based on all assets "ready" state.
-	 *
-	 * @return - Loading progress as a float between 0.0 and 1.0.
-	 */
 	getLoadingProgress: function() {
 		var allData = chao.images.length + chao.sounds.length;
 		var loadedData = 0;
@@ -1960,31 +1457,14 @@ var chao = {
 		return loadedData / allData;
 	},
 
-	/**
-	 * Returns milliseconds that passed since the last frame. Scaled by chao.timeScale.
-	 *
-	 * @return - Milliseconds that passed since the last frame.
-	 */
 	getTimeDelta: function() {
 		return chao.timeDelta * chao.timeScale;
 	},
 
-	/**
-	 * Returns milliseconds that passed since the last frame. Not affected by chao.timeScale so useful for pause menus etc.
-	 *
-	 * @return - Milliseconds that passed since the last frame.
-	 */
 	getUnscaledDelta: function() {
 		return chao.timeDelta;
 	},
 
-	/**
-	 * Creates a point object.
-	 *
-	 * @param x - X component of the point.
-	 * @param y - Y component of the point.
-	 * @return Created point object.
-	 */
 	makePoint: function(x, y) {
 		return {
 			x: x,
@@ -1992,13 +1472,6 @@ var chao = {
 		};
 	},
 
-	/**
-	 * Creates a vector out of two given points.
-	 *
-	 * @param pointFrom - The beginning point of the vector.
-	 * @param pointTo - The end point of the vector.
-	 * @return Created vector object.
-	 */
 	makeVector: function(pointFrom, pointTo) {
 		return {
 			x: pointTo.x - pointFrom.x,
@@ -2006,36 +1479,16 @@ var chao = {
 		};
 	},
 
-	/**
-	 * Calculates length of the given vector.
-	 *
-	 * @param vec - Vector object, in {x, y} format.
-	 * @return Length of the vector.
-	 */
 	getVectorLength: function(vec) {
 		return Math.sqrt((vec.x * vec.x) + (vec.y * vec.y));
 	},
 
-	/**
-	 * Normalizes the given vector.
-	 *
-	 * @param vec - Vector object to normalize, in {x, y} format.
-	 */
 	normalizeVector: function(vec) {
 		var len = chao.getVectorLength(vec);
 		vec.x /= len;
 		vec.y /= len;
 	},
 
-	/**
-	 * Checks there is an intersection between the two lines.
-	 *
-	 * @param line1a - Beginning of the first line.
-	 * @param line1b - End of the first line.
-	 * @param line2a - Beginning of the second line.
-	 * @param line2b - End of the second line.
-	 * @return True if the two lines interset, false if there is no intersection or lines are the same/collinear.
-	 */
 	areLinesIntersecting: function(line1a, line1b, line2a, line2b) {
 		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y) - (line2b.x - line2a.x) * (line1b.y - line1a.y);
 		if (det === 0) {
@@ -2047,12 +1500,8 @@ var chao = {
 		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
-	/**
-	 * Creates an object describing a polygon.
-	 *
-	 * @param points - All the points shaping the polygon. Can be array of points (see makePoint()) or just a simple array built like this: [x1, y1, x2, y2, ...].
-	 * @return An object with polygon data in it!
-	 */
+	// Points - All the points shaping the polygon. 
+	// Can be array of points (see makePoint()) or just a simple array built like this: [x1, y1, x2, y2, ...].
 	makePolygon: function(points) {
 		if (!Array.isArray(points) || points.length < 1) {
 			chao.log("makePolygon: points param is not an array or has no elements. :(");
@@ -2091,13 +1540,6 @@ var chao = {
 		};
 	},
 
-	/**
-	 * Checks if a point {x,y} is inside a polygon.
-	 *
-	 * @param point - The beginning point of the vector.
-	 * @param polygon - The end point of the vector.
-	 * @return True if the point is indeed inside the polygon.
-	 */
 	isPointInsidePolygon: function(point, polygon) {
 		if (point.x < polygon.left || point.x > polygon.right || point.y < polygon.top || point.y > polygon.bottom) {
 			return false;
@@ -2128,58 +1570,25 @@ var chao = {
 		return false;
 	},
 
-	/**
-	 * Generates a random integer between 0 (inclusive) and max (exclusive).
-	 *
-	 * @param max - Maximum value of the generated integer will be smaller than this.
-	 */
 	getRandom: function(max) {
 		max -= 1;
 		return Math.round(max * Math.random());
 	},
 
-	/**
-	 * Converts radians to degrees.
-	 *
-	 * @param radians - Radians to convert.
-	 * @return - Angle in degrees.
-	 */
 	rad2deg: function(radians) {
 		return radians / (180 / Math.PI);
 	},
 
-	/**
-	 * Converts degrees to radians.
-	 *
-	 * @param degrees - degrees to convert.
-	 * @return - Angle in radians.
-	 */
 	deg2rad: function(degres) {
 		return degrees * (Math.PI / 180);
 	},
 
-	/**
-	 * Clamps the given value between min (inclusive) and max (inclusive).
-	 *
-	 * @param value - Value to clamp.
-	 * @param min - We don't want the value to be anything less than this (inclusive).
-	 * @param max - We don't want the value to be anything more than this (inclusive).
-	 * @return - Suprise! A clamped value!
-	 */
 	clamp: function(value, min, max) {
 		if (value < min) value = min;
 		if (value > max) value = max;
 		return value;
 	},
 
-	/**
-	 * Moves from a to b by max_step.
-	 *
-	 * @param a - Current value.
-	 * @param b - Target value.
-	 * @param maxStep - Max how much a will change to move towards b.
-	 * @return - Suprise! A clamped value!
-	 */
 	moveTowards: function(a, b, maxStep) {
 		if(b > a) {
 			a += maxStep;
@@ -2195,15 +1604,6 @@ var chao = {
 		return a;
 	},
 
-	/**
-	 * Interpolates between a and b by v using specified interpolation method.
-	 *
-	 * @param a - Start value.
-	 * @param b - End value.
-	 * @param v - Interpolation value between a and b.
-	 * @param interpolationType - Type of interpolation. Use the chao.INTERPOLATE_* consts. Defaults to chao.INTERPOLATE_LINEAR.
-	 * @return - Interpolated value.
-	 */
 	interpolate: function(a, b, v, interpolationType) {
 		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR
 		v = chao.clamp(v, 0.0, 1.0)
@@ -2255,15 +1655,6 @@ var chao = {
 		return (b * v) + (a * (1.0 - v))
 	},
 
-	/**
-	 * Interpolates between vector a and vector b by v using specified interpolation method.
-	 *
-	 * @param a - Start vector.
-	 * @param b - Target vector.
-	 * @param v - Interpolation value between a and b.
-	 * @param interpolationType - Type of interpolation. Use the chao.INTERPOLATE_* consts. Defaults to chao.INTERPOLATE_LINEAR.
-	 * @return - Interpolated value.
-	 */
 	interpolateVector: function(a, b, v, interpolationType) {
 		return {
 			x: chao.interpolate(a.x, b.x, v, interpolationType),
@@ -2271,11 +1662,6 @@ var chao = {
 		};
 	},
 
-	/**
-	 * Sets up the place to put all the logs into.
-	 *
-	 * @param htmlElementId -  HTML element to insert all the logs into.
-	 */
 	setupLogTarget: function(htmlElementId) {
 		chao.debugLogTarget = document.getElementById(htmlElementId);
 		window.addEventListener("error", function(e) {
@@ -2285,11 +1671,6 @@ var chao = {
 		});
 	},
 
-	/**
-	 * Log a thing to the browser's js console. Set chao.loggingEnabled to false to prevent the logging.
-	 *
-	 * @param thingie - A thingie to put in the console.
-	 */
 	log: function(thingie) {
 		if (chao.loggingEnabled) {
 			if (chao.debugLogTarget) {
@@ -2300,22 +1681,11 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Draws a pretty log of the hierarchy of all the children sticked to the given entity,
-	 *
-	 * @param entity - An entity to draw the hierarchy log for.
-	 */
 	logHierarchy: function(entity) {
 		var logString = chao.logEntity(entity, 0);
 		chao.log(logString);
 	},
 
-	/**
-	 * Used by logHierarchy to recursively create a hierarchy log string for given entity.
-	 *
-	 * @param entity - Entity to make a log string for.
-	 * @param indent - Indentation level for the currently generated string.
-	 */
 	logEntity: function(entity, indent) {
 
 		entity = entity || chao.getCurrentState().rootEntity;
@@ -2353,9 +1723,6 @@ var chao = {
 		return "\n" + entityLog;
 	},
 
-	/**
-	 * Sets up some event listeners so we know when the game's window loses focus. Called somewhere in chao.init().
-	 */
 	installVisibilityHandler: function() {
 
 		if (chao.visibilityHandlerInstalled) {
@@ -2400,52 +1767,16 @@ var chao = {
 		}
 	},
 
-	/**
-	 * Sub-namespace containing some useful helper functions.
-	 */
 	helpers: {
 
-		/**
-		 * Creates an entity and sticks ComponentSprite to it.
-		 *
-		 * @param entityName - Name for the created entity.
-		 * @param image - Image or its id.
-		 * @param x - X position of the entity.
-		 * @param y - Y position of the entity.
-		 * @return - Created ComponentSprite component.
-		 */
 		createSprite: function(entityName, image, x, y) {
 			return (new Entity(entityName, x, y)).addComponent(new ComponentSprite(image));
 		},
 
-		/**
-		 * Creates an entity and sticks ComponentText to it.
-		 *
-		 * @param entityName - Name for the created entity.
-		 * @param x - X position of the entity.
-		 * @param y - Y position of the entity.
-		 * @param font - Font to use for the text object.
-		 * @param text - Text that will be displayed.
-		 * @param size - Size of the text.
-		 * @return - Created ComponentText component.
-		 */
 		createText: function(entityName, x, y, font, text, size) {
 			return (new Entity(entityName, x, y)).addComponent(new ComponentText(font, text, size));
 		},
 
-		/**
-		 * Creates an entity and sticks ComponentButton to it.
-		 *
-		 * @param entityName - Name for the created entity.
-		 * @param x - X position of the entity.
-		 * @param y - Y position of the entity.
-		 * @param image - Button image or its id.
-		 * @param imagePressed - Image to be used for the button's pressed state.
-		 * @param font - Font to use as the label for this button.
-		 * @param text - Text that will be displayed as a label.
-		 * @param size - Size of the text.
-		 * @return - Created ComponentButton component.
-		 */
 		createButton: function(entityName, x, y, image, imagePressed, font, fontSize, text) {
 			var newButton = (new Entity(entityName, x, y)).addComponent(new ComponentButton(image));
 
@@ -2461,47 +1792,18 @@ var chao = {
 			return newButton;
 		},
 
-		/**
-		 * Fades out the entity.
-		 *
-		 * @param entity - Entity to fade out.
-		 * @param time - Seconds the fade will take.
-		 * @param delay - Seconds before the fade will start.
-		 */
 		fadeEntityOut: function(entity, time, delay) {
 			ComponentTween.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
-		/**
-		 * Fades in the entity.
-		 *
-		 * @param entity - Entity to fade in.
-		 * @param time - Seconds the fade will take.
-		 * @param delay - Seconds before the fade will start.
-		 */
 		fadeEntityIn: function(entity, time, delay) {
 			ComponentTween.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
-		/**
-		 * Adds a bouncy-bounce to the entity.
-		 *
-		 * @param entity - Entity to apply the bounce tween to.
-		 * @param amplitude - Bounce amplitude in pixels.
-		 * @param time - Bounce time in seconds.
-		 */
 		addBounceTween: function(entity, amplitude, time) {
 			ComponentTween.addTween(entity, "y", entity.y - amplitude / 2, entity.y + amplitude / 2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
 		},
 
-		/**
-		 * Shake an entity. This is done by adding a disposable ComponentShake to the entity that will vanish after the shake is performed.
-		 *
-		 * @param entity - An entity to be shaken.
-		 * @param force - Max shake range in pixels.
-		 * @param time - How long the the shaking will last, in seconds.
-		 * @param damped - Is the shake supposed to be damped over time.
-		 */
 		shake: function(entity, force, time, damped) {
 			var shakerName = "Disposable Shake";
 
@@ -2520,36 +1822,27 @@ var chao = {
 
 };
 
-/**
- * A basic game entity.
- *
- * @param x - Horizontal position of the entity
- * @param y - Vertical position of the entity
- */
 function Entity(name, x, y) {
-	this.name = name || "Entity", // Name by which this component is identified.
-	this.x = x || 0, // Horizontal position of this entity, from the left edge of the viewport.
-	this.y = y || 0, // Vertical position of this entity, from the top edge of the viewport.
-	this.anchor = {}; // When set, AlignToParent() will be called using the values insde every time the game window is resized.
-	this.alpha = 1.0; // Entity's opacity.
-	this.width = 0, // Width of the entity.
-	this.height = 0, // Height of the enity.
-	this.scaleX = 1.0; // Horizontal scale.
-	this.scaleY = 1.0; // Vertical scale.
-	this.rotation = 0.0; // Angle, in degrees.
-	this.children = [], // Sub-entities attached to this entity. They will follow this entity's position and alpha values.
-	this.components = [], // Components attached to this entity.
-	this.removalQueuedComponents = []; // Components queued for removal.
-	this.parent = null, // Parent object.
-	this.visible = true, // Is rendering enabled for this entity.
-	this.paused = false, // When true, no updates will happen for this entity, its components and all the children.
-	this.clickable = false, // When true, this entity will receive mouse/touch input events.
-	this.keepClickFocus = false; // When true, the entity will keep the click focus even when the pointer slides off it. when false, the onCancel will be called when pointer slides off.
-	this.foldInLog = false; // When true, the chao.logEntity method won't print children of this entity.
+	this.name = name || "Entity",
+	this.x = x || 0,
+	this.y = y || 0,
+	this.anchor = {};
+	this.alpha = 1.0;
+	this.width = 0,
+	this.height = 0,
+	this.scaleX = 1.0;
+	this.scaleY = 1.0;
+	this.rotation = 0.0;
+	this.children = [],
+	this.components = [],
+	this.removalQueuedComponents = [];
+	this.parent = null,
+	this.visible = true,
+	this.paused = false,
+	this.clickable = false,
+	this.keepClickFocus = false;
+	this.foldInLog = false;
 
-	/**
-	 * Destroys all children and components sticked to this entity.
-	 */
 	this.destroy = function() {
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].destroy) {
@@ -2565,13 +1858,6 @@ function Entity(name, x, y) {
 		this.components = [];
 	}
 
-	/**
-	 * Draws this entity, its components and all the children.
-	 *
-	 * @param x - X position that parent of this entity is displayed.
-	 * @param y - Y position that parent of this entity is displayed.
-	 * @param alpha - Our parent's opacity.
-	 */
 	this.draw = function(x, y, alpha) {
 		if (!this.visible) {
 			return;
@@ -2592,9 +1878,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Updates this entity, components and all the children.
-	 */
 	this.update = function() {
 		if (this.paused || !this.visible) {
 			return;
@@ -2626,11 +1909,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Adds a child entity.
-	 *
-	 * @param child - A child entity to be added to the hierarchy. Could also be a component and this method will add the entity its sticked to.
-	 */
 	this.add = function(childEntity) {
 		if (childEntity.parent === undefined) {
 			chao.log("The object you are trying to add as an entity is not an Entity.");
@@ -2642,11 +1920,6 @@ function Entity(name, x, y) {
 		return childEntity;
 	}
 
-	/**
-	 * Adds a child entity.
-	 *
-	 * @param child - A child entity to be added to the hierarchy.
-	 */
 	this.remove = function(childEntity) {
 		if (childEntity.parent === this) {
 			this.children.splice(this.children.indexOf(childEntity), 1);
@@ -2654,9 +1927,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Called automatically when the screen is resized.
-	 */
 	this.resize = function() {
 		if (this.anchor.alignX != undefined && this.anchor.anchorX != undefined && this.anchor.pxOffsetX != undefined) {
 			this.alignToParentHorizontally(this.anchor.alignX, this.anchor.anchorX, this.anchor.pxOffsetX);
@@ -2671,12 +1941,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Adds a new component to this entity and initializes it via the component's create() function.
-	 *
-	 * @param component - A new component to be added.
-	 * @return - A reference to the newly added component.
-	 */
 	this.addComponent = function(component) {
 		if (!component.entity) {
 			component.entity = this;
@@ -2693,12 +1957,6 @@ function Entity(name, x, y) {
 		return null;
 	}
 
-	/**
-	 * Returns a component sticked to this entity.
-	 *
-	 * @param componentName - Name of the component to be searched for.
-	 * @return - A component, if found. Otherwise, a null.
-	 */
 	this.getComponentByName = function(componentName) {
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].name === componentName) {
@@ -2721,12 +1979,6 @@ function Entity(name, x, y) {
 		return allComponents;
 	}
 
-	/**
-	 * Recursively searches for a component of given name in this entity and all its children.
-	 *
-	 * @param componentName - Name of the component to be searched for.
-	 * @return - A component, if found. Otherwise, a null.
-	 */
 	this.getComponentInChildrenByName = function(componentName) {
 		var foundComponent = this.getComponentByName(componentName);
 		if (foundComponent != null) {
@@ -2743,11 +1995,6 @@ function Entity(name, x, y) {
 		return null;
 	}
 
-	/**
-	 * Removes a component from tis entity. :(
-	 *
-	 * @param component - Reference to the component about to be removed.
-	 */
 	this.removeComponent = function(component) {
 		if (component.entity === this) {
 			this.removalQueuedComponents.push(component);
@@ -2756,18 +2003,10 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Removes a component from tis entity. :(
-	 *
-	 * @param componentName - Name of the component about to be removed.
-	 */
 	this.removeComponentByName = function(componentName) {
 		this.removeComponent(this.getComponentByName(componentName));
 	}
 
-	/**
-	 * Called when this entity is clicked. Tries to call onClick on all its children.
-	 */
 	this.onClick = function() {
 		var relativeX = chao.mouse.x - this.getScreenX();
 		var relativeY = chao.mouse.y - this.getScreenY();
@@ -2778,9 +2017,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Called when this entity is clicked and the pointer moves around. Tries to call onMove on all its children.
-	 */
 	this.onMove = function() {
 		var relativeX = chao.mouse.x - this.getScreenX();
 		var relativeY = chao.mouse.y - this.getScreenY();
@@ -2791,9 +2027,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Called when the mouse/touch input on this entity is canceled. This happens when an entity is clickable and keepClickFocus is set to false. Tries to call onCancel on all its children.
-	 */
 	this.onCancel = function() {
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onCancel) {
@@ -2802,9 +2035,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Called when the mouse/touch input on this entity is released. Tries to call onRelease on all its children.
-	 */
 	this.onRelease = function() {
 		var relativeX = chao.mouse.x - this.getScreenX();
 		var relativeY = chao.mouse.y - this.getScreenY();
@@ -2815,30 +2045,11 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Aligns this entity inside its parent. If no arguments are passed, it sets the centered position inside the parenting entity.
-	 *
-	 * @param alignX - Normalized x position inside the parent entity to align to. (where 0.0 means 0 pixels from the left and 1.0 the total width)
-	 * @param alignY - Normalized y position inside the parent entity to align to. (where 0.0 means 0 pixels from the top and 1.0 the total height)
-	 * @param anchorX - Place in this entity that will be snapped to the alignX point.
-	 * @param anchorY - Place in this entity that will be snapped to the alignX point.
-	 * @param pxOffsetX - Horizontal offset in pixels.
-	 * @param pxOffsetY - Vertical offset in pixels.
-	 * @param setAnchor - Whence true, given values would be applied every time the game's window is resized.
-	 */
 	this.alignToParent = function(alignX, alignY, anchorX, anchorY, pxOffsetX, pxOffsetY, setAnchor) {
 		this.alignToParentHorizontally(alignX, anchorX, pxOffsetX, setAnchor);
 		this.alignToParentVertically(alignY, anchorY, pxOffsetY, setAnchor);
 	}
 
-	/**
-	 * Aligns this entity inside its parent horizontally. If no arguments are passed, it sets the centered position inside the parenting entity.
-	 *
-	 * @param alignX - Normalized x position inside the parent entity to align to. (where 0.0 means 0 pixels from the left and 1.0 the total width)
-	 * @param anchorX - Place in this entity that will be snapped to the alignX point.
-	 * @param pxOffset - Horizontal offset in pixels.
-	 * @param setAnchor - Whence true, given values would be applied every time the game's window is resized.
-	 */
 	this.alignToParentHorizontally = function(alignX, anchorX, pxOffset, setAnchor) {
 		alignX = alignX != undefined ? alignX : 0.5;
 		anchorX = anchorX != undefined ? anchorX : 0.5;
@@ -2854,14 +2065,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Aligns this entity inside its parent vertically. If no arguments are passed, it sets the centered position inside the parenting entity.
-	 *
-	 * @param alignY - Normalized y position inside the parent entity to align to. (where 0.0 means 0 pixels from the top and 1.0 the total height)
-	 * @param anchorY - Place in this entity that will be snapped to the alignX point.
-	 * @param pxOffset - Vertical offset in pixels.
-	 * @param setAnchor - Whence true, given values would be applied every time the game's window is resized.
-	 */
 	this.alignToParentVertically = function(alignY, anchorY, pxOffset, setAnchor) {
 		alignY = alignY != undefined ? alignY : 0.5;
 		anchorY = anchorY != undefined ? anchorY : 0.5;
@@ -2877,31 +2080,14 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	 * Calculates and returns the screen position of this entity.
-	 *
-	 * @return - Position on the screen, relative to its left edge.
-	 */
 	this.getScreenX = function() {
 		return this.parent == null ? this.x : this.x + this.parent.getScreenX();
 	}
 
-	/**
-	 * Calculates and returns the screen position of this entity.
-	 *
-	 * @return - Position on the screen, relative to its top edge.
-	 */
 	this.getScreenY = function() {
 		return this.parent == null ? this.y : this.y + this.parent.getScreenY();
 	}
 
-	/**
-	 * Checks if any child entity can be found at given coords and returns it.
-	 *
-	 * @param x - X position to look for the entity at.
-	 * @param y - Y position to look for the entity at.
-	 * @return - If this entity or one of its children were found at given coords, you will get them. If this is not the case, you get a null.
-	 */
 	this.getEntityAt = function(x, y) {
 		if (!this.visible || this.alpha <= 0) {
 			return null;
@@ -2928,11 +2114,6 @@ function Entity(name, x, y) {
 		return null;
 	}
 
-	/**
-	 * Checks if this entity is visible. Takes visibility of the parent entities into consideration.
-	 *
-	 * @return - True if this entity is visible in the hierarchy.
-	 */
 	this.isVisible = function() {
 
 		if (this.parent != null) {
@@ -2942,11 +2123,6 @@ function Entity(name, x, y) {
 		return this.visible;
 	}
 
-	/**
-	 * Checks collision against another entity.
-	 *
-	 * @return - True if a collision against given entity occurs.
-	 */
 	this.checkCollision = function(entity) {
 		var thisX = this.getScreenX();
 		var thisY = this.getScreenY();
