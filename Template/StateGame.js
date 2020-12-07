@@ -12,6 +12,8 @@ function StateGame(){
 		newText.align = "center";
 		newSprite.entity.add(newText.entity);
 		newText.entity.alignToParentVertically(1.0, 0.0, 10);
+
+		ComponentShake.logAThingie();
 	}
 
 	this.resize = function(){

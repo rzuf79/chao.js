@@ -2137,7 +2137,7 @@ var chao = {
   /**
    * Generates a random integer between 0 (inclusive) and max (exclusive).
    *
-   * @param max - Maximum value of the generated integer will be lesser than this.
+   * @param max - Maximum value of the generated integer will be smaller than this.
    */
   getRandom: function(max) {
     max -= 1;
@@ -2212,8 +2212,8 @@ var chao = {
 	 */
 	interpolate: function(a, b, v, interpolationType) {
 		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR
-		v = chao.clamp(v, 0.0, 1.0)
-
+    v = chao.clamp(v, 0.0, 1.0)
+    
 		switch (interpolationType) {
       case chao.INTERPOLATE_SMOOTH: {
         v = v * v * (3 - 2 * v);
