@@ -189,7 +189,7 @@
 			this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", 360, 330).entity);
 
 
-			this.camera.follow(this.ludzik.entity, chao.framerate);
+			this.camera.follow(this.ludzik.entity, 3.0);
 			// this.camera.bounds = {x:100, y:100, width:750, height:700};
 			// this.camera.deadzone = {	x: chao.screenWidth/2-50,
 			// 					y: chao.screenHeight/2-50,
@@ -200,7 +200,7 @@
 			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
 			this.add(this.textLogo.entity);
 			this.textLogo.entity.alignToParentHorizontally();
-			chao.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7,
+			ComponentTween.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7,
 				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
 
@@ -225,7 +225,7 @@
 			}
 			if(chao.justPressed[chao.KEY_SPACE]){
 				// chao.finishAllTweens(true);
-				this.camera.slideToPosition(0, 0, 2.5, chao.INTERPOLATE_BOUNCE);
+				this.camera.slideToPosition(0, 0, 3.0, chao.INTERPOLATE_BOUNCE);
 			}
 			if(chao.justPressed[chao.KEY_S]){
 				// chao.finishAllTweens(true);
@@ -252,7 +252,7 @@
 		},
 
 		draw: function(){
-			// debuggy camera deadzone display
+			// // debuggy camera deadzone display
 			// chao.drawRect(chao.canvas,
 			// 	this.camera.deadzone.x, this.camera.deadzone.y,
 			// 	this.camera.deadzone.width, this.camera.deadzone.height,
