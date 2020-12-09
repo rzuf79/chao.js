@@ -34,12 +34,15 @@
 			chao.loadImage("sticker", "sticker.png");
 
 			function StateGame(){
+
+				this.angle = 0.0;
+
 				this.create = function(){
 					this.thingie = new Entity("Thingie", 100, 100);
+					this.thingie.scaleX = 0.5;
+					this.thingie.scaleY = 0.5;
 					this.thingie.addComponent(new ComponentSprite("sticker"));
 					this.add(this.thingie);
-					
-					chao.log("This is a debug log!");
 				}
 			}
 			
