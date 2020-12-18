@@ -19,15 +19,15 @@ function ComponentTemplate(game){
 	this.update = function(){
 		var movementSpeed = chao.getTimeDelta() * 100;
 
-		if(chao.keys[chao.KEY_UP]){
+		if(chao.pressed[chao.KEY_UP]){
 			this.entity.y -= movementSpeed;
-		} else if(chao.keys[chao.KEY_DOWN]){
+		} else if(chao.pressed[chao.KEY_DOWN]){
 			this.entity.y += movementSpeed;
 		}
 
-		if(chao.keys[chao.KEY_LEFT]){
+		if(chao.pressed[chao.KEY_LEFT]){
 			this.entity.x -= movementSpeed;
-		} else if(chao.keys[chao.KEY_RIGHT]){
+		} else if(chao.pressed[chao.KEY_RIGHT]){
 			this.entity.x += movementSpeed;
 		}
 

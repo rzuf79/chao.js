@@ -465,7 +465,10 @@ var chao = {
 		state.rootEntity.width = chao.screenWidth;
 		state.rootEntity.height = chao.screenHeight;
 		state.add = function (entity) {
-			this.rootEntity.add(entity);
+			return this.rootEntity.add(entity);
+		};
+		state.addWithComponent = function (entity, component) {
+			return this.rootEntity.addWithComponent(entity, component);
 		};
 		state.remove = function (entity) {
 			this.rootEntity.remove(entity);
@@ -1922,15 +1925,19 @@ var chao = {
 		},
 
 		fadeEntityOut: function (entity, time, delay) {
-			ComponentTween.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
+			return ComponentTween.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
 		fadeEntityIn: function (entity, time, delay) {
-			ComponentTween.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
+			return ComponentTween.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
 		addBounceTween: function (entity, amplitude, time) {
-			ComponentTween.addTween(entity, "y", entity.y - amplitude / 2, entity.y + amplitude / 2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
+			var tweenName = "BounceTween";
+			entity.removeComponentsByName(tweenName);
+			var newTween = ComponentTween.addTween(entity, "y", entity.y - amplitude / 2, entity.y + amplitude / 2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
+			newTween.name = tweenName;
+			return newTween;
 		},
 
 		shake: function (entity, force, time, damped) {
@@ -1953,23 +1960,27 @@ var chao = {
 
 function Entity(name, x, y) {
 	this.name = name || "Entity",
-		this.x = x || 0,
-		this.y = y || 0,
-		this.anchor = {};
+
+	this.x = x || 0,
+	this.y = y || 0,
+	this.anchor = {};
+
 	this.alpha = 1.0;
 	this.width = 0, // see also getWidth()
-		this.height = 0, // see also getHeight()
-		this.scaleX = 1.0;
+	this.height = 0, // see also getHeight()
+	this.scaleX = 1.0;
 	this.scaleY = 1.0;
 	this.rotation = 0.0;
+
 	this.children = [],
-		this.components = [],
-		this.removalQueuedComponents = [];
+	this.components = [],
+	this.removalQueuedComponents = [];
 	this.parent = null,
-		this.visible = true,
-		this.paused = false,
-		this.clickable = false,
-		this.keepClickFocus = false;
+	
+	this.visible = true,
+	this.paused = false,
+	this.clickable = false,
+	this.keepClickFocus = false;
 	this.foldInLog = false;
 
 	this.destroy = function () {
@@ -2049,6 +2060,14 @@ function Entity(name, x, y) {
 		return childEntity;
 	}
 
+	this.addWithComponent = function(childEntity, component) {
+		var newEntity = this.add(childEntity);
+		if (newEntity) {
+			newEntity.addComponent(component);
+			return component;
+		}
+	}
+
 	this.remove = function (childEntity) {
 		if (childEntity.parent === this) {
 			this.children.splice(this.children.indexOf(childEntity), 1);
@@ -2057,11 +2076,21 @@ function Entity(name, x, y) {
 	}
 
 	this.resize = function () {
+		if (this.anchor.stretch) {
+			this.stretchOnParent(true);
+		}
 		if (this.anchor.alignX != undefined && this.anchor.anchorX != undefined && this.anchor.pxOffsetX != undefined) {
 			this.alignToParentHorizontally(this.anchor.alignX, this.anchor.anchorX, this.anchor.pxOffsetX);
 		}
 		if (this.anchor.alignY != undefined && this.anchor.anchorY != undefined && this.anchor.pxOffsetY != undefined) {
 			this.alignToParentVertically(this.anchor.alignY, this.anchor.anchorY, this.anchor.pxOffsetY);
+		}
+
+		var componentsNum = this.components.length;
+		for (var i = 0; i < componentsNum; ++i) {
+			if (this.components[i].resize) {
+				this.components[i].resize();
+			}
 		}
 
 		var childrenNum = this.children.length;
@@ -2076,6 +2105,9 @@ function Entity(name, x, y) {
 			if (component.create) {
 				component.create();
 			}
+			if (component.resize) {
+				component.resize();
+			}
 			this.components.push(component);
 
 			return component;
@@ -2088,7 +2120,8 @@ function Entity(name, x, y) {
 
 	this.getComponentByName = function (componentName) {
 		for (var i = 0; i < this.components.length; ++i) {
-			if (this.components[i].name === componentName) {
+			var c = this.components[i];
+			if (c.name === componentName && this.removalQueuedComponents.indexOf(c) == -1) {
 				return this.components[i];
 			}
 		}
@@ -2100,7 +2133,8 @@ function Entity(name, x, y) {
 		var allComponents = [];
 
 		for (var i = 0; i < this.components.length; ++i) {
-			if (this.components[i].name === componentName) {
+			var c = this.components[i];
+			if (c.name === componentName && this.removalQueuedComponents.indexOf(c) == -1) {
 				allComponents.push(this.components[i]);
 			}
 		}
@@ -2134,6 +2168,16 @@ function Entity(name, x, y) {
 
 	this.removeComponentByName = function (componentName) {
 		this.removeComponent(this.getComponentByName(componentName));
+	}
+
+	this.removeComponentsByName = function(componentName) {
+		for(;;) {
+			var component = this.getComponentByName(componentName);
+			if (!component) {
+				break;
+			}
+			this.removeComponent(component);
+		}
 	}
 
 	this.onClick = function () {
@@ -2174,14 +2218,27 @@ function Entity(name, x, y) {
 		}
 	}
 
-	this.alignToParent = function (alignX, alignY, anchorX, anchorY, pxOffsetX, pxOffsetY, setAnchor) {
+	this.stretchOnParent = function (setAnchor = true) {
+		this.width = this.parent.width;
+		this.height = this.parent.height;
+		this.x = this.y = 0;
+
+		if (setAnchor) {
+			this.anchor.stretch = true;
+		}
+	}
+
+	this.alignToParent = function (alignX, alignY, anchorX, anchorY, pxOffsetX, pxOffsetY, setAnchor = true) {
+
 		this.alignToParentHorizontally(alignX, anchorX, pxOffsetX, setAnchor);
 		this.alignToParentVertically(alignY, anchorY, pxOffsetY, setAnchor);
 	}
 
-	this.alignToParentHorizontally = function (alignX, anchorX, pxOffset, setAnchor) {
+	this.alignToParentHorizontally = function (alignX, anchorX, pxOffset, setAnchor = true) {
 		alignX = alignX != undefined ? alignX : 0.5;
 		anchorX = anchorX != undefined ? anchorX : 0.5;
+		pxOffset = pxOffset || 0;
+
 		if (this.parent != null) {
 			this.x = Math.ceil((this.parent.getWidth() * alignX) - (this.getWidth() * anchorX));
 			this.x += pxOffset || 0;
@@ -2194,9 +2251,11 @@ function Entity(name, x, y) {
 		}
 	}
 
-	this.alignToParentVertically = function (alignY, anchorY, pxOffset, setAnchor) {
+	this.alignToParentVertically = function (alignY, anchorY, pxOffset, setAnchor = true) {
 		alignY = alignY != undefined ? alignY : 0.5;
 		anchorY = anchorY != undefined ? anchorY : 0.5;
+		pxOffset = pxOffset || 0;
+
 		if (this.parent != null) {
 			this.y = Math.ceil((this.parent.getHeight() * alignY) - (this.getHeight() * anchorY));
 			this.y += pxOffset || 0;

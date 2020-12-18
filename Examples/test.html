@@ -76,15 +76,15 @@
 			var direction 	= "";
 			var animName 	= "idle";
 
-			if(chao.keys[chao.KEY_UP]){
+			if(chao.pressed[chao.KEY_UP]){
 				direction += "n";
-			}else if(chao.keys[chao.KEY_DOWN]){
+			}else if(chao.pressed[chao.KEY_DOWN]){
 				direction += "s";
 			}
 
-			if(chao.keys[chao.KEY_LEFT]){
+			if(chao.pressed[chao.KEY_LEFT]){
 				direction += "w";
-			}else if(chao.keys[chao.KEY_RIGHT]){
+			}else if(chao.pressed[chao.KEY_RIGHT]){
 				direction += "e";
 			}
 
