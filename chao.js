@@ -406,7 +406,7 @@ var chao = {
 			chao.updateTouches();
 		}
 
-		stateToProcess.rootEntity.draw(0, 0, 1.0);
+		stateToProcess.rootEntity.draw();
 		if (stateToProcess.draw) {
 			stateToProcess.draw();
 		}
@@ -726,7 +726,7 @@ var chao = {
 		x = scaleX >= 0 ? x : x - w * scaleX;
 		y = scaleY >= 0 ? y : y - h * scaleY;
 
-		if (!chao.smoothing || true) {
+		if (!chao.smoothing) {
 			x = Math.round(x);
 			y = Math.round(y);
 			rect.x = Math.round(rect.x);
@@ -1961,27 +1961,29 @@ var chao = {
 function Entity(name, x, y) {
 	this.name = name || "Entity",
 
-	this.x = x || 0,
-	this.y = y || 0,
-	this.anchor = {};
+	this.transformMatrix = {
+		x: [1, 0],
+		y: [0, 1],
+		origin: [x || 0, y || 0]
+	},
 
-	this.alpha = 1.0;
 	this.width = 0, // see also getWidth()
 	this.height = 0, // see also getHeight()
-	this.scaleX = 1.0;
-	this.scaleY = 1.0;
-	this.rotation = 0.0;
+
+	this.alpha = 1.0,
+
+	this.anchor = {},
 
 	this.children = [],
 	this.components = [],
-	this.removalQueuedComponents = [];
+	this.removalQueuedComponents = [],
 	this.parent = null,
-	
+
 	this.visible = true,
 	this.paused = false,
 	this.clickable = false,
-	this.keepClickFocus = false;
-	this.foldInLog = false;
+	this.keepClickFocus = false,
+	this.foldInLog = false,
 
 	this.destroy = function () {
 		for (var i = 0; i < this.components.length; ++i) {
@@ -1998,7 +2000,7 @@ function Entity(name, x, y) {
 		this.components = [];
 	}
 
-	this.draw = function (x, y, alpha) {
+	this.draw = function () {
 		if (!this.visible) {
 			return;
 		}
@@ -2006,14 +2008,14 @@ function Entity(name, x, y) {
 		var componentsNum = this.components.length;
 		for (var i = 0; i < componentsNum; ++i) {
 			if (this.components[i].draw) {
-				this.components[i].draw(x, y, alpha);
+				this.components[i].draw();
 			}
 		}
 
 		var childrenNum = this.children.length;
 		for (var i = 0; i < childrenNum; ++i) {
 			if (this.children[i].draw) {
-				this.children[i].draw(this.x + x, this.y + y, this.alpha * alpha);
+				this.children[i].draw();
 			}
 		}
 	}
@@ -2060,7 +2062,7 @@ function Entity(name, x, y) {
 		return childEntity;
 	}
 
-	this.addWithComponent = function(childEntity, component) {
+	this.addWithComponent = function (childEntity, component) {
 		var newEntity = this.add(childEntity);
 		if (newEntity) {
 			newEntity.addComponent(component);
@@ -2170,8 +2172,8 @@ function Entity(name, x, y) {
 		this.removeComponent(this.getComponentByName(componentName));
 	}
 
-	this.removeComponentsByName = function(componentName) {
-		for(;;) {
+	this.removeComponentsByName = function (componentName) {
+		for (;;) {
 			var component = this.getComponentByName(componentName);
 			if (!component) {
 				break;
@@ -2181,8 +2183,8 @@ function Entity(name, x, y) {
 	}
 
 	this.onClick = function () {
-		var relativeX = chao.mouse.x - this.getScreenX();
-		var relativeY = chao.mouse.y - this.getScreenY();
+		var relativeX = chao.mouse.x - this.screenX;
+		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onClick) {
 				this.components[i].onClick(relativeX, relativeY);
@@ -2191,8 +2193,8 @@ function Entity(name, x, y) {
 	}
 
 	this.onMove = function () {
-		var relativeX = chao.mouse.x - this.getScreenX();
-		var relativeY = chao.mouse.y - this.getScreenY();
+		var relativeX = chao.mouse.x - this.screenX;
+		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onMove) {
 				this.components[i].onMove(relativeX, relativeY);
@@ -2209,8 +2211,8 @@ function Entity(name, x, y) {
 	}
 
 	this.onRelease = function () {
-		var relativeX = chao.mouse.x - this.getScreenX();
-		var relativeY = chao.mouse.y - this.getScreenY();
+		var relativeX = chao.mouse.x - this.screenX;
+		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onRelease) {
 				this.components[i].onRelease(relativeX, relativeY);
@@ -2268,6 +2270,38 @@ function Entity(name, x, y) {
 		}
 	}
 
+	/**
+	    var origin = parent.x * child.origin.x + parent.y * child.origin.y + parent.origin
+		var basis_x = parent.x * child.x.x + parent.y * child.x.y
+		var basis_y = parent.x * child.y.x + parent.y * child.y.y
+	 */
+	this.getTransformMatrix = function () {
+		if (this.parent == null) {
+			return this.transformMatrix;
+		}
+
+		var child = this.transformMatrix;
+		var parent = this.parent.getTransformMatrix();
+
+		return {
+			
+			x: [
+				parent.x[0] * child.x[0] + parent.y[0] * child.x[1],
+				parent.x[1] * child.x[0] + parent.y[1] * child.x[1],
+			],
+			
+			y: [
+				parent.x[0] * child.y[0] + parent.y[0] * child.y[1],
+				parent.x[1] * child.y[0] + parent.y[1] * child.y[1],
+			],
+			
+			origin: [
+				parent.x[0] * child.origin[0] + parent.y[0] * child.origin[1] + parent.origin[0],
+				parent.x[1] * child.origin[0] + parent.y[1] * child.origin[1] + parent.origin[1],
+			]
+		}
+	}
+
 	this.getWidth = function () {
 		return this.width * this.scaleX;
 	}
@@ -2276,12 +2310,11 @@ function Entity(name, x, y) {
 		return this.height * this.scaleY;
 	}
 
-	this.getScreenX = function () {
-		return this.parent == null ? this.x : this.x + this.parent.getScreenX();
-	}
-
-	this.getScreenY = function () {
-		return this.parent == null ? this.y : this.y + this.parent.getScreenY();
+	this.getScreenAlpha = function () {
+		if (this.parent == null) {
+			return this.alpha;
+		}
+		return this.alpha * this.parent.getScreenAlpha();
 	}
 
 	this.getEntityAt = function (x, y) {
@@ -2298,8 +2331,8 @@ function Entity(name, x, y) {
 			}
 		}
 
-		var screenX = this.getScreenX();
-		var screenY = this.getScreenY();
+		var screenX = this.screenX;
+		var screenY = this.screenY;
 
 		if (this.clickable &&
 			x >= screenX && x <= screenX + this.width * this.scaleX &&
@@ -2320,10 +2353,10 @@ function Entity(name, x, y) {
 	}
 
 	this.checkCollision = function (entity) {
-		var thisX = this.getScreenX();
-		var thisY = this.getScreenY();
-		var otherX = entity.getScreenX();
-		var otherY = entity.getScreenY();
+		var thisX = this.screenX;
+		var thisY = this.screenY;
+		var otherX = entity.screenX;
+		var otherY = entity.screenY;
 
 		return otherX + entity.width * entity.scaleX > thisX &&
 			otherY + entity.height * entity.scaleY > thisX &&
@@ -2331,6 +2364,40 @@ function Entity(name, x, y) {
 			thisX + this.height * this.scaleY > otherY;
 	}
 }
+Entity.prototype = {
+	get x() {
+		return this.transformMatrix.origin[0];
+	},
+	set x(value) {
+		this.transformMatrix.origin[0] = value;
+	},
+	get y() {
+		return this.transformMatrix.origin[1];
+	},
+	set y(value) {
+		this.transformMatrix.origin[1] = value;
+	},
+	get screenX() {
+		return this.getTransformMatrix().origin[0];
+	},
+	set screenX(value) {
+		// FIXME
+		this.transformMatrix.origin[0] = value;
+	},
+	get screenY() {
+		return this.getTransformMatrix().origin[1];
+	},
+	set screenY(value) {
+		// FIXME
+		this.transformMatrix.origin[1] = value;
+	},
+	get rotation() {
+		//
+	},
+	set rotation(value) {
+		//
+	}
+};
 
 function ComponentSprite(key, frameWidth, frameHeight) {
 	this.name = "Sprite";
@@ -2360,7 +2427,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
 	}
 
-	this.draw = function (x, y, alpha) {
+	this.draw = function () {
 		if (!this.image) {
 			return;
 		}
@@ -2379,9 +2446,9 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			anim = this.anims[this.currentAnim];
 		}
 
-		var drawX = this.entity.x + x * this.scrollFactorX;
-		var drawY = this.entity.y + y * this.scrollFactorY;
-		var drawAlpha = this.entity.alpha * alpha;
+		var drawX = this.entity.screenX * this.scrollFactorX;
+		var drawY = this.entity.screenY * this.scrollFactorY;
+		var drawAlpha = this.entity.getScreenAlpha();
 		var drawScaleX = this.flipX ? -this.entity.scaleX : this.entity.scaleX;
 		var drawScaleY = this.flipY ? -this.entity.scaleY : this.entity.scaleY;
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
@@ -2500,7 +2567,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 }
 
 /**
- * Text rendering entity.
+ * Text rendering component.
  * Use "\n" to break lines.
  * You can colorize parts of the text using color codes, eg. `2 is a color code for green and `` removes the effect of the last color code.
  * Color codes are defined in colorCodes array in the chao namespace.
@@ -2536,14 +2603,14 @@ function ComponentText(font, text, size) {
 		this.changeText();
 	}
 
-	this.draw = function (x, y, alpha) {
+	this.draw = function () {
 		if (this.text === "") {
 			return;
 		}
 
-		var drawX = this.entity.x + x;
-		var drawY = this.entity.y + y;
-		var drawAlpha = this.entity.alpha * alpha;
+		var drawX = this.entity.screenX;
+		var drawY = this.entity.screenY;
+		var drawAlpha = this.entity.getScreenAlpha();
 
 		if (!this.ready && this.font.ready) {
 			this.ready = true;
@@ -2768,8 +2835,8 @@ function ComponentButton(image) {
 	}
 
 	this.update = function () {
-		var screenX = this.entity.getScreenX();
-		var screenY = this.entity.getScreenY();
+		var screenX = this.entity.screenX;
+		var screenY = this.entity.screenY;
 
 		if (!this.entity.visible) {
 			return;

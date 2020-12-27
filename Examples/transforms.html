@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>chao.js</title>
+<head>
+	<style type="text/css">
+		body {
+			margin: 0;
+			background-color: #202020
+		}
+
+		#debug {
+			text-align:left;
+			width:640px;
+			height:250px;
+			border:1px solid #888;
+			font: 10px monospace;
+			overflow: auto;
+			background-color:#f8fcff;
+			margin: 10px auto;
+			padding:10px;
+		}
+	</style>
+</head>
+<body>
+	<center>
+		<canvas id="canvas_id" width="640" height="480"></canvas>
+		<div id="debug"></div>
+
+		<script src="../chao.js"></script>
+		<script>
+
+			chao.setupLogTarget("debug");
+			chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
+			chao.setImagesSmoothing(false);
+			chao.loadImage("sticker", "sticker.png");
+
+			function StateGame(){
+
+				this.img1;
+
+				this.create = function(){
+					this.img1 = chao.helpers.createSprite("Image 1", "sticker", 200, 200);
+					this.add(this.img1.entity);
+					chao.log(this.img1.entity.x);
+				}
+
+				this.update = function(){
+					if (chao.justPressed[chao.KEY_SPACE]){
+						chao.log(this.img1.entity.getTransformMatrix().origin);
+						chao.log(this.img1.entity.x);
+					}
+				}
+			}
+			
+			chao.switchState(new StateGame());
+
+
+
+		</script>
+</body>
