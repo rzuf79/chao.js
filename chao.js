@@ -686,7 +686,7 @@ var chao = {
 		};
 
 		target.context.translate(rotationPivot.x, rotationPivot.y);
-		target.context.rotate(chao.rad2deg(angle));
+		target.context.rotate(chao.deg2rad(angle));
 		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
 		if (!chao.smoothing) {
@@ -720,7 +720,7 @@ var chao = {
 		target.context.globalAlpha = alpha;
 
 		target.context.translate(rotationPivot.x, rotationPivot.y);
-		target.context.rotate(chao.rad2deg(angle));
+		target.context.rotate(chao.deg2rad(angle));
 		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
 		x = scaleX >= 0 ? x : x - w * scaleX;
@@ -1708,11 +1708,11 @@ var chao = {
 	},
 
 	rad2deg: function (radians) {
-		return radians / (180 / Math.PI);
+		return radians * (180.0 / Math.PI);
 	},
 
-	deg2rad: function (degres) {
-		return degrees * (Math.PI / 180);
+	deg2rad: function (degrees) {
+		return degrees * (Math.PI / 180.0);
 	},
 
 	clamp: function (value, min, max) {
@@ -1825,7 +1825,7 @@ var chao = {
 
 		var entityLog = "";
 		for (var i = 0; i < indent; ++i) {
-			entityLog += "  ";
+			entityLog += "-";
 		}
 		entityLog += entity.name;
 		if (entity.components.length > 0) {
@@ -1964,7 +1964,7 @@ function Entity(name, x, y) {
 	this.transformMatrix = {
 		x: [1, 0],
 		y: [0, 1],
-		origin: [x || 0, y || 0]
+		origin: [x || 0, y || 0],
 	},
 
 	this.width = 0, // see also getWidth()
@@ -2302,6 +2302,13 @@ function Entity(name, x, y) {
 		}
 	}
 
+	this.getMatrixScaleX = function(matrix) {
+		return Math.sqrt((matrix.x[0]*matrix.x[0])+(matrix.y[0]*matrix.y[0]));
+	},
+	this.getMatrixScaleY = function(matrix) {
+		return Math.sqrt((matrix.x[1]*matrix.x[1])+(matrix.y[1]*matrix.y[1]));
+	}
+
 	this.getWidth = function () {
 		return this.width * this.scaleX;
 	}
@@ -2391,11 +2398,49 @@ Entity.prototype = {
 		// FIXME
 		this.transformMatrix.origin[1] = value;
 	},
+	get scaleX() {
+		return this.getMatrixScaleX(this.transformMatrix);
+	},
+	set scaleX(value) {
+		var mat = this.transformMatrix;
+		var currentScale = this.scaleX;
+		mat.x[0] = (mat.x[0] / currentScale) * value;
+		mat.y[0] = (mat.y[0] / currentScale) * value;
+	},
+	get scaleY() {
+		return this.getMatrixScaleY(this.transformMatrix);
+	},
+	set scaleY(value) {
+		var mat = this.transformMatrix;
+		var currentScale = this.scaleY;
+		mat.x[1] = (mat.x[1] / currentScale) * value;
+		mat.y[1] = (mat.y[1] / currentScale) * value;
+	},
+	get screenScaleX() {
+		return this.getMatrixScaleX(this.getTransformMatrix());
+	},
+	get screenScaleY() {
+		return this.getMatrixScaleY(this.getTransformMatrix());
+	},
 	get rotation() {
-		//
+		var mat = this.transformMatrix;
+		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
 	},
 	set rotation(value) {
-		//
+		var rads = chao.deg2rad(value);
+		var scaleX = this.scaleX;
+		var scaleY = this.scaleY;
+		this.transformMatrix.x[0] = Math.cos(rads) * scaleX;
+		this.transformMatrix.y[0] = -Math.sin(rads) * scaleX;
+		this.transformMatrix.x[1] = Math.sin(rads) * scaleY;
+		this.transformMatrix.y[1] = Math.cos(rads) * scaleY;
+	},
+	get screenRotation() {
+		var mat = this.getTransformMatrix();
+		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+	},
+	set screenRotation(value) {
+		// FIXME!
 	}
 };
 
@@ -2449,8 +2494,8 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		var drawX = this.entity.screenX * this.scrollFactorX;
 		var drawY = this.entity.screenY * this.scrollFactorY;
 		var drawAlpha = this.entity.getScreenAlpha();
-		var drawScaleX = this.flipX ? -this.entity.scaleX : this.entity.scaleX;
-		var drawScaleY = this.flipY ? -this.entity.scaleY : this.entity.scaleY;
+		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
+		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
@@ -2472,7 +2517,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 
 		chao.drawImagePart(chao.canvas, this.image,
 			drawX, drawY, drawArea,
-			this.entity.rotation, drawScaleX, drawScaleY,
+			this.entity.screenRotation, drawScaleX, drawScaleY,
 			drawAlpha);
 	}
 
@@ -2629,8 +2674,8 @@ function ComponentText(font, text, size) {
 		chao.drawImage(chao.canvas, this.image,
 			drawX, drawY,
 			drawAlpha,
-			this.entity.scaleX, this.entity.scaleY,
-			this.entity.rotation);
+			this.entity.screenScaleX, this.entity.screenScaleY,
+			this.entity.screenRotation);
 	}
 
 	this.changeText = function (text) {

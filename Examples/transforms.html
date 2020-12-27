@@ -7,47 +7,58 @@
 			margin: 0;
 			background-color: #202020
 		}
-
-		#debug {
-			text-align:left;
-			width:640px;
-			height:250px;
-			border:1px solid #888;
-			font: 10px monospace;
-			overflow: auto;
-			background-color:#f8fcff;
-			margin: 10px auto;
-			padding:10px;
-		}
 	</style>
 </head>
 <body>
 	<center>
 		<canvas id="canvas_id" width="640" height="480"></canvas>
-		<div id="debug"></div>
 
 		<script src="../chao.js"></script>
 		<script>
 
-			chao.setupLogTarget("debug");
 			chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
-			chao.setImagesSmoothing(false);
+			// chao.setImagesSmoothing(false);
 			chao.loadImage("sticker", "sticker.png");
 
 			function StateGame(){
 
 				this.img1;
+				this.img2;
+				this.img3;
+				this.bounceTimer = 0.0;
 
 				this.create = function(){
-					this.img1 = chao.helpers.createSprite("Image 1", "sticker", 200, 200);
+					this.img1 = chao.helpers.createSprite("Image 1", "sticker", 100, 100);
 					this.add(this.img1.entity);
-					chao.log(this.img1.entity.x);
+
+					this.img2 = chao.helpers.createSprite("Image 2", "sticker", 100, 100);
+					this.img1.entity.add(this.img2.entity);
+
+					this.img3 = chao.helpers.createSprite("Image 2", "sticker", 100, 100);
+					this.img3.entity.scaleX = 0.5;
+					this.img3.entity.scaleY = 0.5;
+					this.img2.entity.add(this.img3.entity);
 				}
 
 				this.update = function(){
+					this.bounceTimer += chao.getTimeDelta() * 2.0;
+
+					// this.img1.entity.scaleX = 0.5 + Math.sin(this.bounceTimer) * 0.25;
+					// this.img1.entity.scaleY = 0.5 + Math.cos(this.bounceTimer) * 0.25;
+
+					this.img1.entity.rotation += chao.getTimeDelta() * 50.0;
+					// this.img2.entity.rotation = 45;
+
 					if (chao.justPressed[chao.KEY_SPACE]){
-						chao.log(this.img1.entity.getTransformMatrix().origin);
-						chao.log(this.img1.entity.x);
+						chao.log(this.img2.entity.getTransformMatrix().x);
+						chao.log(this.img2.entity.getTransformMatrix().y);
+						chao.log(this.img2.entity.getTransformMatrix().origin);
+						chao.log(this.img2.entity.rotation);
+						chao.log(this.img2.entity.screenRotation);
+					}
+
+					if(chao.justPressed[chao.KEY_L]){
+						chao.logHierarchy(this.rootEntity);
 					}
 				}
 			}
