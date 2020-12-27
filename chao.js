@@ -318,7 +318,7 @@ var chao = {
 	},
 
 	clearScreen: function () {
-		if (chao.backgroundColor == "none") {
+		if (chao.backgroundColor === undefined) {
 			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height);
 		} else {
 			chao.canvas.context.fillStyle = chao.backgroundColor;
@@ -677,6 +677,11 @@ var chao = {
 
 		image = chao.getImage(image);
 
+		if (!chao.smoothing) {
+			x = Math.round(x);
+			y = Math.round(y);
+		}
+
 		target.context.save();
 		target.context.globalAlpha = alpha;
 
@@ -689,14 +694,7 @@ var chao = {
 		target.context.rotate(chao.deg2rad(angle));
 		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
-		if (!chao.smoothing) {
-			x = Math.round(x);
-			y = Math.round(y);
-		}
-
-		target.context.translate(x, y);
-		target.context.scale(scaleX, scaleY);
-		target.context.drawImage(image.canvas, 0, 0);
+		target.context.drawImage(image.canvas, x, y, image.width * scaleX, image.height * scaleY);
 
 		target.context.restore();
 	},
@@ -2283,22 +2281,19 @@ function Entity(name, x, y) {
 		var child = this.transformMatrix;
 		var parent = this.parent.getTransformMatrix();
 
+		var x0 = parent.x[0] * child.x[0] + parent.y[0] * child.x[1];
+		var x1 = parent.x[1] * child.x[0] + parent.y[1] * child.x[1];
+		var y0 = parent.x[0] * child.y[0] + parent.y[0] * child.y[1];
+		var y1 = parent.x[1] * child.y[0] + parent.y[1] * child.y[1];
+
 		return {
-			
-			x: [
-				parent.x[0] * child.x[0] + parent.y[0] * child.x[1],
-				parent.x[1] * child.x[0] + parent.y[1] * child.x[1],
-			],
-			
-			y: [
-				parent.x[0] * child.y[0] + parent.y[0] * child.y[1],
-				parent.x[1] * child.y[0] + parent.y[1] * child.y[1],
-			],
-			
+
 			origin: [
 				parent.x[0] * child.origin[0] + parent.y[0] * child.origin[1] + parent.origin[0],
 				parent.x[1] * child.origin[0] + parent.y[1] * child.origin[1] + parent.origin[1],
-			]
+			],
+			x: [ x0, x1 ],
+			y: [ y0, y1 ],
 		}
 	}
 
@@ -2366,9 +2361,9 @@ function Entity(name, x, y) {
 		var otherY = entity.screenY;
 
 		return otherX + entity.width * entity.scaleX > thisX &&
-			otherY + entity.height * entity.scaleY > thisX &&
+			otherY + entity.height * entity.scaleY > thisY &&
 			thisX + this.width * this.scaleX > otherX &&
-			thisX + this.height * this.scaleY > otherY;
+			thisY + this.height * this.scaleY > otherY;
 	}
 }
 Entity.prototype = {
@@ -2430,10 +2425,12 @@ Entity.prototype = {
 		var rads = chao.deg2rad(value);
 		var scaleX = this.scaleX;
 		var scaleY = this.scaleY;
-		this.transformMatrix.x[0] = Math.cos(rads) * scaleX;
-		this.transformMatrix.y[0] = -Math.sin(rads) * scaleX;
-		this.transformMatrix.x[1] = Math.sin(rads) * scaleY;
-		this.transformMatrix.y[1] = Math.cos(rads) * scaleY;
+		var cr = Math.cos(rads);
+		var sr = Math.sin(rads);
+		this.transformMatrix.x[0] = cr * scaleX;
+		this.transformMatrix.y[0] = -sr * scaleX;
+		this.transformMatrix.x[1] = sr * scaleY;
+		this.transformMatrix.y[1] = cr * scaleY;
 	},
 	get screenRotation() {
 		var mat = this.getTransformMatrix();
@@ -2880,9 +2877,6 @@ function ComponentButton(image) {
 	}
 
 	this.update = function () {
-		var screenX = this.entity.screenX;
-		var screenY = this.entity.screenY;
-
 		if (!this.entity.visible) {
 			return;
 		}
