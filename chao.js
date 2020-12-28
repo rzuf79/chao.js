@@ -1959,44 +1959,44 @@ var chao = {
 function Entity(name, x, y) {
 	this.name = name || "Entity",
 
-	this.transformMatrix = {
-		x: [1, 0],
-		y: [0, 1],
-		origin: [x || 0, y || 0],
-	},
+		this.transformMatrix = {
+			x: [1, 0],
+			y: [0, 1],
+			origin: [x || 0, y || 0],
+		},
 
-	this.width = 0, // see also getWidth()
-	this.height = 0, // see also getHeight()
+		this.width = 0, // see also getWidth()
+		this.height = 0, // see also getHeight()
 
-	this.alpha = 1.0,
+		this.alpha = 1.0,
 
-	this.anchor = {},
+		this.anchor = {},
 
-	this.children = [],
-	this.components = [],
-	this.removalQueuedComponents = [],
-	this.parent = null,
+		this.children = [],
+		this.components = [],
+		this.removalQueuedComponents = [],
+		this.parent = null,
 
-	this.visible = true,
-	this.paused = false,
-	this.clickable = false,
-	this.keepClickFocus = false,
-	this.foldInLog = false,
+		this.visible = true,
+		this.paused = false,
+		this.clickable = false,
+		this.keepClickFocus = false,
+		this.foldInLog = false,
 
-	this.destroy = function () {
-		for (var i = 0; i < this.components.length; ++i) {
-			if (this.components[i].destroy) {
-				this.components[i].destroy();
+		this.destroy = function () {
+			for (var i = 0; i < this.components.length; ++i) {
+				if (this.components[i].destroy) {
+					this.components[i].destroy();
+				}
 			}
-		}
 
-		for (var i = 0; i < this.children.length; ++i) {
-			this.children[i].destroy();
-		}
+			for (var i = 0; i < this.children.length; ++i) {
+				this.children[i].destroy();
+			}
 
-		this.children = [];
-		this.components = [];
-	}
+			this.children = [];
+			this.components = [];
+		}
 
 	this.draw = function () {
 		if (!this.visible) {
@@ -2268,11 +2268,6 @@ function Entity(name, x, y) {
 		}
 	}
 
-	/**
-	    var origin = parent.x * child.origin.x + parent.y * child.origin.y + parent.origin
-		var basis_x = parent.x * child.x.x + parent.y * child.x.y
-		var basis_y = parent.x * child.y.x + parent.y * child.y.y
-	 */
 	this.getTransformMatrix = function () {
 		if (this.parent == null) {
 			return this.transformMatrix;
@@ -2287,22 +2282,21 @@ function Entity(name, x, y) {
 		var y1 = parent.x[1] * child.y[0] + parent.y[1] * child.y[1];
 
 		return {
-
 			origin: [
 				parent.x[0] * child.origin[0] + parent.y[0] * child.origin[1] + parent.origin[0],
 				parent.x[1] * child.origin[0] + parent.y[1] * child.origin[1] + parent.origin[1],
 			],
-			x: [ x0, x1 ],
-			y: [ y0, y1 ],
+			x: [x0, x1],
+			y: [y0, y1],
 		}
 	}
 
-	this.getMatrixScaleX = function(matrix) {
-		return Math.sqrt((matrix.x[0]*matrix.x[0])+(matrix.y[0]*matrix.y[0]));
-	},
-	this.getMatrixScaleY = function(matrix) {
-		return Math.sqrt((matrix.x[1]*matrix.x[1])+(matrix.y[1]*matrix.y[1]));
-	}
+	this.getMatrixScaleX = function (matrix) {
+			return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
+		},
+		this.getMatrixScaleY = function (matrix) {
+			return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
+		}
 
 	this.getWidth = function () {
 		return this.width * this.scaleX;
@@ -2346,11 +2340,9 @@ function Entity(name, x, y) {
 	}
 
 	this.isVisible = function () {
-
 		if (this.parent != null) {
 			return this.visible && this.parent.isVisible();
 		}
-
 		return this.visible;
 	}
 
@@ -2383,15 +2375,13 @@ Entity.prototype = {
 		return this.getTransformMatrix().origin[0];
 	},
 	set screenX(value) {
-		// FIXME
-		this.transformMatrix.origin[0] = value;
+		this.transformMatrix.origin[0] += value - this.screenX;
 	},
 	get screenY() {
 		return this.getTransformMatrix().origin[1];
 	},
 	set screenY(value) {
-		// FIXME
-		this.transformMatrix.origin[1] = value;
+		this.transformMatrix.origin[1] += value - this.screenY;
 	},
 	get scaleX() {
 		return this.getMatrixScaleX(this.transformMatrix);
@@ -2437,7 +2427,7 @@ Entity.prototype = {
 		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
 	},
 	set screenRotation(value) {
-		// FIXME!
+		this.rotation += value - this.screenRotation;
 	}
 };
 
@@ -2493,6 +2483,8 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		var drawAlpha = this.entity.getScreenAlpha();
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
+		var drawWidth = this.entity.width * drawScaleX;
+		var drawHeight = this.entity.height * drawScaleY;
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
@@ -2513,7 +2505,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		}
 
 		chao.drawImagePart(chao.canvas, this.image,
-			drawX, drawY, drawArea,
+			drawX - drawWidth / 2, drawY - drawHeight / 2, drawArea,
 			this.entity.screenRotation, drawScaleX, drawScaleY,
 			drawAlpha);
 	}
