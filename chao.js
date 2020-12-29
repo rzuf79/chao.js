@@ -205,6 +205,7 @@ var chao = {
 		chao.screenWidth = width;
 		chao.screenHeight = height;
 		chao.scalingMode = scalingMode || chao.SCALING_MODE_NONE;
+		chao.backgroundColor = 0x000000;
 
 		chao.screenScaleX = 1.0;
 		chao.screenScaleY = 1.0;
@@ -545,10 +546,6 @@ var chao = {
 			context: newContext,
 			width: width,
 			height: height,
-			rotationOrigin: {
-				x: 0.5,
-				y: 0.5
-			}, // {0.0 - 1.0}
 			ready: true,
 		};
 
@@ -572,10 +569,6 @@ var chao = {
 			context: newContext,
 			width: -1,
 			height: -1,
-			rotationOrigin: {
-				x: 0.5,
-				y: 0.5
-			}, // {0.0 - 1.0}
 			ready: false,
 		};
 
@@ -668,12 +661,14 @@ var chao = {
 		}
 	},
 
-	drawImage: function (target, image, x, y, alpha, scaleX, scaleY, angle) {
+	drawImage: function (target, image, x, y, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
 		scaleY = scaleY === undefined ? 1 : scaleY;
 		angle = angle || 0;
+		rotationOffsetX = rotationOffsetX === undefined ? 0.5 : rotationOffsetX;
+		rotationOffsetY = rotationOffsetY === undefined ? 0.5 : rotationOffsetY;
 
 		image = chao.getImage(image);
 
@@ -686,8 +681,8 @@ var chao = {
 		target.context.globalAlpha = alpha;
 
 		var rotationPivot = {
-			x: (x + (image.width * scaleX * image.rotationOrigin.x)),
-			y: (y + (image.height * scaleY * image.rotationOrigin.y))
+			x: (x + (image.width * scaleX * rotationOffsetX)),
+			y: (y + (image.height * scaleY * rotationOffsetY))
 		};
 
 		target.context.translate(rotationPivot.x, rotationPivot.y);
@@ -699,19 +694,21 @@ var chao = {
 		target.context.restore();
 	},
 
-	drawImagePart: function (target, image, x, y, rect, angle, scaleX, scaleY, alpha) {
+	drawImagePart: function (target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 		angle = angle || 0;
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
 		scaleY = scaleY === undefined ? 1 : scaleY;
+		rotationOffsetX = rotationOffsetX === undefined ? 0.5 : rotationOffsetX;
+		rotationOffsetY = rotationOffsetY === undefined ? 0.5 : rotationOffsetY;
 
 		image = chao.getImage(image);
 
 		var w = rect.width;
 		var h = rect.height;
 		var rotationPivot = {
-			x: (x + (w * scaleX * image.rotationOrigin.x)),
-			y: (y + (h * scaleY * image.rotationOrigin.y))
+			x: (x + (w * scaleX * rotationOffsetX)),
+			y: (y + (h * scaleY * rotationOffsetY))
 		};
 
 		target.context.save();
@@ -1964,6 +1961,8 @@ function Entity(name, x, y) {
 			y: [0, 1],
 			origin: [x || 0, y || 0],
 		},
+		this.pivotX = 0.5;
+		this.pivotY = 0.5;
 
 		this.width = 0, // see also getWidth()
 		this.height = 0, // see also getHeight()
@@ -2228,42 +2227,42 @@ function Entity(name, x, y) {
 		}
 	}
 
-	this.alignToParent = function (alignX, alignY, anchorX, anchorY, pxOffsetX, pxOffsetY, setAnchor = true) {
+	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor = true) {
 
-		this.alignToParentHorizontally(alignX, anchorX, pxOffsetX, setAnchor);
-		this.alignToParentVertically(alignY, anchorY, pxOffsetY, setAnchor);
+		this.alignToParentHorizontally(parentX, childX, pxOffsetX, setAnchor);
+		this.alignToParentVertically(parentY, childY, pxOffsetY, setAnchor);
 	}
 
-	this.alignToParentHorizontally = function (alignX, anchorX, pxOffset, setAnchor = true) {
-		alignX = alignX != undefined ? alignX : 0.5;
-		anchorX = anchorX != undefined ? anchorX : 0.5;
+	this.alignToParentHorizontally = function (parentX, childX, pxOffset, setAnchor = true) {
+		parentX = parentX != undefined ? parentX : 0.5;
+		childX = childX != undefined ? childX : 0.5;
 		pxOffset = pxOffset || 0;
 
 		if (this.parent != null) {
-			this.x = Math.ceil((this.parent.getWidth() * alignX) - (this.getWidth() * anchorX));
+			this.x = Math.ceil((this.parent.getWidth() * parentX) - (this.getWidth() * childX));
 			this.x += pxOffset || 0;
 		}
 
 		if (setAnchor) {
-			this.anchor.alignX = alignX;
-			this.anchor.anchorX = anchorX;
+			this.anchor.parentX = parentX;
+			this.anchor.childX = childX;
 			this.anchor.pxOffsetX = pxOffset;
 		}
 	}
 
-	this.alignToParentVertically = function (alignY, anchorY, pxOffset, setAnchor = true) {
-		alignY = alignY != undefined ? alignY : 0.5;
-		anchorY = anchorY != undefined ? anchorY : 0.5;
+	this.alignToParentVertically = function (parentY, childY, pxOffset, setAnchor = true) {
+		parentY = parentY != undefined ? parentY : 0.5;
+		childY = childY != undefined ? childY : 0.5;
 		pxOffset = pxOffset || 0;
 
 		if (this.parent != null) {
-			this.y = Math.ceil((this.parent.getHeight() * alignY) - (this.getHeight() * anchorY));
+			this.y = Math.ceil((this.parent.getHeight() * parentY) - (this.getHeight() * childY));
 			this.y += pxOffset || 0;
 		}
 
 		if (setAnchor) {
-			this.anchor.alignY = alignY;
-			this.anchor.anchorY = anchorY;
+			this.anchor.parentY = parentY;
+			this.anchor.childY = childY;
 			this.anchor.pxOffsetY = pxOffset;
 		}
 	}
@@ -2478,13 +2477,13 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			anim = this.anims[this.currentAnim];
 		}
 
-		var drawX = this.entity.screenX * this.scrollFactorX;
-		var drawY = this.entity.screenY * this.scrollFactorY;
-		var drawAlpha = this.entity.getScreenAlpha();
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
 		var drawWidth = this.entity.width * drawScaleX;
 		var drawHeight = this.entity.height * drawScaleY;
+		var drawX = (this.entity.screenX * this.scrollFactorX) - (drawWidth * this.entity.pivotX);
+		var drawY = (this.entity.screenY * this.scrollFactorY) - (drawHeight * this.entity.pivotY);
+		var drawAlpha = this.entity.getScreenAlpha();
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
@@ -2505,9 +2504,9 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		}
 
 		chao.drawImagePart(chao.canvas, this.image,
-			drawX - drawWidth / 2, drawY - drawHeight / 2, drawArea,
-			this.entity.screenRotation, drawScaleX, drawScaleY,
-			drawAlpha);
+			drawX, drawY, drawArea, drawAlpha,
+			drawScaleX, drawScaleY, this.entity.screenRotation,
+			this.entity.pivotX, this.entity.pivotY);
 	}
 
 	this.update = function () {

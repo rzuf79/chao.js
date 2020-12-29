@@ -22,84 +22,31 @@
 
 			function StateGame(){
 
-				this.img1;
-				this.img2;
-				this.img3;
 				this.bounceTimer = 0.0;
+				this.frameSprite;
 
 				this.create = function(){
-					chao.backgroundColor = "black";
-					this.img1 = chao.helpers.createSprite("Image 1", "sticker", 0, 0);
-					this.add(this.img1.entity);
+					var frameImage = chao.createImage("frame", 400, 300);
+					chao.clearToColor(frameImage, chao.makeColor(255, 255, 255));
 
-					this.img2 = chao.helpers.createSprite("Image 2", "sticker", 100, 100);
-					// this.img2.entity.scaleX = 1.5;
-					// this.img2.entity.scaleY = 1.5;
-					this.img1.entity.add(this.img2.entity);
-
-					this.img3 = chao.helpers.createSprite("Image 2", "sticker", 100, 100);
-					this.img3.entity.scaleX = 0.5;
-					this.img3.entity.scaleY = 0.5;
-					this.img2.entity.add(this.img3.entity);
-					this.img3.entity.alignToParent();
-
-					// this.img3.entity.screenX = 0;
-					// this.img3.entity.screenY = 0;
+					this.frameSprite = chao.helpers.createSprite("Frame", "frame", 0, 0);
+					this.add(this.frameSprite.entity);
+					this.frameSprite.entity.alignToParent();
+					
 				}
 
 				this.update = function(){
 					this.bounceTimer += chao.getTimeDelta() * 2.0;
 
-					// this.img3.entity.scaleX = 0.5 + Math.sin(this.bounceTimer) * 0.25;
-					// this.img3.entity.scaleY = 0.5 + Math.cos(this.bounceTimer) * 0.25;
-
-					// this.img2.entity.scaleX = 0.5 + Math.sin(this.bounceTimer) * 0.25;
-					// this.img2.entity.scaleY = 0.5 + Math.cos(this.bounceTimer) * 0.25;
-
-					// this.img1.entity.x = 100 + Math.sin(this.bounceTimer*0.9) * 50;
-					// this.img1.entity.y = 100 + Math.cos(this.bounceTimer*0.9) * 50;
-
-					// this.img1.entity.rotation += chao.getTimeDelta() * 50.0;
-					// this.img2.entity.rotation += chao.getTimeDelta() * 50.0;
-					// this.img3.entity.rotation += chao.getTimeDelta() * 50.0;
-					// this.img2.entity.rotation = 45;
-
 					if (chao.justPressed[chao.KEY_SPACE]){
-						var entity = this.img3.entity;
-						// chao.log(entity.getTransformMatrix().x);
-						// chao.log(entity.getTransformMatrix().y);
-						chao.log(entity.getTransformMatrix().origin);
-						chao.log(entity.rotation);
 						// chao.log(entity.screenRotation);
 					}
 
 					if(chao.justPressed[chao.KEY_L]){
 						chao.logHierarchy(this.rootEntity);
 					}
-					if(chao.justPressed[chao.KEY_R]){
-						this.img3.entity.screenRotation = 45;
-					}
 
-					var rotationSpeed = 100.0;
-					if(chao.pressed[chao.KEY_LEFT]){
-						this.img1.entity.rotation -= chao.getTimeDelta() * rotationSpeed;
-					}
-					if(chao.pressed[chao.KEY_RIGHT]){
-						this.img1.entity.rotation += chao.getTimeDelta() * rotationSpeed;
-					}
-					if(chao.pressed[chao.KEY_A]){
-						this.img3.entity.scaleX -= chao.getTimeDelta() * 1.0;
-						this.img3.entity.scaleY -= chao.getTimeDelta() * 1.0;
-					}
-					if(chao.pressed[chao.KEY_D]){
-						this.img3.entity.scaleX += chao.getTimeDelta() * 1.0;
-						this.img3.entity.scaleY += chao.getTimeDelta() * 1.0;
-					}
-					if(chao.pressed[chao.KEY_X]){
-						this.img1.entity.rotation = 0;
-						this.img3.entity.scaleX = 1.0;
-						this.img3.entity.scaleY = 1.0;
-					}
+			
 					
 				}
 			}
