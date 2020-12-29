@@ -2646,29 +2646,25 @@ function ComponentText(font, text, size) {
 			return;
 		}
 
-		var drawX = this.entity.screenX;
-		var drawY = this.entity.screenY;
+		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
+		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
 		var drawAlpha = this.entity.getScreenAlpha();
+		var drawWidth = this.entity.width * drawScaleX;
+		var drawHeight = this.entity.height * drawScaleY;
+		var drawX = this.entity.screenX - (drawWidth * this.entity.pivotX);
+		var drawY = this.entity.screenY - (drawHeight * this.entity.pivotY);
 
 		if (!this.ready && this.font.ready) {
 			this.ready = true;
 			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
 		}
 
-		switch (this.align) {
-			case "center":
-				drawX -= this.entity.width / 2;
-				break;
-			case "right":
-				drawX -= this.entity.width;
-				break;
-		}
-
 		chao.drawImage(chao.canvas, this.image,
 			drawX, drawY,
 			drawAlpha,
-			this.entity.screenScaleX, this.entity.screenScaleY,
-			this.entity.screenRotation);
+			drawScaleX, drawScaleY,
+			this.entity.screenRotation,
+			this.entity.pivotX, this.entity.pivotY);
 	}
 
 	this.changeText = function (text) {
@@ -2832,6 +2828,13 @@ ComponentText.prototype = {
 	},
 	set align(newAlign) {
 		this._align = newAlign;
+
+		switch(newAlign) {
+			case "center": this.entity.pivotX = 0.5; break;
+			case "left": this.entity.pivotX = 0.0; break;
+			case "right": this.entity.pivotX = 1.0; break;
+		}
+
 		this.changeText();
 	},
 	get outlineColor() {
