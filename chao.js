@@ -465,6 +465,8 @@ var chao = {
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
 		state.rootEntity.height = chao.screenHeight;
+		state.rootEntity.pivotX = 0;
+		state.rootEntity.pivotY = 0;
 		state.add = function (entity) {
 			return this.rootEntity.add(entity);
 		};
@@ -2228,7 +2230,6 @@ function Entity(name, x, y) {
 	}
 
 	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor = true) {
-
 		this.alignToParentHorizontally(parentX, childX, pxOffsetX, setAnchor);
 		this.alignToParentVertically(parentY, childY, pxOffsetY, setAnchor);
 	}
@@ -2239,8 +2240,10 @@ function Entity(name, x, y) {
 		pxOffset = pxOffset || 0;
 
 		if (this.parent != null) {
-			this.x = Math.ceil((this.parent.getWidth() * parentX) - (this.getWidth() * childX));
-			this.x += pxOffset || 0;
+			var prX = parentX - this.parent.pivotX;
+			var crX = childX - this.pivotX;
+			this.x = Math.ceil((this.parent.getWidth() * prX) - (this.getWidth() * crX));
+			this.x += pxOffset;
 		}
 
 		if (setAnchor) {
@@ -2256,8 +2259,10 @@ function Entity(name, x, y) {
 		pxOffset = pxOffset || 0;
 
 		if (this.parent != null) {
-			this.y = Math.ceil((this.parent.getHeight() * parentY) - (this.getHeight() * childY));
-			this.y += pxOffset || 0;
+			var prY = parentY - this.parent.pivotY;
+			var crY = childY - this.pivotY;
+			this.y = Math.ceil((this.parent.getHeight() * prY) - (this.getHeight() * crY));
+			this.y += pxOffset;
 		}
 
 		if (setAnchor) {

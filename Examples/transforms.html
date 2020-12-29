@@ -19,6 +19,7 @@
 			chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
 			// chao.setImagesSmoothing(false);
 			chao.loadImage("sticker", "sticker.png");
+			chao.loadImage("island", "assets/island_small1.png");
 
 			function StateGame(){
 
@@ -29,17 +30,25 @@
 					var frameImage = chao.createImage("frame", 400, 300);
 					chao.clearToColor(frameImage, chao.makeColor(255, 255, 255));
 
-					this.frameSprite = chao.helpers.createSprite("Frame", "frame", 0, 0);
+					this.frameSprite = chao.helpers.createSprite("Frame", "frame", 300, 200);
 					this.add(this.frameSprite.entity);
 					this.frameSprite.entity.alignToParent();
+
 					
 				}
-
+				
 				this.update = function(){
 					this.bounceTimer += chao.getTimeDelta() * 2.0;
 
+					if (chao.pressed[chao.KEY_LEFT]) {
+						this.frameSprite.entity.rotation -= chao.getTimeDelta() * 50.0;
+					}
+					if (chao.pressed[chao.KEY_RIGHT]) {
+						this.frameSprite.entity.rotation += chao.getTimeDelta() * 50.0;
+					}
+
 					if (chao.justPressed[chao.KEY_SPACE]){
-						// chao.log(entity.screenRotation);
+						//
 					}
 
 					if(chao.justPressed[chao.KEY_L]){
