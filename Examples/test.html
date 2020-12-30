@@ -190,7 +190,6 @@
 			this.buttonLog.entity.alignToParent(0.5, 1.0, 0.5, 1.0, -200, -20);
 			this.buttonLog.setText("Log things", chao.font, 20);
 			this.buttonLog.onReleased = function() { chao.logHierarchy(); }
-			this.buttonLog.entity.rotation = 45;
 
 
 			var textTest = this.addWithComponent(new Entity("Text test", 300, 300), new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
@@ -199,8 +198,6 @@
 			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow\noraz niesamowita istnie\nmulti`12linia!";
 
 			chao.playSound("nature");
-
-			// chao.logHierarchy();
 
 		},
 

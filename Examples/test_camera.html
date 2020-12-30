@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>chao.js</title>
+
 <head>
 	<style type="text/css">
 		body {
@@ -9,261 +10,268 @@
 		}
 	</style>
 </head>
+
 <body>
 	<center>
-<script src="../chao.js"></script>
-<script>
+		<script src="../chao.js"></script>
+		<script>
+			chao.init(640, 480, chao.SCALING_MODE_KEEP_RATIO);
+			chao.backgroundColor = "#28293f";
 
-	chao.init(640, 480, chao.SCALING_MODE_KEEP_RATIO);
-	chao.backgroundColor = "#28293f";
-
-	chao.loadImage("buba", "assets/buba.png");
-	chao.loadImage("cloud", "assets/cloud.png");
-	chao.loadImage("island_large", "assets/island_large.png");
-	chao.loadImage("island_small1", "assets/island_small1.png");
-	chao.loadImage("island_small2", "assets/island_small2.png");
-	chao.loadImage("cloudy", "assets/cloudy.png");
+			chao.loadImage("buba", "assets/buba.png");
+			chao.loadImage("cloud", "assets/cloud.png");
+			chao.loadImage("island_large", "assets/island_large.png");
+			chao.loadImage("island_small1", "assets/island_small1.png");
+			chao.loadImage("island_small2", "assets/island_small2.png");
+			chao.loadImage("cloudy", "assets/cloudy.png");
 
 
-	function ComponentLudzik(){
-		this.name 				= "Buba";
+			function ComponentLudzik() {
+				this.name = "Buba";
 
-		this.create = function(){
-			this.shaker = this.entity.addComponent(new ComponentShake(5, 0.25, false));
-			this.sprite = this.entity.addComponent(new ComponentSprite("buba", 64, 64));
+				this.create = function () {
+					this.shaker = this.entity.addComponent(new ComponentShake(5, 0.25, false));
+					this.sprite = this.entity.addComponent(new ComponentSprite("buba", 64, 64));
 
-			this.sprite.addAnim("idle", [0], 0, false);
-			this.sprite.addAnim("run", [1, 0, 2, 0], 0.2, true);
-			this.sprite.playAnim("idle");
-		}
+					this.sprite.addAnim("idle", [0], 0, false);
+					this.sprite.addAnim("run", [1, 0, 2, 0], 0.2, true);
+					this.sprite.playAnim("idle");
+				}
 
-		this.update = function(){
-			var direction 	= "";
-			var animName 	= "idle";
+				this.update = function () {
+					var direction = "";
+					var animName = "idle";
 
-			if(chao.pressed[chao.KEY_UP]){
-				direction += "n";
-			}else if(chao.pressed[chao.KEY_DOWN]){
-				direction += "s";
+					if (chao.pressed[chao.KEY_UP]) {
+						direction += "n";
+					} else if (chao.pressed[chao.KEY_DOWN]) {
+						direction += "s";
+					}
+					if (chao.pressed[chao.KEY_LEFT]) {
+						direction += "w";
+					} else if (chao.pressed[chao.KEY_RIGHT]) {
+						direction += "e";
+					}
+
+					if (direction.length > 0) {
+						animName = "run";
+					}
+
+					this.sprite.playAnim(animName, false);
+
+					var currSpeed = chao.getTimeDelta() * 80;
+					if (direction.indexOf("n") != -1) {
+						this.entity.y -= currSpeed;
+					}
+					if (direction.indexOf("s") != -1) {
+						this.entity.y += currSpeed;
+					}
+					if (direction.indexOf("w") != -1) {
+						this.entity.x -= currSpeed;
+						this.sprite.flipX = true;
+					}
+					if (direction.indexOf("e") != -1) {
+						this.entity.x += currSpeed;
+						this.sprite.flipX = false;
+					}
+
+					if (chao.justPressed[chao.KEY_Z]) {
+						this.shaker.shake();
+					}
+				}
 			}
-			if(chao.pressed[chao.KEY_LEFT]){
-				direction += "w";
-			}else if(chao.pressed[chao.KEY_RIGHT]){
-				direction += "e";
-			}
 
-			if(direction.length > 0){
-				animName = "run";
-			}
+			var StateGame = {
 
-			this.sprite.playAnim(animName, false);
+				create: function () {
+					chao.countFPS = true;
 
-			var currSpeed = chao.getTimeDelta() * 80;
-			if(direction.indexOf("n") != -1){
-				this.entity.y -= currSpeed;
-			}
-			if(direction.indexOf("s") != -1){
-				this.entity.y += currSpeed;
-			}
-			if(direction.indexOf("w") != -1){
-				this.entity.x -= currSpeed;
-				this.sprite.flipX = true;
-			}
-			if(direction.indexOf("e") != -1){
-				this.entity.x += currSpeed;
-				this.sprite.flipX = false;
-			}
+					var background = chao.createImage(undefined, 1000, 1000);
+					chao.clearToColor(background, chao.backgroundColor);
+					for (var i = 0; i < 1000; ++i) {
+						chao.putPixel(background, chao.getRandom(background.width), chao.getRandom(background.height),
+							"#f9f7c7");
+					}
+					this.add(chao.helpers.createSprite("Sky", background, chao.screenWidth/2, chao.screenHeight/2).entity);
+
+					this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
+					this.add(this.camera.entity);
+
+					var bouncyIsle = chao.helpers.createSprite("Small Island", "island_small1", -300, -300);
+					this.camera.entity.add(bouncyIsle.entity);
+					chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
+					StateGame.bouncyIsle = bouncyIsle.entity;
+
+					var smallerIslands = [];
+					for (var i = 0; i < 25; ++i) {
+						var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
+						var newIsle = chao.helpers.createSprite("Smaller Island", imgName, 0, 0);
+						var tries = 0;
+						while (tries < 108) {
+							newIsle.entity.x = chao.getRandom(800);
+							newIsle.entity.y = chao.getRandom(800);
+							tries++;
+							var collide = false;
+							for (var j = 0; j < smallerIslands.length; ++j) {
+								if (newIsle.entity.checkCollision(smallerIslands[j])) {
+									collide = true;
+									break;
+								}
+							}
+							if (collide) continue;
+							break;
+						}
+						smallerIslands.push(newIsle.entity);
+						newIsle.entity.alpha = 0.4;
+						newIsle.entity.scaleX = newIsle.entity.scaleY = 0.5;
+						newIsle.scrollFactorX = 0.1;
+						newIsle.scrollFactorY = 0.1;
+						this.camera.entity.add(newIsle.entity);
+					}
+
+					var islands = [];
+					for (var i = 0; i < 15; ++i) {
+						var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
+						var newIsle = chao.helpers.createSprite("Small Island", imgName, 0, 0);
+						var tries = 0;
+						while (tries < 108) {
+							newIsle.entity.x = chao.getRandom(800);
+							newIsle.entity.y = chao.getRandom(800);
+							tries++;
+							var collide = false;
+							for (var j = 0; j < islands.length; ++j) {
+								if (newIsle.entity.checkCollision(islands[j])) {
+									collide = true;
+									break;
+								}
+							}
+							if (collide) continue;
+							break;
+						}
+						islands.push(newIsle.entity);
+						newIsle.entity.alpha = 0.7;
+						newIsle.scrollFactorX = 0.3;
+						newIsle.scrollFactorY = 0.3;
+						this.camera.entity.add(newIsle.entity);
+					}
+
+					var clouds = [];
+					for (var i = 0; i < 15; ++i) {
+						var newCloud = chao.helpers.createSprite("Cloud", "cloud", 0, 0);
+						var tries = 0;
+						while (tries < 108) {
+							newCloud.entity.x = chao.getRandom(800);
+							newCloud.entity.y = chao.getRandom(800);
+							tries++;
+							var collide = false;
+							for (var j = 0; j < clouds.length; ++j) {
+								if (newCloud.entity.checkCollision(clouds[j])) {
+									collide = true;
+									break;
+								}
+							}
+							if (collide) continue;
+							break;
+						}
+						clouds.push(newCloud.entity);
+						newCloud.entity.alpha = 0.4;
+						newCloud.entity.scaleX = newCloud.entity.scaleY = (60 + chao.getRandom(41)) / 100;
+						newCloud.scrollFactorX = 0.6;
+						newCloud.scrollFactorY = 0.6;
+						this.camera.entity.add(newCloud.entity);
+					}
+
+					this.camera.entity.add(chao.helpers.createSprite("Island", "island_large", 0, 0).entity);
 
 
-			if(chao.justPressed[chao.KEY_Z]){
-				this.shaker.shake();
-			}
+					this.gameObjects = new Entity("Game Objects");
+					this.camera.entity.add(this.gameObjects);
 
-		}
+					this.ludzik = (new Entity("Buba", 0, 0)).addComponent(new ComponentLudzik());
+					this.gameObjects.add(this.ludzik.entity);
 
-	}
+					this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", -100, -100).entity);
+					this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", -130, -130).entity);
 
-	var StateGame = {
 
-		create: function(){
-			chao.countFPS = true;
+					this.camera.follow(this.ludzik.entity, 3.0);
+					// this.camera.bounds = {x:100, y:100, width:750, height:700};
+					// this.camera.deadzone = {	x: chao.screenWidth/2-50,
+					// 					y: chao.screenHeight/2-50,
+					// 					width: 100,
+					// 					height: 100};
 
-			var background = chao.createImage(undefined, 1000, 1000);
-			chao.clearToColor(background, chao.backgroundColor);
-			for(var i = 0; i < 1000; ++i){
-				chao.putPixel(background, chao.getRandom(background.width), chao.getRandom(background.height), "#f9f7c7");
-			}
-			this.add(chao.helpers.createSprite("Sky", background, 0, 0).entity);
 
-			this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
-			this.add(this.camera.entity);
+					this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
+					this.add(this.textLogo.entity);
+					this.textLogo.entity.alignToParentHorizontally();
+					ComponentTween.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7,
+						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
-			var bouncyIsle = chao.helpers.createSprite("Small Island", "island_small1", -64, -64);
-			this.camera.entity.add(bouncyIsle.entity);
-			chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 
-			var smallerIslands = [];
-			for(var i = 0; i < 25; ++i){
-				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-				var newIsle = chao.helpers.createSprite("Smaller Island", imgName, 0, 0);
-				var tries = 0;
-				while(tries < 108){
-					newIsle.entity.x = chao.getRandom(800); newIsle.entity.y = chao.getRandom(800);
-					tries ++;
-					var collide = false;
-					for(var j = 0; j < smallerIslands.length; ++j) {
-						if(newIsle.entity.checkCollision(smallerIslands[j])) {
-							collide = true; break;
+					var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font,
+						"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy\n[S] screen shAaaAaaAkeeEEeE!",
+						20);
+					debugInfo.backgroundColor = chao.makeColor(255, 255, 255, 100);
+					chao.log(chao.makeColor(255, 255, 255, 100));
+					chao.log(chao.makeColorf(255 / 255, 255 / 255, 255 / 255, 100 / 255));
+					this.add(debugInfo.entity);
+					debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
+
+					chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
+				},
+
+				update: function () {
+					if (chao.justPressed[chao.KEY_L]) {
+						chao.logHierarchy();
+					}
+					if (chao.justPressed[chao.KEY_F]) {
+						this.camera.follow(this.ludzik.entity);
+					}
+					if (chao.justPressed[chao.KEY_U]) {
+						this.camera.unfollow();
+					}
+					if (chao.justPressed[chao.KEY_SPACE]) {
+						this.camera.slideToPosition(StateGame.bouncyIsle.x, StateGame.bouncyIsle.y, 3.0, chao.INTERPOLATE_BOUNCE);
+					}
+					if (chao.justPressed[chao.KEY_S]) {
+						chao.helpers.shake(this.camera.entity, 15, 0.5, true);
+					}
+
+					this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, -191, 201);
+					this.ludzik.entity.y = chao.clamp(this.ludzik.entity.y, -209, 137);
+
+					// if (chao.justPressed[chao.KEY_X]) {
+					// 	chao.log("" + this.ludzik.entity.x + "x" + this.ludzik.entity.y);
+					// }
+
+					// sorty sort
+					var objs = this.gameObjects.children;
+					var n = objs.length;
+					for (var i = 0; i < n; ++i) {
+						for (var j = 0; j < n - i - 1; ++j) {
+							var swap = objs[j].y + objs[j].height / 2 > objs[j + 1].y + objs[j + 1].height / 2;
+							if (swap) {
+								var tempChild = objs[j];
+								objs[j] = objs[j + 1];
+								objs[j + 1] = tempChild;
+							}
 						}
 					}
-					if(collide) continue;
-					break;
+
+				},
+
+				draw: function () {
+					// // debuggy camera deadzone display
+					// chao.drawRect(chao.canvas,
+					// 	this.camera.deadzone.x, this.camera.deadzone.y,
+					// 	this.camera.deadzone.width, this.camera.deadzone.height,
+					// 	chao.colorCodes[2], 2);
 				}
-				smallerIslands.push(newIsle.entity);
-				newIsle.entity.alpha = 0.4;
-				newIsle.entity.scaleX = newIsle.entity.scaleY = 0.5;
-				newIsle.scrollFactorX = 0.1;
-				newIsle.scrollFactorY = 0.1;
-				this.camera.entity.add(newIsle.entity);
-			}
-
-			var islands = [];
-			for(var i = 0; i < 15; ++i){
-				var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-				var newIsle = chao.helpers.createSprite("Small Island", imgName, 0, 0);
-				var tries = 0;
-				while(tries < 108){
-					newIsle.entity.x = chao.getRandom(800); newIsle.entity.y = chao.getRandom(800);
-					tries ++;
-					var collide = false;
-					for(var j = 0; j < islands.length; ++j) {
-						if(newIsle.entity.checkCollision(islands[j])) {
-							collide = true; break;
-						}
-					}
-					if(collide) continue;
-					break;
-				}
-				islands.push(newIsle.entity);
-				newIsle.entity.alpha = 0.7;
-				newIsle.scrollFactorX = 0.3;
-				newIsle.scrollFactorY = 0.3;
-				this.camera.entity.add(newIsle.entity);
-			}
-
-			var clouds = [];
-			for(var i = 0; i < 15; ++i){
-				var newCloud = chao.helpers.createSprite("Cloud", "cloud", 0, 0);
-				var tries = 0;
-				while(tries < 108){
-					newCloud.entity.x = chao.getRandom(800); newCloud.entity.y = chao.getRandom(800);
-					tries ++;
-					var collide = false;
-					for(var j = 0; j < clouds.length; ++j) {
-						if(newCloud.entity.checkCollision(clouds[j])){
-							collide = true; break;
-						}
-					}
-					if(collide) continue;
-					break;
-				}
-				clouds.push(newCloud.entity);
-				newCloud.entity.alpha = 0.4;
-				newCloud.entity.scaleX = newCloud.entity.scaleY = (60 + chao.getRandom(41)) / 100;
-				newCloud.scrollFactorX = 0.6;
-				newCloud.scrollFactorY = 0.6;
-				this.camera.entity.add(newCloud.entity);
-			}
-
-			this.camera.entity.add(chao.helpers.createSprite("Island", "island_large", 200, 200).entity);
 
 
-			this.gameObjects = new Entity("Game Objects");
-			this.camera.entity.add(this.gameObjects);
+			};
 
-			this.ludzik = (new Entity("Buba", 400, 400)).addComponent(new ComponentLudzik());
-			this.gameObjects.add(this.ludzik.entity);
-
-			this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", 300, 300).entity);
-			this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", 360, 330).entity);
-
-
-			this.camera.follow(this.ludzik.entity, 3.0);
-			// this.camera.bounds = {x:100, y:100, width:750, height:700};
-			// this.camera.deadzone = {	x: chao.screenWidth/2-50,
-			// 					y: chao.screenHeight/2-50,
-			// 					width: 100,
-			// 					height: 100};
-
-
-			this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
-			this.add(this.textLogo.entity);
-			this.textLogo.entity.alignToParentHorizontally();
-			ComponentTween.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7,
-				chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
-
-
-			var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font,
-				"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy\n[S] screen shAaaAaaAkeeEEeE!",
-				20);
-			this.add(debugInfo.entity);
-			debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
-
-			chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
-		},
-
-		update: function(){
-			if(chao.justPressed[chao.KEY_L]){
-				chao.logHierarchy();
-			}
-			if(chao.justPressed[chao.KEY_F]){
-				this.camera.follow(this.ludzik.entity);
-			}
-			if(chao.justPressed[chao.KEY_U]){
-				this.camera.unfollow();
-			}
-			if(chao.justPressed[chao.KEY_SPACE]){
-				// chao.finishAllTweens(true);
-				this.camera.slideToPosition(0, 0, 3.0, chao.INTERPOLATE_BOUNCE);
-			}
-			if(chao.justPressed[chao.KEY_S]){
-				// chao.finishAllTweens(true);
-				chao.helpers.shake(this.camera.entity, 15, 0.5, true);
-			}
-
-			this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, 214, 610);
-			this.ludzik.entity.y = chao.clamp(this.ludzik.entity.y, 220, 550);
-
-			// sorty sort
-			var objs 	= this.gameObjects.children;
-			var n 		= objs.length;
-			for(var i = 0; i < n; ++i){
-				for(var j = 0; j < n - i - 1; ++j){
-					var swap = objs[j].y+objs[j].height > objs[j+1].y+objs[j+1].height;
-					if(swap){
-						var tempChild = objs[j];
-						objs[j] = objs[j+1];
-						objs[j+1] = tempChild;
-					}
-				}
-			}
-
-		},
-
-		draw: function(){
-			// // debuggy camera deadzone display
-			// chao.drawRect(chao.canvas,
-			// 	this.camera.deadzone.x, this.camera.deadzone.y,
-			// 	this.camera.deadzone.width, this.camera.deadzone.height,
-			// 	chao.colorCodes[2], 2);
-		}
-
-
-	};
-
-	chao.switchState(StateGame);
-
-
-
-</script>
+			chao.switchState(StateGame);
+		</script>
 </body>

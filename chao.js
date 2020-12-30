@@ -771,7 +771,7 @@ var chao = {
 	// Creates a color in a 0xFFFFFFFF form. Values in 0-1 range.
 	makeColorf: function (r, g, b, a) {
 		a = a || 1;
-		return chao.makeColor(a * 255, r * 255, g * 255, b * 255);
+		return chao.makeColor(r * 255, g * 255, b * 255, a * 255);
 	},
 
 	// Creates a color string in "rgba(r,g,b,a)" format.
@@ -2667,16 +2667,16 @@ function ComponentText(font, text, size) {
 			return;
 		}
 
+		if (!this.ready && this.font.ready) {
+			this.ready = true;
+			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
+		}
+
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
 		var drawAlpha = this.entity.getScreenAlpha();
 		var drawX = this.entity.screenX - (this.entity.screenWidth * this.entity.pivotX);
 		var drawY = this.entity.screenY - (this.entity.screenHeight * this.entity.pivotY);
-
-		if (!this.ready && this.font.ready) {
-			this.ready = true;
-			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
-		}
 
 		chao.drawImage(chao.canvas, this.image,
 			drawX, drawY,
@@ -2868,7 +2868,7 @@ ComponentText.prototype = {
 	},
 	set outlineSize(newOutlineSize) {
 		this._outlineSize = newOutlineSize;
-		this.changeoutlineSize();
+		this.changeText();
 	},
 };
 
@@ -3033,8 +3033,8 @@ function ComponentCamera() {
 
 		// figuring out some basic stuff
 		var targetPos = {
-			x: this.trackedEntity.x + this.trackedEntity.width / 2,
-			y: this.trackedEntity.y + this.trackedEntity.height / 2
+			x: this.trackedEntity.screenX,
+			y: this.trackedEntity.screenY
 		}
 
 		var relativePos = {
@@ -3043,8 +3043,8 @@ function ComponentCamera() {
 		}
 
 		var cameraPos = {
-			x: (-targetPos.x + (chao.screenWidth / 2)) - this.offsetX,
-			y: (-targetPos.y + (chao.screenHeight / 2)) - this.offsetY
+			x: (-targetPos.x + chao.screenWidth) - this.offsetX,
+			y: (-targetPos.y + chao.screenHeight) - this.offsetY
 		}
 
 		// contrived deadzone calculations
