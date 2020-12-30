@@ -205,7 +205,7 @@ var chao = {
 		chao.screenWidth = width;
 		chao.screenHeight = height;
 		chao.scalingMode = scalingMode || chao.SCALING_MODE_NONE;
-		chao.backgroundColor = 0x000000;
+		chao.backgroundColor = "black";
 
 		chao.screenScaleX = 1.0;
 		chao.screenScaleY = 1.0;
@@ -2296,11 +2296,12 @@ function Entity(name, x, y) {
 	}
 
 	this.getMatrixScaleX = function (matrix) {
-			return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
-		},
-		this.getMatrixScaleY = function (matrix) {
-			return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
-		}
+		return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
+	}
+	
+	this.getMatrixScaleY = function (matrix) {
+		return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
+	}
 
 	this.getWidth = function () {
 		return this.width * this.scaleX;
@@ -2317,6 +2318,27 @@ function Entity(name, x, y) {
 		return this.alpha * this.parent.getScreenAlpha();
 	}
 
+	this.isPointInside = function(x, y) {
+		var sx = this.screenX;
+		var sy = this.screenY;
+		var s = Math.sin(chao.deg2rad(-this.screenRotation));
+		var c = Math.cos(chao.deg2rad(-this.screenRotation));
+		var sw = this.screenWidth;
+		var sh = this.screenHeight;
+
+		x -= sx;
+		y -= sy;
+		var newX = x * c - y * s;
+		var newY = x * s + y * c;
+		x = newX;
+		y = newY;
+
+		return (x > -sw * this.pivotX
+			&& x < sw * this.pivotX
+			&& y > -sh * this.pivotY
+			&& y < sh * this.pivotY);
+	}
+
 	this.getEntityAt = function (x, y) {
 		if (!this.visible || this.alpha <= 0) {
 			return null;
@@ -2331,12 +2353,7 @@ function Entity(name, x, y) {
 			}
 		}
 
-		var screenX = this.screenX;
-		var screenY = this.screenY;
-
-		if (this.clickable &&
-			x >= screenX && x <= screenX + this.width * this.scaleX &&
-			y >= screenY && y <= screenY + this.height * this.scaleY) {
+		if (this.clickable && this.isPointInside(x, y)){
 			return this;
 		}
 
@@ -2432,6 +2449,12 @@ Entity.prototype = {
 	},
 	set screenRotation(value) {
 		this.rotation += value - this.screenRotation;
+	},
+	get screenWidth() {
+		return this.width * this.screenScaleX;
+	},
+	get screenHeight() {
+		return this.height * this.screenScaleY;
 	}
 };
 
@@ -2484,10 +2507,8 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
-		var drawWidth = this.entity.width * drawScaleX;
-		var drawHeight = this.entity.height * drawScaleY;
-		var drawX = (this.entity.screenX * this.scrollFactorX) - (drawWidth * this.entity.pivotX);
-		var drawY = (this.entity.screenY * this.scrollFactorY) - (drawHeight * this.entity.pivotY);
+		var drawX = (this.entity.screenX * this.scrollFactorX) - (this.entity.screenWidth * this.entity.pivotX);
+		var drawY = (this.entity.screenY * this.scrollFactorY) - (this.entity.screenHeight * this.entity.pivotY);
 		var drawAlpha = this.entity.getScreenAlpha();
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
@@ -2649,10 +2670,8 @@ function ComponentText(font, text, size) {
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
 		var drawAlpha = this.entity.getScreenAlpha();
-		var drawWidth = this.entity.width * drawScaleX;
-		var drawHeight = this.entity.height * drawScaleY;
-		var drawX = this.entity.screenX - (drawWidth * this.entity.pivotX);
-		var drawY = this.entity.screenY - (drawHeight * this.entity.pivotY);
+		var drawX = this.entity.screenX - (this.entity.screenWidth * this.entity.pivotX);
+		var drawY = this.entity.screenY - (this.entity.screenHeight * this.entity.pivotY);
 
 		if (!this.ready && this.font.ready) {
 			this.ready = true;
@@ -2890,6 +2909,7 @@ function ComponentButton(image) {
 				if (this.onReleased) {
 					this.onReleased(this);
 					// hacky supress any other releases
+					// could do something like Godot's set_input_as_handled here
 					chao.mouse.justReleased = false;
 				}
 			}
@@ -2933,9 +2953,8 @@ function ComponentButton(image) {
 
 		this.imageKey = key;
 
-		this.sprite = (new Entity("Button Image")).addComponent(new ComponentSprite(this.imageKey));
+		this.sprite = this.entity.addWithComponent(new Entity("Button Image"), new ComponentSprite(this.imageKey));
 		this.sprite.entity.clickable = false;
-		this.entity.add(this.sprite.entity);
 
 		// Update Entity's size to be the same as button's sprite
 		this.entity.width = this.sprite.entity.width;
@@ -2947,15 +2966,14 @@ function ComponentButton(image) {
 			this.entity.remove(this.spritePressed.entity);
 		}
 
-		this.spritePressed = (new Entity("Button Image Pressed")).addComponent(new ComponentSprite(key));
+		this.spritePressed = this.entity.addWithComponent(new Entity("Button Image Pressed"), new ComponentSprite(key));
 		this.spritePressed.entity.clickable = false;
-		this.entity.add(this.spritePressed.entity);
 		this.spritePressed.entity.visible = false;
 	}
 
 	this.setText = function (text, font, size) {
 		if (!this.text) {
-			this.text = (new Entity("Button Text", 0, 0)).addComponent(new ComponentText(font, text, size));
+			this.text = this.entity.addWithComponent(new Entity("Button Text"), new ComponentText(font, text, size));
 			this.text.align = "left";
 			this.text.entity.clickable = false;
 			this.entity.add(this.text.entity);

@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>chao.js</title>
+
 <head>
 	<style type="text/css">
 		body {
@@ -9,24 +10,24 @@
 		}
 	</style>
 </head>
+
 <body>
 	<center>
 		<canvas id="canvas_id" width="640" height="480"></canvas>
 
 		<script src="../chao.js"></script>
 		<script>
-
 			chao.init(640, 480, chao.SCALING_MODE_NONE, "canvas_id");
-			// chao.setImagesSmoothing(false);
 			chao.loadImage("sticker", "sticker.png");
 			chao.loadImage("island", "assets/island_small1.png");
 			chao.loadImage("cloudy", "assets/cloudy.png");
+			chao.loadImage("button", "assets/button.png");
 
-			function StateGame(){
+			function StateGame() {
 
 				this.bounceTimer = 0.0;
 
-				this.create = function(){
+				this.create = function () {
 					var frameImage = chao.createImage("frame", 400, 300);
 					chao.clearToColor(frameImage, chao.makeColor(255, 255, 255));
 
@@ -39,8 +40,8 @@
 
 					ComponentTween.addTween(frameSprite.entity, "scaleX", 0.8, 1.2, 0.9,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
-					
-					ComponentTween.addTween(frameSprite.entity, "scaleY", 1.2, 0.8, 0.9,
+
+					ComponentTween.addTween(frameSprite.entity, "scaleY", 0.8, 1.2, 0.9,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
 					var title = chao.helpers.createText("Title", 0, 0, chao.font, "--- frame title ---", 24);
@@ -63,34 +64,39 @@
 					island.entity.alignToParent();
 					chao.helpers.addBounceTween(island.entity, 15, 0.5);
 
+
+					var aButton = frameSprite.entity.addWithComponent(new Entity("Button"), new ComponentButton("button"));
+					aButton.entity.alignToParent(0.5, 0.8, 0.5, 0.5);
+					aButton.setText("Rotating button", chao.font, 20);
+					aButton.onReleased = function() { chao.logHierarchy(); }
+
 					var cloudie1 = chao.helpers.createSprite("Cloudie", "cloudy", 0, 0);
 					frameSprite.entity.add(cloudie1.entity);
 					cloudie1.entity.alignToParent(0.0, 1.0, 0.0, 1.0, 0, -5);
-					ComponentTween.addTween(cloudie1.entity, "x", 
-						cloudie1.entity.x, cloudie1.entity.x+(frameSprite.entity.getWidth()-cloudie1.entity.getWidth()),
+					ComponentTween.addTween(cloudie1.entity, "x",
+						cloudie1.entity.x, cloudie1.entity.x + (frameSprite.entity.getWidth() - cloudie1.entity
+						.getWidth()),
 						1.0,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
 
 					var cloudie2 = chao.helpers.createSprite("Cloudie", "cloudy", 0, 0);
 					frameSprite.entity.add(cloudie2.entity);
 					cloudie2.entity.alignToParent(1.0, 1.0, 1.0, 1.0, 0, -5);
-					ComponentTween.addTween(cloudie2.entity, "x", 
-						cloudie2.entity.x, cloudie2.entity.x-(frameSprite.entity.getWidth()-cloudie1.entity.getWidth()),
+					ComponentTween.addTween(cloudie2.entity, "x",
+						cloudie2.entity.x, cloudie2.entity.x - (frameSprite.entity.getWidth() - cloudie1.entity
+						.getWidth()),
 						1.0,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
-					
+
 				}
 
-				this.update = function(){
-					if(chao.justPressed[chao.KEY_L]){
+				this.update = function () {
+					if (chao.justPressed[chao.KEY_L]) {
 						chao.logHierarchy(this.rootEntity);
 					}
 				}
 			}
-			
+
 			chao.switchState(new StateGame());
-
-
-
 		</script>
 </body>

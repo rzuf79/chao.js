@@ -170,9 +170,8 @@
 			zbylut.clickable = true;
 			this.add(zbylut);
 
-			this.buttonMute = (new Entity("Button Mute")).addComponent(new ComponentButton("button_sound_on"));
-			this.buttonMute.entity.x = chao.screenWidth - 60;
-			this.buttonMute.entity.y = chao.screenHeight - 60;
+			this.buttonMute = this.addWithComponent(new Entity("Button Mute"), new ComponentButton("button_sound_on"));
+			this.buttonMute.entity.alignToParent(1.0, 1.0, 1.0, 1.0, -10, -10);
 			this.buttonMute.onReleased = function(button){
 				chao.toggleMute();
 				if(chao.muted){
@@ -181,21 +180,20 @@
 					this.setImage("button_sound_on");
 				}
 			};
-			this.add(this.buttonMute.entity);
 
-			this.buttonSound = (new Entity("Button Sound", chao.screenWidth-300, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
+			this.buttonSound = this.addWithComponent(new Entity("Button Sound"), new ComponentButton("button"));
+			this.buttonSound.entity.alignToParent(0.5, 1.0, 0.5, 1.0, 0, -20);
 			this.buttonSound.setText("Hmmm!", chao.font, 20);
 			this.buttonSound.onRelease = this.playSound;
-			this.add(this.buttonSound.entity);
 
-			this.buttonLog = (new Entity("Button Log", chao.screenWidth-500, chao.screenHeight-50)).addComponent(new ComponentButton("button"));
+			this.buttonLog = this.addWithComponent(new Entity("Button Log"), new ComponentButton("button"));
+			this.buttonLog.entity.alignToParent(0.5, 1.0, 0.5, 1.0, -200, -20);
 			this.buttonLog.setText("Log things", chao.font, 20);
 			this.buttonLog.onReleased = function() { chao.logHierarchy(); }
-			this.add(this.buttonLog.entity);
+			this.buttonLog.entity.rotation = 45;
 
 
-			var textTest = (new Entity("TextTest", 300, 300)).addComponent(new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
-			this.add(textTest.entity);
+			var textTest = this.addWithComponent(new Entity("Text test", 300, 300), new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
 			textTest.align = "center";
 			textTest.backgroundColor = "gray";
 			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow\noraz niesamowita istnie\nmulti`12linia!";
