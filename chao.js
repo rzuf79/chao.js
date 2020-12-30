@@ -1601,6 +1601,18 @@ var chao = {
 		};
 	},
 
+	rotatePoint: function (point, originX, originY, rotation) {
+		rotation = chao.deg2rad(rotation);
+		var s = Math.sin(rotation);
+		var c = Math.cos(rotation);
+		point.x -= originX;
+		point.y -= originY;
+		var newX = point.x * c - point.y * s;
+		var newY = point.x * s + point.y * c;
+		point.x = newX + originX;
+		point.y = newY + originY;
+	},
+
 	makeVector: function (pointFrom, pointTo) {
 		return {
 			x: pointTo.x - pointFrom.x,
@@ -1667,6 +1679,45 @@ var chao = {
 			top: top, // Highest point
 			bottom: bottom // Lowest point
 		};
+	},
+
+	arePolygonsIntersecting: function (poly1, poly2) {
+		var polys = [ poly1, poly2 ];
+		for (var i = 0; i < polys.length; ++i) {
+			var polygon = polys[i];
+
+			for (var i1 = 0; i1 < polygon.points.length; i1++) {
+				var i2 = (i1 + 1) % polygon.points.length;
+				var p1 = polygon.points[i1];
+				var p2 = polygon.points[i2];
+
+				var normal = chao.makePoint(p2.y - p1.y, p1.x - p2.x);
+
+				var minA = null, maxA = null;
+				for (var pi = 0; pi < poly1.points.length; ++pi) {
+					var p = poly1.points[pi];
+					var projected = normal.x * p.x + normal.y * p.y;
+					if (minA == null || projected < minA)
+						minA = projected;
+					if (maxA == null || projected > maxA)
+						maxA = projected;
+				}
+
+				var minB = null, maxB = null;
+				for (var pi = 0; pi < poly2.points.length; ++pi) {
+					var p = poly2.points[pi];
+					var projected = normal.x * p.x + normal.y * p.y;
+					if (minB == null || projected < minB)
+						minB = projected;
+					if (maxB == null || projected > maxB)
+						maxB = projected;
+				}
+
+				if (maxA < minB || maxB < minA)
+					return false;
+			}
+		}
+		return true;
 	},
 
 	isPointInsidePolygon: function (point, polygon) {
@@ -1964,9 +2015,9 @@ function Entity(name, x, y) {
 			origin: [x || 0, y || 0],
 		},
 		this.pivotX = 0.5;
-		this.pivotY = 0.5;
+	this.pivotY = 0.5;
 
-		this.width = 0, // see also getWidth()
+	this.width = 0, // see also getWidth()
 		this.height = 0, // see also getHeight()
 
 		this.alpha = 1.0,
@@ -2298,7 +2349,7 @@ function Entity(name, x, y) {
 	this.getMatrixScaleX = function (matrix) {
 		return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
 	}
-	
+
 	this.getMatrixScaleY = function (matrix) {
 		return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
 	}
@@ -2318,25 +2369,20 @@ function Entity(name, x, y) {
 		return this.alpha * this.parent.getScreenAlpha();
 	}
 
-	this.isPointInside = function(x, y) {
+	this.isPointInside = function (x, y) {
 		var sx = this.screenX;
 		var sy = this.screenY;
-		var s = Math.sin(chao.deg2rad(-this.screenRotation));
-		var c = Math.cos(chao.deg2rad(-this.screenRotation));
 		var sw = this.screenWidth;
 		var sh = this.screenHeight;
+		var point = chao.makePoint(x, y);
+		chao.rotatePoint(point, sx, sy, -this.screenRotation);
+		x = point.x - sx;
+		y = point.y - sy;
 
-		x -= sx;
-		y -= sy;
-		var newX = x * c - y * s;
-		var newY = x * s + y * c;
-		x = newX;
-		y = newY;
-
-		return (x > -sw * this.pivotX
-			&& x < sw * this.pivotX
-			&& y > -sh * this.pivotY
-			&& y < sh * this.pivotY);
+		return (x > -sw * this.pivotX &&
+			x < sw * this.pivotX &&
+			y > -sh * this.pivotY &&
+			y < sh * this.pivotY);
 	}
 
 	this.getEntityAt = function (x, y) {
@@ -2353,7 +2399,7 @@ function Entity(name, x, y) {
 			}
 		}
 
-		if (this.clickable && this.isPointInside(x, y)){
+		if (this.clickable && this.isPointInside(x, y)) {
 			return this;
 		}
 
@@ -2368,15 +2414,58 @@ function Entity(name, x, y) {
 	}
 
 	this.checkCollision = function (entity) {
-		var thisX = this.screenX;
-		var thisY = this.screenY;
-		var otherX = entity.screenX;
-		var otherY = entity.screenY;
+		var thisPos = {
+			x: this.screenX,
+			y: this.screenY
+		};
+		var thisSize = {
+			x: this.getWidth(),
+			y: this.getHeight()
+		};
+		var otherPos = {
+			x: entity.screenX,
+			y: entity.screenY
+		};
+		var otherSize = {
+			x: entity.getWidth(),
+			y: entity.getHeight()
+		};
 
-		return otherX + entity.width * entity.scaleX > thisX &&
-			otherY + entity.height * entity.scaleY > thisY &&
-			thisX + this.width * this.scaleX > otherX &&
-			thisY + this.height * this.scaleY > otherY;
+		// first unholy wall of nonsense
+		var tl1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y - otherSize.y * entity.pivotY);
+		var tr1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
+		var bl1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var br1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var tl2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y - thisSize.y * this.pivotY);
+		var tr2 = chao.makePoint(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y - thisSize.y * this.pivotY);
+		var bl2 = chao.makePoint(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y + thisSize.y * (1.0 - this.pivotY));
+		var br2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1.0 - this.pivotY));
+
+		// a "good enough" check for not rotated rects
+		if (Math.abs(this.rotation) < 10.0 && Math.abs(entity.rotation) < 10.0){
+			return tl1.x < tr2.x && tr1.x > tl2.x && tl1.y < bl2.y && bl1.y > tl2.y;
+		}
+
+		// preliminary check if polygon counting is worth the effort
+		var vec = chao.makeVector(thisPos, otherPos);
+		var distMinSqrt = Math.pow(Math.max(thisSize.x, thisSize.y) + Math.max(otherSize.x, otherSize.y), 2);
+		if (vec.x * vec.x + vec.y * vec.y > distMinSqrt) {
+			return false;
+		}
+
+		// second, slightly less unholy wall of nonsense
+		chao.rotatePoint(tl1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(tr1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(bl1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(br1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(tl2, thisPos.x, thisPos.y, this.rotation);
+		chao.rotatePoint(tr2, thisPos.x, thisPos.y, this.rotation);
+		chao.rotatePoint(bl2, thisPos.x, thisPos.y, this.rotation);
+		chao.rotatePoint(br2, thisPos.x, thisPos.y, this.rotation);
+		var poly2 = chao.makePolygon([tl2, tr2, bl2, br2]);
+		var poly1 = chao.makePolygon([tl1, tr1, bl1, br1]);
+
+		return chao.arePolygonsIntersecting(poly1, poly2);
 	}
 }
 Entity.prototype = {
@@ -2848,10 +2937,16 @@ ComponentText.prototype = {
 	set align(newAlign) {
 		this._align = newAlign;
 
-		switch(newAlign) {
-			case "center": this.entity.pivotX = 0.5; break;
-			case "left": this.entity.pivotX = 0.0; break;
-			case "right": this.entity.pivotX = 1.0; break;
+		switch (newAlign) {
+			case "center":
+				this.entity.pivotX = 0.5;
+				break;
+			case "left":
+				this.entity.pivotX = 0.0;
+				break;
+			case "right":
+				this.entity.pivotX = 1.0;
+				break;
 		}
 
 		this.changeText();

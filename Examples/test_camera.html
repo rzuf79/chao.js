@@ -102,84 +102,10 @@
 					chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 					StateGame.bouncyIsle = bouncyIsle.entity;
 
-					var smallerIslands = [];
-					for (var i = 0; i < 25; ++i) {
-						var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-						var newIsle = chao.helpers.createSprite("Smaller Island", imgName, 0, 0);
-						var tries = 0;
-						while (tries < 108) {
-							newIsle.entity.x = chao.getRandom(800);
-							newIsle.entity.y = chao.getRandom(800);
-							tries++;
-							var collide = false;
-							for (var j = 0; j < smallerIslands.length; ++j) {
-								if (newIsle.entity.checkCollision(smallerIslands[j])) {
-									collide = true;
-									break;
-								}
-							}
-							if (collide) continue;
-							break;
-						}
-						smallerIslands.push(newIsle.entity);
-						newIsle.entity.alpha = 0.4;
-						newIsle.entity.scaleX = newIsle.entity.scaleY = 0.5;
-						newIsle.scrollFactorX = 0.1;
-						newIsle.scrollFactorY = 0.1;
-						this.camera.entity.add(newIsle.entity);
-					}
-
-					var islands = [];
-					for (var i = 0; i < 15; ++i) {
-						var imgName = chao.getRandom(2) == 0 ? "island_small1" : "island_small2";
-						var newIsle = chao.helpers.createSprite("Small Island", imgName, 0, 0);
-						var tries = 0;
-						while (tries < 108) {
-							newIsle.entity.x = chao.getRandom(800);
-							newIsle.entity.y = chao.getRandom(800);
-							tries++;
-							var collide = false;
-							for (var j = 0; j < islands.length; ++j) {
-								if (newIsle.entity.checkCollision(islands[j])) {
-									collide = true;
-									break;
-								}
-							}
-							if (collide) continue;
-							break;
-						}
-						islands.push(newIsle.entity);
-						newIsle.entity.alpha = 0.7;
-						newIsle.scrollFactorX = 0.3;
-						newIsle.scrollFactorY = 0.3;
-						this.camera.entity.add(newIsle.entity);
-					}
-
-					var clouds = [];
-					for (var i = 0; i < 15; ++i) {
-						var newCloud = chao.helpers.createSprite("Cloud", "cloud", 0, 0);
-						var tries = 0;
-						while (tries < 108) {
-							newCloud.entity.x = chao.getRandom(800);
-							newCloud.entity.y = chao.getRandom(800);
-							tries++;
-							var collide = false;
-							for (var j = 0; j < clouds.length; ++j) {
-								if (newCloud.entity.checkCollision(clouds[j])) {
-									collide = true;
-									break;
-								}
-							}
-							if (collide) continue;
-							break;
-						}
-						clouds.push(newCloud.entity);
-						newCloud.entity.alpha = 0.4;
-						newCloud.entity.scaleX = newCloud.entity.scaleY = (60 + chao.getRandom(41)) / 100;
-						newCloud.scrollFactorX = 0.6;
-						newCloud.scrollFactorY = 0.6;
-						this.camera.entity.add(newCloud.entity);
-					}
+					// addWorldElements: function(image, count, alpha, scale, scrollFactor) {
+					StateGame.addWorldElements("island_small1", 25, 0.5, 0.4, 0.1);
+					StateGame.addWorldElements("island_small2", 25, 0.7, 1.0, 0.3);
+					StateGame.addWorldElements("cloud", 25, 0.4, 1.0, 0.6);
 
 					this.camera.entity.add(chao.helpers.createSprite("Island", "island_large", 0, 0).entity);
 
@@ -238,8 +164,16 @@
 						chao.helpers.shake(this.camera.entity, 15, 0.5, true);
 					}
 
-					this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, -191, 201);
-					this.ludzik.entity.y = chao.clamp(this.ludzik.entity.y, -209, 137);
+					if (chao.pressed[chao.KEY_A]) {
+						this.camera.entity.rotation -= chao.getTimeDelta() * 30.0;
+					}
+					if (chao.pressed[chao.KEY_D]) {
+						this.camera.entity.rotation += chao.getTimeDelta() * 30.0;
+					}
+
+
+					this.ludzik.entity.x = chao.clamp(this.ludzik.entity.x, -200, 200);
+					this.ludzik.entity.y = chao.clamp(this.ludzik.entity.y, -200, 140);
 
 					// if (chao.justPressed[chao.KEY_X]) {
 					// 	chao.log("" + this.ludzik.entity.x + "x" + this.ludzik.entity.y);
@@ -267,9 +201,38 @@
 					// 	this.camera.deadzone.x, this.camera.deadzone.y,
 					// 	this.camera.deadzone.width, this.camera.deadzone.height,
 					// 	chao.colorCodes[2], 2);
+				},
+
+				addWorldElements: function(image, count, alpha, scale, scrollFactor) {
+					var createdElements = [];
+					var cols = 0;
+					for (var i = 0; i < 25; ++i) {
+						var newElement = chao.helpers.createSprite(image, image, 0, 0);
+						var tries = 0;
+						while (tries < 108) {
+							newElement.entity.x = chao.getRandom(2000);
+							newElement.entity.y = chao.getRandom(2000);
+							tries++;
+							var collide = false;
+							for (var j = 0; j < createdElements.length; ++j) {
+								if (newElement.entity.checkCollision(createdElements[j])) {
+									collide = true;
+									cols ++;
+									break;
+								}
+							}
+							if (collide) continue;
+							break;
+						}
+						createdElements.push(newElement.entity);
+						newElement.entity.alpha = alpha;
+						newElement.entity.scaleX = newElement.entity.scaleY = scale;
+						newElement.scrollFactorX = scrollFactor;
+						newElement.scrollFactorY = scrollFactor;
+						this.camera.entity.add(newElement.entity);
+					}
+					chao.log("" + cols + " collisiong when creating " + image);
 				}
-
-
 			};
 
 			chao.switchState(StateGame);
