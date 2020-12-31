@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.42",
+	VERSION: "0.5",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -205,6 +205,7 @@ var chao = {
 		chao.screenWidth = width;
 		chao.screenHeight = height;
 		chao.scalingMode = scalingMode || chao.SCALING_MODE_NONE;
+		chao.backgroundColor = "black";
 
 		chao.screenScaleX = 1.0;
 		chao.screenScaleY = 1.0;
@@ -318,7 +319,7 @@ var chao = {
 	},
 
 	clearScreen: function () {
-		if (chao.backgroundColor == "none") {
+		if (chao.backgroundColor === undefined) {
 			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height);
 		} else {
 			chao.canvas.context.fillStyle = chao.backgroundColor;
@@ -406,7 +407,7 @@ var chao = {
 			chao.updateTouches();
 		}
 
-		stateToProcess.rootEntity.draw(0, 0, 1.0);
+		stateToProcess.rootEntity.draw();
 		if (stateToProcess.draw) {
 			stateToProcess.draw();
 		}
@@ -464,6 +465,8 @@ var chao = {
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
 		state.rootEntity.height = chao.screenHeight;
+		state.rootEntity.pivotX = 0;
+		state.rootEntity.pivotY = 0;
 		state.add = function (entity) {
 			return this.rootEntity.add(entity);
 		};
@@ -545,10 +548,6 @@ var chao = {
 			context: newContext,
 			width: width,
 			height: height,
-			rotationOrigin: {
-				x: 0.5,
-				y: 0.5
-			}, // {0.0 - 1.0}
 			ready: true,
 		};
 
@@ -572,10 +571,6 @@ var chao = {
 			context: newContext,
 			width: -1,
 			height: -1,
-			rotationOrigin: {
-				x: 0.5,
-				y: 0.5
-			}, // {0.0 - 1.0}
 			ready: false,
 		};
 
@@ -668,65 +663,67 @@ var chao = {
 		}
 	},
 
-	drawImage: function (target, image, x, y, alpha, scaleX, scaleY, angle) {
+	drawImage: function (target, image, x, y, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
 		scaleY = scaleY === undefined ? 1 : scaleY;
 		angle = angle || 0;
+		rotationOffsetX = rotationOffsetX === undefined ? 0.5 : rotationOffsetX;
+		rotationOffsetY = rotationOffsetY === undefined ? 0.5 : rotationOffsetY;
 
 		image = chao.getImage(image);
-
-		target.context.save();
-		target.context.globalAlpha = alpha;
-
-		var rotationPivot = {
-			x: (x + (image.width * scaleX * image.rotationOrigin.x)),
-			y: (y + (image.height * scaleY * image.rotationOrigin.y))
-		};
-
-		target.context.translate(rotationPivot.x, rotationPivot.y);
-		target.context.rotate(chao.rad2deg(angle));
-		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
 		if (!chao.smoothing) {
 			x = Math.round(x);
 			y = Math.round(y);
 		}
 
-		target.context.translate(x, y);
-		target.context.scale(scaleX, scaleY);
-		target.context.drawImage(image.canvas, 0, 0);
+		target.context.save();
+		target.context.globalAlpha = alpha;
+
+		var rotationPivot = {
+			x: (x + (image.width * scaleX * rotationOffsetX)),
+			y: (y + (image.height * scaleY * rotationOffsetY))
+		};
+
+		target.context.translate(rotationPivot.x, rotationPivot.y);
+		target.context.rotate(chao.deg2rad(angle));
+		target.context.translate(-rotationPivot.x, -rotationPivot.y);
+
+		target.context.drawImage(image.canvas, x, y, image.width * scaleX, image.height * scaleY);
 
 		target.context.restore();
 	},
 
-	drawImagePart: function (target, image, x, y, rect, angle, scaleX, scaleY, alpha) {
+	drawImagePart: function (target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 		angle = angle || 0;
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
 		scaleY = scaleY === undefined ? 1 : scaleY;
+		rotationOffsetX = rotationOffsetX === undefined ? 0.5 : rotationOffsetX;
+		rotationOffsetY = rotationOffsetY === undefined ? 0.5 : rotationOffsetY;
 
 		image = chao.getImage(image);
 
 		var w = rect.width;
 		var h = rect.height;
 		var rotationPivot = {
-			x: (x + (w * scaleX * image.rotationOrigin.x)),
-			y: (y + (h * scaleY * image.rotationOrigin.y))
+			x: (x + (w * scaleX * rotationOffsetX)),
+			y: (y + (h * scaleY * rotationOffsetY))
 		};
 
 		target.context.save();
 		target.context.globalAlpha = alpha;
 
 		target.context.translate(rotationPivot.x, rotationPivot.y);
-		target.context.rotate(chao.rad2deg(angle));
+		target.context.rotate(chao.deg2rad(angle));
 		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
 		x = scaleX >= 0 ? x : x - w * scaleX;
 		y = scaleY >= 0 ? y : y - h * scaleY;
 
-		if (!chao.smoothing || true) {
+		if (!chao.smoothing) {
 			x = Math.round(x);
 			y = Math.round(y);
 			rect.x = Math.round(rect.x);
@@ -774,7 +771,7 @@ var chao = {
 	// Creates a color in a 0xFFFFFFFF form. Values in 0-1 range.
 	makeColorf: function (r, g, b, a) {
 		a = a || 1;
-		return chao.makeColor(a * 255, r * 255, g * 255, b * 255);
+		return chao.makeColor(r * 255, g * 255, b * 255, a * 255);
 	},
 
 	// Creates a color string in "rgba(r,g,b,a)" format.
@@ -1604,6 +1601,18 @@ var chao = {
 		};
 	},
 
+	rotatePoint: function (point, originX, originY, rotation) {
+		rotation = chao.deg2rad(rotation);
+		var s = Math.sin(rotation);
+		var c = Math.cos(rotation);
+		point.x -= originX;
+		point.y -= originY;
+		var newX = point.x * c - point.y * s;
+		var newY = point.x * s + point.y * c;
+		point.x = newX + originX;
+		point.y = newY + originY;
+	},
+
 	makeVector: function (pointFrom, pointTo) {
 		return {
 			x: pointTo.x - pointFrom.x,
@@ -1672,6 +1681,45 @@ var chao = {
 		};
 	},
 
+	arePolygonsIntersecting: function (poly1, poly2) {
+		var polys = [ poly1, poly2 ];
+		for (var i = 0; i < polys.length; ++i) {
+			var polygon = polys[i];
+
+			for (var i1 = 0; i1 < polygon.points.length; i1++) {
+				var i2 = (i1 + 1) % polygon.points.length;
+				var p1 = polygon.points[i1];
+				var p2 = polygon.points[i2];
+
+				var normal = chao.makePoint(p2.y - p1.y, p1.x - p2.x);
+
+				var minA = null, maxA = null;
+				for (var pi = 0; pi < poly1.points.length; ++pi) {
+					var p = poly1.points[pi];
+					var projected = normal.x * p.x + normal.y * p.y;
+					if (minA == null || projected < minA)
+						minA = projected;
+					if (maxA == null || projected > maxA)
+						maxA = projected;
+				}
+
+				var minB = null, maxB = null;
+				for (var pi = 0; pi < poly2.points.length; ++pi) {
+					var p = poly2.points[pi];
+					var projected = normal.x * p.x + normal.y * p.y;
+					if (minB == null || projected < minB)
+						minB = projected;
+					if (maxB == null || projected > maxB)
+						maxB = projected;
+				}
+
+				if (maxA < minB || maxB < minA)
+					return false;
+			}
+		}
+		return true;
+	},
+
 	isPointInsidePolygon: function (point, polygon) {
 		if (point.x < polygon.left || point.x > polygon.right || point.y < polygon.top || point.y > polygon.bottom) {
 			return false;
@@ -1708,11 +1756,11 @@ var chao = {
 	},
 
 	rad2deg: function (radians) {
-		return radians / (180 / Math.PI);
+		return radians * (180.0 / Math.PI);
 	},
 
-	deg2rad: function (degres) {
-		return degrees * (Math.PI / 180);
+	deg2rad: function (degrees) {
+		return degrees * (Math.PI / 180.0);
 	},
 
 	clamp: function (value, min, max) {
@@ -1825,7 +1873,7 @@ var chao = {
 
 		var entityLog = "";
 		for (var i = 0; i < indent; ++i) {
-			entityLog += "  ";
+			entityLog += "-";
 		}
 		entityLog += entity.name;
 		if (entity.components.length > 0) {
@@ -1961,44 +2009,48 @@ var chao = {
 function Entity(name, x, y) {
 	this.name = name || "Entity",
 
-	this.x = x || 0,
-	this.y = y || 0,
-	this.anchor = {};
+		this.transformMatrix = {
+			x: [1, 0],
+			y: [0, 1],
+			origin: [x || 0, y || 0],
+		},
+		this.pivotX = 0.5;
+	this.pivotY = 0.5;
 
-	this.alpha = 1.0;
 	this.width = 0, // see also getWidth()
-	this.height = 0, // see also getHeight()
-	this.scaleX = 1.0;
-	this.scaleY = 1.0;
-	this.rotation = 0.0;
+		this.height = 0, // see also getHeight()
 
-	this.children = [],
-	this.components = [],
-	this.removalQueuedComponents = [];
-	this.parent = null,
-	
-	this.visible = true,
-	this.paused = false,
-	this.clickable = false,
-	this.keepClickFocus = false;
-	this.foldInLog = false;
+		this.alpha = 1.0,
 
-	this.destroy = function () {
-		for (var i = 0; i < this.components.length; ++i) {
-			if (this.components[i].destroy) {
-				this.components[i].destroy();
+		this.anchor = {},
+
+		this.children = [],
+		this.components = [],
+		this.removalQueuedComponents = [],
+		this.parent = null,
+
+		this.visible = true,
+		this.paused = false,
+		this.clickable = false,
+		this.keepClickFocus = false,
+		this.foldInLog = false,
+
+		this.destroy = function () {
+			for (var i = 0; i < this.components.length; ++i) {
+				if (this.components[i].destroy) {
+					this.components[i].destroy();
+				}
 			}
+
+			for (var i = 0; i < this.children.length; ++i) {
+				this.children[i].destroy();
+			}
+
+			this.children = [];
+			this.components = [];
 		}
 
-		for (var i = 0; i < this.children.length; ++i) {
-			this.children[i].destroy();
-		}
-
-		this.children = [];
-		this.components = [];
-	}
-
-	this.draw = function (x, y, alpha) {
+	this.draw = function () {
 		if (!this.visible) {
 			return;
 		}
@@ -2006,14 +2058,14 @@ function Entity(name, x, y) {
 		var componentsNum = this.components.length;
 		for (var i = 0; i < componentsNum; ++i) {
 			if (this.components[i].draw) {
-				this.components[i].draw(x, y, alpha);
+				this.components[i].draw();
 			}
 		}
 
 		var childrenNum = this.children.length;
 		for (var i = 0; i < childrenNum; ++i) {
 			if (this.children[i].draw) {
-				this.children[i].draw(this.x + x, this.y + y, this.alpha * alpha);
+				this.children[i].draw();
 			}
 		}
 	}
@@ -2060,7 +2112,7 @@ function Entity(name, x, y) {
 		return childEntity;
 	}
 
-	this.addWithComponent = function(childEntity, component) {
+	this.addWithComponent = function (childEntity, component) {
 		var newEntity = this.add(childEntity);
 		if (newEntity) {
 			newEntity.addComponent(component);
@@ -2170,8 +2222,8 @@ function Entity(name, x, y) {
 		this.removeComponent(this.getComponentByName(componentName));
 	}
 
-	this.removeComponentsByName = function(componentName) {
-		for(;;) {
+	this.removeComponentsByName = function (componentName) {
+		for (;;) {
 			var component = this.getComponentByName(componentName);
 			if (!component) {
 				break;
@@ -2181,8 +2233,8 @@ function Entity(name, x, y) {
 	}
 
 	this.onClick = function () {
-		var relativeX = chao.mouse.x - this.getScreenX();
-		var relativeY = chao.mouse.y - this.getScreenY();
+		var relativeX = chao.mouse.x - this.screenX;
+		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onClick) {
 				this.components[i].onClick(relativeX, relativeY);
@@ -2191,8 +2243,8 @@ function Entity(name, x, y) {
 	}
 
 	this.onMove = function () {
-		var relativeX = chao.mouse.x - this.getScreenX();
-		var relativeY = chao.mouse.y - this.getScreenY();
+		var relativeX = chao.mouse.x - this.screenX;
+		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onMove) {
 				this.components[i].onMove(relativeX, relativeY);
@@ -2209,8 +2261,8 @@ function Entity(name, x, y) {
 	}
 
 	this.onRelease = function () {
-		var relativeX = chao.mouse.x - this.getScreenX();
-		var relativeY = chao.mouse.y - this.getScreenY();
+		var relativeX = chao.mouse.x - this.screenX;
+		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onRelease) {
 				this.components[i].onRelease(relativeX, relativeY);
@@ -2228,44 +2280,83 @@ function Entity(name, x, y) {
 		}
 	}
 
-	this.alignToParent = function (alignX, alignY, anchorX, anchorY, pxOffsetX, pxOffsetY, setAnchor = true) {
-
-		this.alignToParentHorizontally(alignX, anchorX, pxOffsetX, setAnchor);
-		this.alignToParentVertically(alignY, anchorY, pxOffsetY, setAnchor);
+	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor = true) {
+		this.alignToParentHorizontally(parentX, childX, pxOffsetX, setAnchor);
+		this.alignToParentVertically(parentY, childY, pxOffsetY, setAnchor);
 	}
 
-	this.alignToParentHorizontally = function (alignX, anchorX, pxOffset, setAnchor = true) {
-		alignX = alignX != undefined ? alignX : 0.5;
-		anchorX = anchorX != undefined ? anchorX : 0.5;
+	this.alignToParentHorizontally = function (parentX, childX, pxOffset, setAnchor = true) {
+		parentX = parentX != undefined ? parentX : 0.5;
+		childX = childX != undefined ? childX : 0.5;
 		pxOffset = pxOffset || 0;
 
 		if (this.parent != null) {
-			this.x = Math.ceil((this.parent.getWidth() * alignX) - (this.getWidth() * anchorX));
-			this.x += pxOffset || 0;
+			var prX = parentX - this.parent.pivotX;
+			var crX = childX - this.pivotX;
+			this.x = Math.ceil((this.parent.getWidth() * prX) - (this.getWidth() * crX));
+			this.x += pxOffset;
 		}
 
 		if (setAnchor) {
-			this.anchor.alignX = alignX;
-			this.anchor.anchorX = anchorX;
+			this.anchor.parentX = parentX;
+			this.anchor.childX = childX;
 			this.anchor.pxOffsetX = pxOffset;
 		}
 	}
 
-	this.alignToParentVertically = function (alignY, anchorY, pxOffset, setAnchor = true) {
-		alignY = alignY != undefined ? alignY : 0.5;
-		anchorY = anchorY != undefined ? anchorY : 0.5;
+	this.alignToParentVertically = function (parentY, childY, pxOffset, setAnchor = true) {
+		parentY = parentY != undefined ? parentY : 0.5;
+		childY = childY != undefined ? childY : 0.5;
 		pxOffset = pxOffset || 0;
 
 		if (this.parent != null) {
-			this.y = Math.ceil((this.parent.getHeight() * alignY) - (this.getHeight() * anchorY));
-			this.y += pxOffset || 0;
+			var prY = parentY - this.parent.pivotY;
+			var crY = childY - this.pivotY;
+			this.y = Math.ceil((this.parent.getHeight() * prY) - (this.getHeight() * crY));
+			this.y += pxOffset;
 		}
 
 		if (setAnchor) {
-			this.anchor.alignY = alignY;
-			this.anchor.anchorY = anchorY;
+			this.anchor.parentY = parentY;
+			this.anchor.childY = childY;
 			this.anchor.pxOffsetY = pxOffset;
 		}
+	}
+
+	this.multiplyMatrices = function(parent, child) {
+		var x0 = parent.x[0] * child.x[0] + parent.y[0] * child.x[1];
+		var x1 = parent.x[1] * child.x[0] + parent.y[1] * child.x[1];
+		var y0 = parent.x[0] * child.y[0] + parent.y[0] * child.y[1];
+		var y1 = parent.x[1] * child.y[0] + parent.y[1] * child.y[1];
+
+		return {
+			origin: [
+				parent.x[0] * child.origin[0] + parent.y[0] * child.origin[1] + parent.origin[0],
+				parent.x[1] * child.origin[0] + parent.y[1] * child.origin[1] + parent.origin[1],
+			],
+			x: [x0, x1],
+			y: [y0, y1],
+		}
+	}
+
+	// mind that this one gets you just a copy of the thing
+	this.getTransformMatrix = function () {
+		if (this.parent == null) {
+			return {
+				origin: this.transformMatrix.origin,
+				x: this.transformMatrix.x,
+				y: this.transformMatrix.y
+			}
+		}
+		return this.multiplyMatrices(this.parent.getTransformMatrix(), this.transformMatrix);
+	}
+
+	this.getMatrixScaleX = function (matrix) {
+		return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
+	}
+
+	this.getMatrixScaleY = function (matrix) {
+		return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
 	}
 
 	this.getWidth = function () {
@@ -2276,12 +2367,27 @@ function Entity(name, x, y) {
 		return this.height * this.scaleY;
 	}
 
-	this.getScreenX = function () {
-		return this.parent == null ? this.x : this.x + this.parent.getScreenX();
+	this.getScreenAlpha = function () {
+		if (this.parent == null) {
+			return this.alpha;
+		}
+		return this.alpha * this.parent.getScreenAlpha();
 	}
 
-	this.getScreenY = function () {
-		return this.parent == null ? this.y : this.y + this.parent.getScreenY();
+	this.isPointInside = function (x, y) {
+		var sx = this.screenX;
+		var sy = this.screenY;
+		var sw = this.screenWidth;
+		var sh = this.screenHeight;
+		var point = chao.makePoint(x, y);
+		chao.rotatePoint(point, sx, sy, -this.screenRotation);
+		x = point.x - sx;
+		y = point.y - sy;
+
+		return (x > -sw * this.pivotX &&
+			x < sw * this.pivotX &&
+			y > -sh * this.pivotY &&
+			y < sh * this.pivotY);
 	}
 
 	this.getEntityAt = function (x, y) {
@@ -2298,12 +2404,7 @@ function Entity(name, x, y) {
 			}
 		}
 
-		var screenX = this.getScreenX();
-		var screenY = this.getScreenY();
-
-		if (this.clickable &&
-			x >= screenX && x <= screenX + this.width * this.scaleX &&
-			y >= screenY && y <= screenY + this.height * this.scaleY) {
+		if (this.clickable && this.isPointInside(x, y)) {
 			return this;
 		}
 
@@ -2311,26 +2412,145 @@ function Entity(name, x, y) {
 	}
 
 	this.isVisible = function () {
-
 		if (this.parent != null) {
 			return this.visible && this.parent.isVisible();
 		}
-
 		return this.visible;
 	}
 
 	this.checkCollision = function (entity) {
-		var thisX = this.getScreenX();
-		var thisY = this.getScreenY();
-		var otherX = entity.getScreenX();
-		var otherY = entity.getScreenY();
+		var thisPos = {
+			x: this.screenX,
+			y: this.screenY
+		};
+		var thisSize = {
+			x: this.getWidth(),
+			y: this.getHeight()
+		};
+		var otherPos = {
+			x: entity.screenX,
+			y: entity.screenY
+		};
+		var otherSize = {
+			x: entity.getWidth(),
+			y: entity.getHeight()
+		};
 
-		return otherX + entity.width * entity.scaleX > thisX &&
-			otherY + entity.height * entity.scaleY > thisX &&
-			thisX + this.width * this.scaleX > otherX &&
-			thisX + this.height * this.scaleY > otherY;
+		// first unholy wall of nopes
+		var tl1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y - otherSize.y * entity.pivotY);
+		var tr1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
+		var bl1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var br1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var tl2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y - thisSize.y * this.pivotY);
+		var tr2 = chao.makePoint(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y - thisSize.y * this.pivotY);
+		var bl2 = chao.makePoint(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y + thisSize.y * (1.0 - this.pivotY));
+		var br2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1.0 - this.pivotY));
+
+		// a "good enough" check for not rotated rects
+		if (Math.abs(this.rotation) < 10.0 && Math.abs(entity.rotation) < 10.0){
+			return tl1.x < tr2.x && tr1.x > tl2.x && tl1.y < bl2.y && bl1.y > tl2.y;
+		}
+
+		// preliminary check if polygon counting is even worth the effort
+		var vec = chao.makeVector(thisPos, otherPos);
+		var distMinSqrt = Math.pow(Math.max(thisSize.x, thisSize.y) + Math.max(otherSize.x, otherSize.y), 2);
+		if (vec.x * vec.x + vec.y * vec.y > distMinSqrt) {
+			return false;
+		}
+
+		// second, slightly less unholy wall of nopes
+		chao.rotatePoint(tl1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(tr1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(bl1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(br1, otherPos.x, otherPos.y, entity.rotation);
+		chao.rotatePoint(tl2, thisPos.x, thisPos.y, this.rotation);
+		chao.rotatePoint(tr2, thisPos.x, thisPos.y, this.rotation);
+		chao.rotatePoint(bl2, thisPos.x, thisPos.y, this.rotation);
+		chao.rotatePoint(br2, thisPos.x, thisPos.y, this.rotation);
+		var poly1 = chao.makePolygon([tl1, tr1, bl1, br1]);
+		var poly2 = chao.makePolygon([tl2, tr2, bl2, br2]);
+
+		return chao.arePolygonsIntersecting(poly1, poly2);
 	}
 }
+Entity.prototype = {
+	get x() {
+		return this.transformMatrix.origin[0];
+	},
+	set x(value) {
+		this.transformMatrix.origin[0] = value;
+	},
+	get y() {
+		return this.transformMatrix.origin[1];
+	},
+	set y(value) {
+		this.transformMatrix.origin[1] = value;
+	},
+	get screenX() {
+		return this.getTransformMatrix().origin[0];
+	},
+	set screenX(value) {
+		this.transformMatrix.origin[0] += value - this.screenX;
+	},
+	get screenY() {
+		return this.getTransformMatrix().origin[1];
+	},
+	set screenY(value) {
+		this.transformMatrix.origin[1] += value - this.screenY;
+	},
+	get scaleX() {
+		return this.getMatrixScaleX(this.transformMatrix);
+	},
+	set scaleX(value) {
+		var mat = this.transformMatrix;
+		var currentScale = this.scaleX;
+		mat.x[0] = (mat.x[0] / currentScale) * value;
+		mat.y[0] = (mat.y[0] / currentScale) * value;
+	},
+	get scaleY() {
+		return this.getMatrixScaleY(this.transformMatrix);
+	},
+	set scaleY(value) {
+		var mat = this.transformMatrix;
+		var currentScale = this.scaleY;
+		mat.x[1] = (mat.x[1] / currentScale) * value;
+		mat.y[1] = (mat.y[1] / currentScale) * value;
+	},
+	get screenScaleX() {
+		return this.getMatrixScaleX(this.getTransformMatrix());
+	},
+	get screenScaleY() {
+		return this.getMatrixScaleY(this.getTransformMatrix());
+	},
+	get rotation() {
+		var mat = this.transformMatrix;
+		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+	},
+	set rotation(value) {
+		var rads = chao.deg2rad(value);
+		var scaleX = this.scaleX;
+		var scaleY = this.scaleY;
+		var cr = Math.cos(rads);
+		var sr = Math.sin(rads);
+		this.transformMatrix.x[0] = cr * scaleX;
+		this.transformMatrix.y[0] = -sr * scaleX;
+		this.transformMatrix.x[1] = sr * scaleY;
+		this.transformMatrix.y[1] = cr * scaleY;
+	},
+	get screenRotation() {
+		var mat = this.getTransformMatrix();
+		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+	},
+	set screenRotation(value) {
+		this.rotation += value - this.screenRotation;
+	},
+	get screenWidth() {
+		return this.width * this.screenScaleX;
+	},
+	get screenHeight() {
+		return this.height * this.screenScaleY;
+	}
+};
 
 function ComponentSprite(key, frameWidth, frameHeight) {
 	this.name = "Sprite";
@@ -2360,14 +2580,17 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
 	}
 
-	this.draw = function (x, y, alpha) {
+	this.draw = function () {
+		var entity = this.entity;
+
 		if (!this.image) {
 			return;
 		}
 
-		if (!this.entity.visible) {
+		if (!entity.visible) {
 			return;
 		}
+
 
 		var anim = {
 			key: "dummy",
@@ -2379,34 +2602,40 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			anim = this.anims[this.currentAnim];
 		}
 
-		var drawX = this.entity.x + x * this.scrollFactorX;
-		var drawY = this.entity.y + y * this.scrollFactorY;
-		var drawAlpha = this.entity.alpha * alpha;
-		var drawScaleX = this.flipX ? -this.entity.scaleX : this.entity.scaleX;
-		var drawScaleY = this.flipY ? -this.entity.scaleY : this.entity.scaleY;
+
+		var parentMatrix = entity.parent.getTransformMatrix();
+		parentMatrix.origin[0] *= this.scrollFactorX;
+		parentMatrix.origin[1] *= this.scrollFactorY;
+		var currentMatrix = entity.multiplyMatrices(parentMatrix, entity.transformMatrix);
+
+		var drawScaleX = this.flipX ? -entity.screenScaleX : entity.screenScaleX;
+		var drawScaleY = this.flipY ? -entity.screenScaleY : entity.screenScaleY;
+		var drawX = currentMatrix.origin[0] - (entity.screenWidth * entity.pivotX);
+		var drawY = currentMatrix.origin[1] - (entity.screenHeight * entity.pivotY);
+		var drawAlpha = entity.getScreenAlpha();
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
 			x: 0,
 			y: 0,
-			width: this.entity.width,
-			height: this.entity.height
+			width: entity.width,
+			height: entity.height
 		};
 
 		if (this.currentAnim != -1) {
-			var framesNumX = this.image.width / this.entity.width;
+			var framesNumX = this.image.width / entity.width;
 			var frameX = anim.frames[this.currentFrame];
 			var frameY = Math.floor(frameX / framesNumX);
 			frameX -= frameY * framesNumX;
 
-			drawArea.x = Math.ceil(frameX * this.entity.width);
-			drawArea.y = Math.ceil(frameY * this.entity.height);
+			drawArea.x = Math.ceil(frameX * entity.width);
+			drawArea.y = Math.ceil(frameY * entity.height);
 		}
 
 		chao.drawImagePart(chao.canvas, this.image,
-			drawX, drawY, drawArea,
-			this.entity.rotation, drawScaleX, drawScaleY,
-			drawAlpha);
+			drawX, drawY, drawArea, drawAlpha,
+			drawScaleX, drawScaleY, entity.screenRotation,
+			entity.pivotX, entity.pivotY);
 	}
 
 	this.update = function () {
@@ -2500,7 +2729,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 }
 
 /**
- * Text rendering entity.
+ * Text rendering component.
  * Use "\n" to break lines.
  * You can colorize parts of the text using color codes, eg. `2 is a color code for green and `` removes the effect of the last color code.
  * Color codes are defined in colorCodes array in the chao namespace.
@@ -2536,34 +2765,28 @@ function ComponentText(font, text, size) {
 		this.changeText();
 	}
 
-	this.draw = function (x, y, alpha) {
+	this.draw = function () {
 		if (this.text === "") {
 			return;
 		}
-
-		var drawX = this.entity.x + x;
-		var drawY = this.entity.y + y;
-		var drawAlpha = this.entity.alpha * alpha;
 
 		if (!this.ready && this.font.ready) {
 			this.ready = true;
 			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
 		}
 
-		switch (this.align) {
-			case "center":
-				drawX -= this.entity.width / 2;
-				break;
-			case "right":
-				drawX -= this.entity.width;
-				break;
-		}
+		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
+		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
+		var drawAlpha = this.entity.getScreenAlpha();
+		var drawX = this.entity.screenX - (this.entity.screenWidth * this.entity.pivotX);
+		var drawY = this.entity.screenY - (this.entity.screenHeight * this.entity.pivotY);
 
 		chao.drawImage(chao.canvas, this.image,
 			drawX, drawY,
 			drawAlpha,
-			this.entity.scaleX, this.entity.scaleY,
-			this.entity.rotation);
+			drawScaleX, drawScaleY,
+			this.entity.screenRotation,
+			this.entity.pivotX, this.entity.pivotY);
 	}
 
 	this.changeText = function (text) {
@@ -2727,6 +2950,19 @@ ComponentText.prototype = {
 	},
 	set align(newAlign) {
 		this._align = newAlign;
+
+		switch (newAlign) {
+			case "center":
+				this.entity.pivotX = 0.5;
+				break;
+			case "left":
+				this.entity.pivotX = 0.0;
+				break;
+			case "right":
+				this.entity.pivotX = 1.0;
+				break;
+		}
+
 		this.changeText();
 	},
 	get outlineColor() {
@@ -2741,7 +2977,7 @@ ComponentText.prototype = {
 	},
 	set outlineSize(newOutlineSize) {
 		this._outlineSize = newOutlineSize;
-		this.changeoutlineSize();
+		this.changeText();
 	},
 };
 
@@ -2768,9 +3004,6 @@ function ComponentButton(image) {
 	}
 
 	this.update = function () {
-		var screenX = this.entity.getScreenX();
-		var screenY = this.entity.getScreenY();
-
 		if (!this.entity.visible) {
 			return;
 		}
@@ -2785,6 +3018,7 @@ function ComponentButton(image) {
 				if (this.onReleased) {
 					this.onReleased(this);
 					// hacky supress any other releases
+					// could do something like Godot's set_input_as_handled here
 					chao.mouse.justReleased = false;
 				}
 			}
@@ -2828,9 +3062,8 @@ function ComponentButton(image) {
 
 		this.imageKey = key;
 
-		this.sprite = (new Entity("Button Image")).addComponent(new ComponentSprite(this.imageKey));
+		this.sprite = this.entity.addWithComponent(new Entity("Button Image"), new ComponentSprite(this.imageKey));
 		this.sprite.entity.clickable = false;
-		this.entity.add(this.sprite.entity);
 
 		// Update Entity's size to be the same as button's sprite
 		this.entity.width = this.sprite.entity.width;
@@ -2842,15 +3075,14 @@ function ComponentButton(image) {
 			this.entity.remove(this.spritePressed.entity);
 		}
 
-		this.spritePressed = (new Entity("Button Image Pressed")).addComponent(new ComponentSprite(key));
+		this.spritePressed = this.entity.addWithComponent(new Entity("Button Image Pressed"), new ComponentSprite(key));
 		this.spritePressed.entity.clickable = false;
-		this.entity.add(this.spritePressed.entity);
 		this.spritePressed.entity.visible = false;
 	}
 
 	this.setText = function (text, font, size) {
 		if (!this.text) {
-			this.text = (new Entity("Button Text", 0, 0)).addComponent(new ComponentText(font, text, size));
+			this.text = this.entity.addWithComponent(new Entity("Button Text"), new ComponentText(font, text, size));
 			this.text.align = "left";
 			this.text.entity.clickable = false;
 			this.entity.add(this.text.entity);
@@ -2910,8 +3142,8 @@ function ComponentCamera() {
 
 		// figuring out some basic stuff
 		var targetPos = {
-			x: this.trackedEntity.x + this.trackedEntity.width / 2,
-			y: this.trackedEntity.y + this.trackedEntity.height / 2
+			x: this.trackedEntity.screenX,
+			y: this.trackedEntity.screenY
 		}
 
 		var relativePos = {
@@ -2920,8 +3152,8 @@ function ComponentCamera() {
 		}
 
 		var cameraPos = {
-			x: (-targetPos.x + (chao.screenWidth / 2)) - this.offsetX,
-			y: (-targetPos.y + (chao.screenHeight / 2)) - this.offsetY
+			x: (-targetPos.x + chao.screenWidth) - this.offsetX,
+			y: (-targetPos.y + chao.screenHeight) - this.offsetY
 		}
 
 		// contrived deadzone calculations

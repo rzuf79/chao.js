@@ -17,22 +17,23 @@ function ComponentTemplate(game){
 	}
 
 	this.update = function(){
+		var entity = this.entity;
 		var movementSpeed = chao.getTimeDelta() * 100;
 
 		if(chao.pressed[chao.KEY_UP]){
-			this.entity.y -= movementSpeed;
+			entity.y -= movementSpeed;
 		} else if(chao.pressed[chao.KEY_DOWN]){
-			this.entity.y += movementSpeed;
+			entity.y += movementSpeed;
 		}
 
 		if(chao.pressed[chao.KEY_LEFT]){
-			this.entity.x -= movementSpeed;
+			entity.x -= movementSpeed;
 		} else if(chao.pressed[chao.KEY_RIGHT]){
-			this.entity.x += movementSpeed;
+			entity.x += movementSpeed;
 		}
 
-		this.entity.x = chao.clamp(this.entity.x, 0, chao.screenWidth - this.entity.width);
-		this.entity.y = chao.clamp(this.entity.y, 0, chao.screenHeight - this.entity.height);
+		entity.x = chao.clamp(entity.x, entity.width/2, chao.screenWidth - entity.width/2);
+		entity.y = chao.clamp(entity.y, entity.height/2, chao.screenHeight - entity.height/2);
 	}
 
 }

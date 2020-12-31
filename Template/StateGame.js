@@ -11,7 +11,7 @@ function StateGame(){
 		newText.color = chao.colorCodes[7];
 		newText.align = "center";
 		newSprite.entity.add(newText.entity);
-		newText.entity.alignToParentVertically(1.0, 0.0, 10);
+		newText.entity.alignToParent(0.5, 1.0, 0.5, 0.0, 10);
 	}
 
 	this.resize = function(){
