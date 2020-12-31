@@ -2323,14 +2323,7 @@ function Entity(name, x, y) {
 		}
 	}
 
-	this.getTransformMatrix = function () {
-		if (this.parent == null) {
-			return this.transformMatrix;
-		}
-
-		var child = this.transformMatrix;
-		var parent = this.parent.getTransformMatrix();
-
+	this.multiplyMatrices = function(parent, child) {
 		var x0 = parent.x[0] * child.x[0] + parent.y[0] * child.x[1];
 		var x1 = parent.x[1] * child.x[0] + parent.y[1] * child.x[1];
 		var y0 = parent.x[0] * child.y[0] + parent.y[0] * child.y[1];
@@ -2344,6 +2337,18 @@ function Entity(name, x, y) {
 			x: [x0, x1],
 			y: [y0, y1],
 		}
+	}
+
+	// mind that this one gets you just a copy of the thing
+	this.getTransformMatrix = function () {
+		if (this.parent == null) {
+			return {
+				origin: this.transformMatrix.origin,
+				x: this.transformMatrix.x,
+				y: this.transformMatrix.y
+			}
+		}
+		return this.multiplyMatrices(this.parent.getTransformMatrix(), this.transformMatrix);
 	}
 
 	this.getMatrixScaleX = function (matrix) {
@@ -2431,7 +2436,7 @@ function Entity(name, x, y) {
 			y: entity.getHeight()
 		};
 
-		// first unholy wall of nonsense
+		// first unholy wall of nopes
 		var tl1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y - otherSize.y * entity.pivotY);
 		var tr1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
 		var bl1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y + otherSize.y * (1.0 - entity.pivotY));
@@ -2446,14 +2451,14 @@ function Entity(name, x, y) {
 			return tl1.x < tr2.x && tr1.x > tl2.x && tl1.y < bl2.y && bl1.y > tl2.y;
 		}
 
-		// preliminary check if polygon counting is worth the effort
+		// preliminary check if polygon counting is even worth the effort
 		var vec = chao.makeVector(thisPos, otherPos);
 		var distMinSqrt = Math.pow(Math.max(thisSize.x, thisSize.y) + Math.max(otherSize.x, otherSize.y), 2);
 		if (vec.x * vec.x + vec.y * vec.y > distMinSqrt) {
 			return false;
 		}
 
-		// second, slightly less unholy wall of nonsense
+		// second, slightly less unholy wall of nopes
 		chao.rotatePoint(tl1, otherPos.x, otherPos.y, entity.rotation);
 		chao.rotatePoint(tr1, otherPos.x, otherPos.y, entity.rotation);
 		chao.rotatePoint(bl1, otherPos.x, otherPos.y, entity.rotation);
@@ -2462,8 +2467,8 @@ function Entity(name, x, y) {
 		chao.rotatePoint(tr2, thisPos.x, thisPos.y, this.rotation);
 		chao.rotatePoint(bl2, thisPos.x, thisPos.y, this.rotation);
 		chao.rotatePoint(br2, thisPos.x, thisPos.y, this.rotation);
-		var poly2 = chao.makePolygon([tl2, tr2, bl2, br2]);
 		var poly1 = chao.makePolygon([tl1, tr1, bl1, br1]);
+		var poly2 = chao.makePolygon([tl2, tr2, bl2, br2]);
 
 		return chao.arePolygonsIntersecting(poly1, poly2);
 	}
@@ -2576,13 +2581,16 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 	}
 
 	this.draw = function () {
+		var entity = this.entity;
+
 		if (!this.image) {
 			return;
 		}
 
-		if (!this.entity.visible) {
+		if (!entity.visible) {
 			return;
 		}
+
 
 		var anim = {
 			key: "dummy",
@@ -2594,34 +2602,40 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			anim = this.anims[this.currentAnim];
 		}
 
-		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
-		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
-		var drawX = (this.entity.screenX * this.scrollFactorX) - (this.entity.screenWidth * this.entity.pivotX);
-		var drawY = (this.entity.screenY * this.scrollFactorY) - (this.entity.screenHeight * this.entity.pivotY);
-		var drawAlpha = this.entity.getScreenAlpha();
+
+		var parentMatrix = entity.parent.getTransformMatrix();
+		parentMatrix.origin[0] *= this.scrollFactorX;
+		parentMatrix.origin[1] *= this.scrollFactorY;
+		var currentMatrix = entity.multiplyMatrices(parentMatrix, entity.transformMatrix);
+
+		var drawScaleX = this.flipX ? -entity.screenScaleX : entity.screenScaleX;
+		var drawScaleY = this.flipY ? -entity.screenScaleY : entity.screenScaleY;
+		var drawX = currentMatrix.origin[0] - (entity.screenWidth * entity.pivotX);
+		var drawY = currentMatrix.origin[1] - (entity.screenHeight * entity.pivotY);
+		var drawAlpha = entity.getScreenAlpha();
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
 			x: 0,
 			y: 0,
-			width: this.entity.width,
-			height: this.entity.height
+			width: entity.width,
+			height: entity.height
 		};
 
 		if (this.currentAnim != -1) {
-			var framesNumX = this.image.width / this.entity.width;
+			var framesNumX = this.image.width / entity.width;
 			var frameX = anim.frames[this.currentFrame];
 			var frameY = Math.floor(frameX / framesNumX);
 			frameX -= frameY * framesNumX;
 
-			drawArea.x = Math.ceil(frameX * this.entity.width);
-			drawArea.y = Math.ceil(frameY * this.entity.height);
+			drawArea.x = Math.ceil(frameX * entity.width);
+			drawArea.y = Math.ceil(frameY * entity.height);
 		}
 
 		chao.drawImagePart(chao.canvas, this.image,
 			drawX, drawY, drawArea, drawAlpha,
-			drawScaleX, drawScaleY, this.entity.screenRotation,
-			this.entity.pivotX, this.entity.pivotY);
+			drawScaleX, drawScaleY, entity.screenRotation,
+			entity.pivotX, entity.pivotY);
 	}
 
 	this.update = function () {

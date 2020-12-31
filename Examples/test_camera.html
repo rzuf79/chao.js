@@ -42,16 +42,10 @@
 					var direction = "";
 					var animName = "idle";
 
-					if (chao.pressed[chao.KEY_UP]) {
-						direction += "n";
-					} else if (chao.pressed[chao.KEY_DOWN]) {
-						direction += "s";
-					}
-					if (chao.pressed[chao.KEY_LEFT]) {
-						direction += "w";
-					} else if (chao.pressed[chao.KEY_RIGHT]) {
-						direction += "e";
-					}
+					if (chao.pressed[chao.KEY_UP]) direction += "n";
+					if (chao.pressed[chao.KEY_DOWN]) direction += "s";
+					if (chao.pressed[chao.KEY_LEFT]) direction += "w";
+					if (chao.pressed[chao.KEY_RIGHT]) direction += "e";
 
 					if (direction.length > 0) {
 						animName = "run";
@@ -97,15 +91,16 @@
 					this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 					this.add(this.camera.entity);
 
+					// addWorldElements: function(image, count, alpha, scale, scrollFactor) {
+					StateGame.addWorldElements("island_small1", 15, 0.5, 1.0, 0.1);
+					StateGame.addWorldElements("island_small2", 15, 0.7, 1.0, 0.3);
+					StateGame.addWorldElements("cloud", 15, 0.4, 1.0, 0.6);
+
 					var bouncyIsle = chao.helpers.createSprite("Small Island", "island_small1", -300, -300);
 					this.camera.entity.add(bouncyIsle.entity);
 					chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 					StateGame.bouncyIsle = bouncyIsle.entity;
 
-					// addWorldElements: function(image, count, alpha, scale, scrollFactor) {
-					StateGame.addWorldElements("island_small1", 25, 0.5, 0.4, 0.1);
-					StateGame.addWorldElements("island_small2", 25, 0.7, 1.0, 0.3);
-					StateGame.addWorldElements("cloud", 25, 0.4, 1.0, 0.6);
 
 					this.camera.entity.add(chao.helpers.createSprite("Island", "island_large", 0, 0).entity);
 
@@ -139,15 +134,21 @@
 						"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy\n[S] screen shAaaAaaAkeeEEeE!",
 						20);
 					debugInfo.backgroundColor = chao.makeColor(255, 255, 255, 100);
-					chao.log(chao.makeColor(255, 255, 255, 100));
-					chao.log(chao.makeColorf(255 / 255, 255 / 255, 255 / 255, 100 / 255));
 					this.add(debugInfo.entity);
 					debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
+
+					this.textFPS = chao.helpers.createText("FPS", 0, 0, chao.font, "FPS", 25);
+					this.add(this.textFPS.entity);
+					this.textFPS.backgroundColor = chao.makeColor(255, 255, 255, 100);
+					this.textFPS.align = "right";
+					this.textFPS.entity.alignToParent(1.0, 0.0, 1.0, 0.0, -5, 5);
 
 					chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
 				},
 
 				update: function () {
+					this.textFPS.text = "" + chao.currentFPS + " fps";
+
 					if (chao.justPressed[chao.KEY_L]) {
 						chao.logHierarchy();
 					}
@@ -206,12 +207,13 @@
 				addWorldElements: function(image, count, alpha, scale, scrollFactor) {
 					var createdElements = [];
 					var cols = 0;
-					for (var i = 0; i < 25; ++i) {
+					for (var i = 0; i < count; ++i) {
 						var newElement = chao.helpers.createSprite(image, image, 0, 0);
+						newElement.entity.scaleX = newElement.entity.scaleY = scale;
 						var tries = 0;
 						while (tries < 108) {
-							newElement.entity.x = chao.getRandom(2000);
-							newElement.entity.y = chao.getRandom(2000);
+							newElement.entity.screenX = -200 + chao.getRandom(800);
+							newElement.entity.screenY = -200 + chao.getRandom(800);
 							tries++;
 							var collide = false;
 							for (var j = 0; j < createdElements.length; ++j) {
@@ -226,7 +228,6 @@
 						}
 						createdElements.push(newElement.entity);
 						newElement.entity.alpha = alpha;
-						newElement.entity.scaleX = newElement.entity.scaleY = scale;
 						newElement.scrollFactorX = scrollFactor;
 						newElement.scrollFactorY = scrollFactor;
 						this.camera.entity.add(newElement.entity);
