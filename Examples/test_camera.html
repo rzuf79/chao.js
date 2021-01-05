@@ -78,8 +78,6 @@
 			var StateGame = {
 
 				create: function () {
-					chao.countFPS = true;
-
 					var background = chao.createImage(undefined, 1000, 1000);
 					chao.clearToColor(background, chao.backgroundColor);
 					for (var i = 0; i < 1000; ++i) {
@@ -138,16 +136,12 @@
 					debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
 
 					this.textFPS = chao.helpers.createText("FPS", 0, 0, chao.font, "FPS", 25);
-					this.add(this.textFPS.entity);
-					this.textFPS.backgroundColor = chao.makeColor(255, 255, 255, 100);
-					this.textFPS.align = "right";
-					this.textFPS.entity.alignToParent(1.0, 0.0, 1.0, 0.0, -5, 5);
 
+					chao.helpers.addFpsCounter();
 					chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
 				},
 
 				update: function () {
-					this.textFPS.text = "" + chao.currentFPS + " fps";
 
 					if (chao.justPressed[chao.KEY_L]) {
 						chao.logHierarchy();
@@ -232,7 +226,6 @@
 						newElement.scrollFactorY = scrollFactor;
 						this.camera.entity.add(newElement.entity);
 					}
-					chao.log("" + cols + " collisiong when creating " + image);
 				}
 			};
 

@@ -197,7 +197,7 @@ var chao = {
 			context: context,
 			width: width,
 			height: height,
-		}
+		};
 
 		// Whole lotta vars
 		chao.loggingEnabled = true;
@@ -371,7 +371,7 @@ var chao = {
 
 		chao.clearScreen();
 
-		chao.timeDelta = (Date.now() - chao.lastTime) * .001;
+		chao.timeDelta = (Date.now() - chao.lastTime) * 0.001;
 		chao.lastTime = Date.now();
 
 		if (chao.countFPS) {
@@ -1015,7 +1015,7 @@ var chao = {
 					sound.channels[i].loop = true;
 				}
 			}
-		}
+		};
 		sound.channels[0].onerror = function (e) {
 			var msg = "Loading the \"" + sound.key + "\" sound failed with error: ";
 			switch (e.currentTarget.error.code) {
@@ -1037,7 +1037,7 @@ var chao = {
 			}
 			chao.log(msg);
 			sound.ready = true;
-		}
+		};
 
 		chao.sounds.push(sound);
 
@@ -1244,7 +1244,7 @@ var chao = {
 		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
 	},
 
-	handleMouseDown: function (button, x, y) {
+	handleMouseDown: function (button) {
 		chao.resumeMusicPlaybackIfNeeded();
 
 		if (chao.mouse.suppressUntilUp) {
@@ -1255,7 +1255,7 @@ var chao = {
 			case 1:
 				chao.mouse.pressed = chao.mouse.justPressed = true;
 				chao.focusedEntity = chao.getEntityUnderMouse();
-				if (chao.focusedEntity != null) {
+				if (chao.focusedEntity !== null) {
 					chao.focusedEntity.onClick();
 				}
 				break;
@@ -1278,7 +1278,7 @@ var chao = {
 			case 1:
 				chao.mouse.pressed = false;
 				chao.mouse.justReleased = true;
-				if (chao.focusedEntity != null) {
+				if (chao.focusedEntity !== null) {
 					if (chao.getEntityUnderMouse() != chao.focusedEntity) {
 						chao.focusedEntity.onCancel();
 					} else {
@@ -1320,7 +1320,7 @@ var chao = {
 	},
 
 	onMouseDown: function (e) {
-		chao.handleMouseDown(e.which, e.offsetX, e.offsetY);
+		chao.handleMouseDown(e.which);
 		e.preventDefault();
 	},
 
@@ -1340,7 +1340,7 @@ var chao = {
 	},
 
 	setMouseVisibility: function (value) {
-		canvas.canvas.style.cursor = value ? "auto" : "none";
+		chao.canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
 	updateTouches: function () {
@@ -1358,12 +1358,12 @@ var chao = {
 				x: touchPos.x,
 				y: touchPos.y,
 				justPressed: true,
-				isMouse: chao.touches.length == 0
+				isMouse: chao.touches.length === 0
 			};
 			chao.touches.push(newTouch);
 
 			if (newTouch.isMouse) {
-				chao.handleMouseDown(1, newTouch.x, newTouch.y);
+				chao.handleMouseDown(1);
 				chao.handleMouseMove(newTouch.x, newTouch.y);
 			}
 		}
@@ -1378,7 +1378,7 @@ var chao = {
 		for (var i = 0; i < touches.length; ++i) {
 			var touch = chao.getTouch(touches[i].identifier);
 			var touchPos = chao.getTouchPos(touches[i]);
-			if (touch != null) {
+			if (touch !== null) {
 				touch.x = touchPos.x;
 				touch.y = touchPos.y;
 
@@ -1396,7 +1396,7 @@ var chao = {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touch = chao.getTouch(touches[i].identifier);
-			if (touch != null) {
+			if (touch !== null) {
 				if (touch.isMouse) {
 					chao.handleMouseUp(1);
 				}
@@ -1450,7 +1450,7 @@ var chao = {
 		e.preventDefault();
 	},
 
-	resize: function (e) {
+	resize: function () {
 		if (chao.scalingMode <= chao.SCALING_MODE_NONE || chao.scalingMode >= chao.SCALING_MODE_END) {
 			return;
 		}
@@ -1491,14 +1491,14 @@ var chao = {
 
 				if (chao.baseScreenWidth * scale < window.innerWidth) {
 					// extend the viewport horizontally
-					var missingPixs = window.innerWidth - (chao.baseScreenWidth * scale);
-					chao.screenWidth = chao.baseScreenWidth + (missingPixs / scale);
+					var spareWidth = window.innerWidth - (chao.baseScreenWidth * scale);
+					chao.screenWidth = chao.baseScreenWidth + (spareWidth / scale);
 					chao.screenHeight = chao.baseScreenHeight;
 				} else {
 					// extend the viewport vertically
-					var missingPixs = window.innerHeight - (chao.baseScreenHeight * scale);
+					var spareHeight = window.innerHeight - (chao.baseScreenHeight * scale);
 					chao.screenWidth = chao.baseScreenWidth;
-					chao.screenHeight = chao.baseScreenHeight + (missingPixs / scale);
+					chao.screenHeight = chao.baseScreenHeight + (spareHeight / scale);
 				}
 				chao.canvas.width = chao.screenWidth;
 				chao.canvas.height = chao.screenHeight;
@@ -1561,14 +1561,15 @@ var chao = {
 	getLoadingProgress: function () {
 		var allData = chao.images.length + chao.sounds.length;
 		var loadedData = 0;
+		var i;
 
-		for (var i = 0; i < chao.images.length; ++i) {
+		for (i = 0; i < chao.images.length; ++i) {
 			if (chao.images[i].ready) {
 				loadedData++;
 			}
 		}
 
-		for (var i = 0; i < chao.sounds.length; ++i) {
+		for (i = 0; i < chao.sounds.length; ++i) {
 			if (chao.sounds[i].ready) {
 				loadedData++;
 			}
@@ -1591,7 +1592,7 @@ var chao = {
 			y: y,
 			width: width,
 			height: height
-		}
+		};
 	},
 
 	makePoint: function (x, y) {
@@ -1649,9 +1650,11 @@ var chao = {
 			return;
 		}
 
+		var i;
+
 		if (typeof points[0] != "object") {
 			var newPoints = [];
-			for (var i = 0; i < points.length / 2; ++i) {
+			for (i = 0; i < points.length / 2; ++i) {
 				newPoints.push({
 					x: points[i * 2],
 					y: points[i * 2 + 1]
@@ -1665,7 +1668,7 @@ var chao = {
 		var top = Number.MAX_VALUE;
 		var bottom = -Number.MAX_VALUE;
 
-		for (var i = 0; i < points.length; ++i) {
+		for (i = 0; i < points.length; ++i) {
 			if (points[i].x < left) left = points[i].x;
 			if (points[i].x > right) right = points[i].x;
 			if (points[i].y < top) top = points[i].y;
@@ -1682,34 +1685,37 @@ var chao = {
 	},
 
 	arePolygonsIntersecting: function (poly1, poly2) {
-		var polys = [ poly1, poly2 ];
+		var polys = [poly1, poly2];
+		var i1, pi, point, projected;
 		for (var i = 0; i < polys.length; ++i) {
 			var polygon = polys[i];
 
-			for (var i1 = 0; i1 < polygon.points.length; i1++) {
+			for (i1 = 0; i1 < polygon.points.length; i1++) {
 				var i2 = (i1 + 1) % polygon.points.length;
 				var p1 = polygon.points[i1];
 				var p2 = polygon.points[i2];
 
 				var normal = chao.makePoint(p2.y - p1.y, p1.x - p2.x);
 
-				var minA = null, maxA = null;
-				for (var pi = 0; pi < poly1.points.length; ++pi) {
-					var p = poly1.points[pi];
-					var projected = normal.x * p.x + normal.y * p.y;
-					if (minA == null || projected < minA)
+				var minA = null,
+					maxA = null;
+				for (pi = 0; pi < poly1.points.length; ++pi) {
+					point = poly1.points[pi];
+					projected = normal.x * point.x + normal.y * point.y;
+					if (minA === null || projected < minA)
 						minA = projected;
-					if (maxA == null || projected > maxA)
+					if (maxA === null || projected > maxA)
 						maxA = projected;
 				}
 
-				var minB = null, maxB = null;
-				for (var pi = 0; pi < poly2.points.length; ++pi) {
-					var p = poly2.points[pi];
-					var projected = normal.x * p.x + normal.y * p.y;
-					if (minB == null || projected < minB)
+				var minB = null,
+					maxB = null;
+				for (pi = 0; pi < poly2.points.length; ++pi) {
+					point = poly2.points[pi];
+					projected = normal.x * point.x + normal.y * point.y;
+					if (minB === null || projected < minB)
 						minB = projected;
-					if (maxB == null || projected > maxB)
+					if (maxB === null || projected > maxB)
 						maxB = projected;
 				}
 
@@ -1725,7 +1731,7 @@ var chao = {
 			return false;
 		}
 
-		var intersections = 0
+		var intersections = 0;
 		var raycastOrigin = {
 			x: polygon.left - 1,
 			y: point.y
@@ -1743,11 +1749,7 @@ var chao = {
 			}
 		}
 
-		if (intersections & 1 == 1) {
-			return true;
-		}
-
-		return false;
+		return intersections & 1 == 1;
 	},
 
 	getRandom: function (max) {
@@ -1776,7 +1778,7 @@ var chao = {
 				a = b;
 			}
 		} else if (b < a) {
-			a -= maxStep
+			a -= maxStep;
 			if (a < b) {
 				a = b;
 			}
@@ -1785,8 +1787,8 @@ var chao = {
 	},
 
 	interpolate: function (a, b, v, interpolationType) {
-		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR
-		v = chao.clamp(v, 0.0, 1.0)
+		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR;
+		v = chao.clamp(v, 0.0, 1.0);
 
 		switch (interpolationType) {
 			case chao.INTERPOLATE_SMOOTH: {
@@ -1816,7 +1818,7 @@ var chao = {
 			case chao.INTERPOLATE_ELASTIC: {
 				var amplitude = 0.0;
 				var period = 0.3;
-				if (v == 0) {
+				if (v === 0) {
 					v = 0;
 				} else if (v == 1.0) {
 					v = 1;
@@ -1832,7 +1834,7 @@ var chao = {
 			}
 		}
 
-		return (b * v) + (a * (1.0 - v))
+		return (b * v) + (a * (1.0 - v));
 	},
 
 	interpolateVector: function (a, b, v, interpolationType) {
@@ -1871,14 +1873,15 @@ var chao = {
 		entity = entity || chao.getCurrentState().rootEntity;
 		indent = indent || 0;
 
+		var i;
 		var entityLog = "";
-		for (var i = 0; i < indent; ++i) {
+		for (i = 0; i < indent; ++i) {
 			entityLog += "-";
 		}
 		entityLog += entity.name;
 		if (entity.components.length > 0) {
 			entityLog += " (";
-			for (var i = 0; i < entity.components.length; ++i) {
+			for (i = 0; i < entity.components.length; ++i) {
 				entityLog += entity.components[i].name;
 				if (i < entity.components.length - 1) entityLog += ", ";
 			}
@@ -1889,12 +1892,12 @@ var chao = {
 		entityLog += " s:" + Math.ceil(entity.width) + "x" + Math.ceil(entity.height);
 
 		if (!entity.foldInLog) {
-			for (var i = 0; i < entity.children.length; ++i) {
+			for (i = 0; i < entity.children.length; ++i) {
 				entityLog += chao.logEntity(entity.children[i], indent + 1);
 			}
 		} else {
 			entityLog += "\n";
-			for (var i = 0; i < indent + 1; ++i) {
+			for (i = 0; i < indent + 1; ++i) {
 				entityLog += "  ";
 			}
 			entityLog += "(...)";
@@ -1941,10 +1944,10 @@ var chao = {
 
 		window.onblur = function () {
 			chao.onFocusChange(false);
-		}
+		};
 		window.onfocus = function () {
 			chao.onFocusChange(true);
-		}
+		};
 	},
 
 	helpers: {
@@ -1972,6 +1975,29 @@ var chao = {
 			return newButton;
 		},
 
+		addFpsCounter: function (size) {
+			size = size || 25;
+			chao.countFPS = true;
+
+			var textFPS = chao.helpers.createText("FPS counter", 0, 0, chao.font, "FPS", size);
+			textFPS.backgroundColor = chao.makeColor(255, 255, 255, 100);
+			textFPS.align = "right";
+
+			var componentCounter = {
+				name: "FPS Counter",
+				textComponent: textFPS,
+				update: function () {
+					this.textComponent.text = "" + chao.currentFPS + " fps";
+				}
+			};
+			textFPS.entity.addComponent(componentCounter);
+
+			chao.getCurrentState().rootEntity.add(textFPS.entity);
+			textFPS.entity.alignToParent(1.0, 0.0, 1.0, 0.0, -5, 5);
+
+			return textFPS;
+		},
+
 		fadeEntityOut: function (entity, time, delay) {
 			return ComponentTween.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
@@ -1992,7 +2018,7 @@ var chao = {
 			var shakerName = "Disposable Shake";
 
 			var oldShake = entity.getComponentByName(shakerName);
-			if (oldShake != null) {
+			if (oldShake !== null) {
 				entity.removeComponent(oldShake);
 			}
 
@@ -2007,90 +2033,94 @@ var chao = {
 };
 
 function Entity(name, x, y) {
-	this.name = name || "Entity",
+	this.name = name || "Entity";
 
-		this.transformMatrix = {
-			x: [1, 0],
-			y: [0, 1],
-			origin: [x || 0, y || 0],
-		},
-		this.pivotX = 0.5;
+	this.transformMatrix = {
+		x: [1, 0],
+		y: [0, 1],
+		origin: [x || 0, y || 0],
+	};
+
+	this.pivotX = 0.5;
 	this.pivotY = 0.5;
 
-	this.width = 0, // see also getWidth()
-		this.height = 0, // see also getHeight()
+	this.width = 0; // see also getWidth()
+	this.height = 0; // see also getHeight()
 
-		this.alpha = 1.0,
+	this.alpha = 1.0;
 
-		this.anchor = {},
+	this.anchor = {};
 
-		this.children = [],
-		this.components = [],
-		this.removalQueuedComponents = [],
-		this.parent = null,
+	this.children = [];
+	this.components = [];
+	this.removalQueuedComponents = [];
+	this.parent = null;
 
-		this.visible = true,
-		this.paused = false,
-		this.clickable = false,
-		this.keepClickFocus = false,
-		this.foldInLog = false,
+	this.visible = true;
+	this.paused = false;
+	this.clickable = false;
+	this.keepClickFocus = false;
+	this.foldInLog = false;
 
-		this.destroy = function () {
-			for (var i = 0; i < this.components.length; ++i) {
-				if (this.components[i].destroy) {
-					this.components[i].destroy();
-				}
+	this.destroy = function () {
+		var i;
+		for (i = 0; i < this.components.length; ++i) {
+			if (this.components[i].destroy) {
+				this.components[i].destroy();
 			}
-
-			for (var i = 0; i < this.children.length; ++i) {
-				this.children[i].destroy();
-			}
-
-			this.children = [];
-			this.components = [];
 		}
+
+		for (i = 0; i < this.children.length; ++i) {
+			this.children[i].destroy();
+		}
+
+		this.children = [];
+		this.components = [];
+	};
 
 	this.draw = function () {
 		if (!this.visible) {
 			return;
 		}
 
+		var i;
 		var componentsNum = this.components.length;
-		for (var i = 0; i < componentsNum; ++i) {
+		for (i = 0; i < componentsNum; ++i) {
 			if (this.components[i].draw) {
 				this.components[i].draw();
 			}
 		}
 
 		var childrenNum = this.children.length;
-		for (var i = 0; i < childrenNum; ++i) {
+		for (i = 0; i < childrenNum; ++i) {
 			if (this.children[i].draw) {
 				this.children[i].draw();
 			}
 		}
-	}
+	};
 
 	this.update = function () {
 		if (this.paused || !this.visible) {
 			return;
 		}
 
+		var i;
 		var componentsNum = this.components.length;
-		for (var i = 0; i < componentsNum; ++i) {
+		for (i = 0; i < componentsNum; ++i) {
 			if (this.components[i].update) {
 				this.components[i].update();
 			}
 		}
 
 		var childrenNum = this.children.length;
-		for (var i = 0; i < childrenNum; ++i) {
+		for (i = 0; i < childrenNum; ++i) {
 			if (this.children[i].update) {
 				this.children[i].update();
 			}
 		}
 
 		if (this.removalQueuedComponents.length > 0) {
-			for (var i = 0; i < this.removalQueuedComponents.length; ++i) {
+			for (i = 0; i < this.removalQueuedComponents.length; ++i) {
 				var component = this.removalQueuedComponents[i];
 				if (component.remove) {
 					component.remove();
@@ -2099,7 +2129,7 @@ function Entity(name, x, y) {
 			}
 			this.removalQueuedComponents = [];
 		}
-	}
+	};
 
 	this.add = function (childEntity) {
 		if (childEntity.parent === undefined) {
@@ -2110,7 +2140,7 @@ function Entity(name, x, y) {
 		this.children.push(childEntity);
 		childEntity.parent = this;
 		return childEntity;
-	}
+	};
 
 	this.addWithComponent = function (childEntity, component) {
 		var newEntity = this.add(childEntity);
@@ -2118,38 +2148,39 @@ function Entity(name, x, y) {
 			newEntity.addComponent(component);
 			return component;
 		}
-	}
+	};
 
 	this.remove = function (childEntity) {
 		if (childEntity.parent === this) {
 			this.children.splice(this.children.indexOf(childEntity), 1);
 			return childEntity;
 		}
-	}
+	};
 
 	this.resize = function () {
 		if (this.anchor.stretch) {
 			this.stretchOnParent(true);
 		}
-		if (this.anchor.alignX != undefined && this.anchor.anchorX != undefined && this.anchor.pxOffsetX != undefined) {
+		if (this.anchor.alignX !== undefined && this.anchor.anchorX !== undefined && this.anchor.pxOffsetX !== undefined) {
 			this.alignToParentHorizontally(this.anchor.alignX, this.anchor.anchorX, this.anchor.pxOffsetX);
 		}
-		if (this.anchor.alignY != undefined && this.anchor.anchorY != undefined && this.anchor.pxOffsetY != undefined) {
+		if (this.anchor.alignY !== undefined && this.anchor.anchorY !== undefined && this.anchor.pxOffsetY !== undefined) {
 			this.alignToParentVertically(this.anchor.alignY, this.anchor.anchorY, this.anchor.pxOffsetY);
 		}
 
+		var i;
 		var componentsNum = this.components.length;
-		for (var i = 0; i < componentsNum; ++i) {
+		for (i = 0; i < componentsNum; ++i) {
 			if (this.components[i].resize) {
 				this.components[i].resize();
 			}
 		}
 
 		var childrenNum = this.children.length;
-		for (var i = 0; i < childrenNum; ++i) {
+		for (i = 0; i < childrenNum; ++i) {
 			this.children[i].resize();
 		}
-	}
+	};
 
 	this.addComponent = function (component) {
 		if (!component.entity) {
@@ -2168,7 +2199,7 @@ function Entity(name, x, y) {
 		}
 
 		return null;
-	}
+	};
 
 	this.getComponentByName = function (componentName) {
 		for (var i = 0; i < this.components.length; ++i) {
@@ -2179,7 +2210,7 @@ function Entity(name, x, y) {
 		}
 
 		return null;
-	}
+	};
 
 	this.getComponentsByName = function (componentName) {
 		var allComponents = [];
@@ -2192,23 +2223,23 @@ function Entity(name, x, y) {
 		}
 
 		return allComponents;
-	}
+	};
 
 	this.getComponentInChildrenByName = function (componentName) {
 		var foundComponent = this.getComponentByName(componentName);
-		if (foundComponent != null) {
+		if (foundComponent !== null) {
 			return foundComponent;
 		}
 
 		for (var i = 0; i < this.children.length; ++i) {
 			foundComponent = this.children[i].getComponentInChildrenByName(componentName);
-			if (foundComponent != null) {
+			if (foundComponent !== null) {
 				return foundComponent;
 			}
 		}
 
 		return null;
-	}
+	};
 
 	this.removeComponent = function (component) {
 		if (component.entity === this) {
@@ -2216,11 +2247,11 @@ function Entity(name, x, y) {
 		} else {
 			chao.log("Entity " + this + " have no such component: " + component);
 		}
-	}
+	};
 
 	this.removeComponentByName = function (componentName) {
 		this.removeComponent(this.getComponentByName(componentName));
-	}
+	};
 
 	this.removeComponentsByName = function (componentName) {
 		for (;;) {
@@ -2230,7 +2261,7 @@ function Entity(name, x, y) {
 			}
 			this.removeComponent(component);
 		}
-	}
+	};
 
 	this.onClick = function () {
 		var relativeX = chao.mouse.x - this.screenX;
@@ -2240,7 +2271,7 @@ function Entity(name, x, y) {
 				this.components[i].onClick(relativeX, relativeY);
 			}
 		}
-	}
+	};
 
 	this.onMove = function () {
 		var relativeX = chao.mouse.x - this.screenX;
@@ -2250,7 +2281,7 @@ function Entity(name, x, y) {
 				this.components[i].onMove(relativeX, relativeY);
 			}
 		}
-	}
+	};
 
 	this.onCancel = function () {
 		for (var i = 0; i < this.components.length; ++i) {
@@ -2258,7 +2289,7 @@ function Entity(name, x, y) {
 				this.components[i].onCancel();
 			}
 		}
-	}
+	};
 
 	this.onRelease = function () {
 		var relativeX = chao.mouse.x - this.screenX;
@@ -2268,9 +2299,13 @@ function Entity(name, x, y) {
 				this.components[i].onRelease(relativeX, relativeY);
 			}
 		}
-	}
+	};
 
-	this.stretchOnParent = function (setAnchor = true) {
+	this.stretchOnParent = function (setAnchor) {
+		if (setAnchor === undefined) {
+			setAnchor = true;
+		}
+
 		this.width = this.parent.width;
 		this.height = this.parent.height;
 		this.x = this.y = 0;
@@ -2278,19 +2313,25 @@ function Entity(name, x, y) {
 		if (setAnchor) {
 			this.anchor.stretch = true;
 		}
-	}
+	};
 
-	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor = true) {
+	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor) {
+		if (setAnchor === undefined) {
+			setAnchor = true;
+		}
 		this.alignToParentHorizontally(parentX, childX, pxOffsetX, setAnchor);
 		this.alignToParentVertically(parentY, childY, pxOffsetY, setAnchor);
-	}
+	};
 
-	this.alignToParentHorizontally = function (parentX, childX, pxOffset, setAnchor = true) {
-		parentX = parentX != undefined ? parentX : 0.5;
-		childX = childX != undefined ? childX : 0.5;
+	this.alignToParentHorizontally = function (parentX, childX, pxOffset, setAnchor) {
+		if (setAnchor === undefined) {
+			setAnchor = true;
+		}
+		parentX = parentX !== undefined ? parentX : 0.5;
+		childX = childX !== undefined ? childX : 0.5;
 		pxOffset = pxOffset || 0;
 
-		if (this.parent != null) {
+		if (this.parent !== null) {
 			var prX = parentX - this.parent.pivotX;
 			var crX = childX - this.pivotX;
 			this.x = Math.ceil((this.parent.getWidth() * prX) - (this.getWidth() * crX));
@@ -2302,14 +2343,17 @@ function Entity(name, x, y) {
 			this.anchor.childX = childX;
 			this.anchor.pxOffsetX = pxOffset;
 		}
-	}
+	};
 
-	this.alignToParentVertically = function (parentY, childY, pxOffset, setAnchor = true) {
-		parentY = parentY != undefined ? parentY : 0.5;
-		childY = childY != undefined ? childY : 0.5;
+	this.alignToParentVertically = function (parentY, childY, pxOffset, setAnchor) {
+		if (setAnchor === undefined) {
+			setAnchor = true;
+		}
+		parentY = parentY !== undefined ? parentY : 0.5;
+		childY = childY !== undefined ? childY : 0.5;
 		pxOffset = pxOffset || 0;
 
-		if (this.parent != null) {
+		if (this.parent !== null) {
 			var prY = parentY - this.parent.pivotY;
 			var crY = childY - this.pivotY;
 			this.y = Math.ceil((this.parent.getHeight() * prY) - (this.getHeight() * crY));
@@ -2321,9 +2365,9 @@ function Entity(name, x, y) {
 			this.anchor.childY = childY;
 			this.anchor.pxOffsetY = pxOffset;
 		}
-	}
+	};
 
-	this.multiplyMatrices = function(parent, child) {
+	this.multiplyMatrices = function (parent, child) {
 		var x0 = parent.x[0] * child.x[0] + parent.y[0] * child.x[1];
 		var x1 = parent.x[1] * child.x[0] + parent.y[1] * child.x[1];
 		var y0 = parent.x[0] * child.y[0] + parent.y[0] * child.y[1];
@@ -2336,43 +2380,43 @@ function Entity(name, x, y) {
 			],
 			x: [x0, x1],
 			y: [y0, y1],
-		}
-	}
+		};
+	};
 
 	// mind that this one gets you just a copy of the thing
 	this.getTransformMatrix = function () {
-		if (this.parent == null) {
+		if (this.parent === null) {
 			return {
 				origin: this.transformMatrix.origin,
 				x: this.transformMatrix.x,
 				y: this.transformMatrix.y
-			}
+			};
 		}
 		return this.multiplyMatrices(this.parent.getTransformMatrix(), this.transformMatrix);
-	}
+	};
 
 	this.getMatrixScaleX = function (matrix) {
 		return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
-	}
+	};
 
 	this.getMatrixScaleY = function (matrix) {
 		return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
-	}
+	};
 
 	this.getWidth = function () {
 		return this.width * this.scaleX;
-	}
+	};
 
 	this.getHeight = function () {
 		return this.height * this.scaleY;
-	}
+	};
 
 	this.getScreenAlpha = function () {
-		if (this.parent == null) {
+		if (this.parent === null) {
 			return this.alpha;
 		}
 		return this.alpha * this.parent.getScreenAlpha();
-	}
+	};
 
 	this.isPointInside = function (x, y) {
 		var sx = this.screenX;
@@ -2388,7 +2432,7 @@ function Entity(name, x, y) {
 			x < sw * this.pivotX &&
 			y > -sh * this.pivotY &&
 			y < sh * this.pivotY);
-	}
+	};
 
 	this.getEntityAt = function (x, y) {
 		if (!this.visible || this.alpha <= 0) {
@@ -2409,14 +2453,14 @@ function Entity(name, x, y) {
 		}
 
 		return null;
-	}
+	};
 
 	this.isVisible = function () {
-		if (this.parent != null) {
+		if (this.parent !== null) {
 			return this.visible && this.parent.isVisible();
 		}
 		return this.visible;
-	}
+	};
 
 	this.checkCollision = function (entity) {
 		var thisPos = {
@@ -2447,7 +2491,7 @@ function Entity(name, x, y) {
 		var br2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1.0 - this.pivotY));
 
 		// a "good enough" check for not rotated rects
-		if (Math.abs(this.rotation) < 10.0 && Math.abs(entity.rotation) < 10.0){
+		if (Math.abs(this.rotation) < 10.0 && Math.abs(entity.rotation) < 10.0) {
 			return tl1.x < tr2.x && tr1.x > tl2.x && tl1.y < bl2.y && bl1.y > tl2.y;
 		}
 
@@ -2471,7 +2515,7 @@ function Entity(name, x, y) {
 		var poly2 = chao.makePolygon([tl2, tr2, bl2, br2]);
 
 		return chao.arePolygonsIntersecting(poly1, poly2);
-	}
+	};
 }
 Entity.prototype = {
 	get x() {
@@ -2578,7 +2622,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 
 	this.create = function () {
 		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
-	}
+	};
 
 	this.draw = function () {
 		var entity = this.entity;
@@ -2591,13 +2635,13 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			return;
 		}
 
-
 		var anim = {
 			key: "dummy",
 			frames: [0],
 			delay: 0,
 			loop: true
 		};
+
 		if (this.currentAnim != -1) {
 			anim = this.anims[this.currentAnim];
 		}
@@ -2636,7 +2680,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			drawX, drawY, drawArea, drawAlpha,
 			drawScaleX, drawScaleY, entity.screenRotation,
 			entity.pivotX, entity.pivotY);
-	}
+	};
 
 	this.update = function () {
 
@@ -2670,7 +2714,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 				}
 			}
 		}
-	}
+	};
 
 	this.setImage = function (image, frameWidth, frameHeight) {
 		if (!image) {
@@ -2685,7 +2729,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		if (!this.image.ready && (!frameWidth || !frameHeight)) {
 			this.ready = false;
 		}
-	}
+	};
 
 	this.addAnim = function (key, frames, delay, loop) {
 		this.anims.push({
@@ -2694,7 +2738,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			delay: delay,
 			loop: loop,
 		});
-	}
+	};
 
 	this.playAnim = function (key, force) {
 		for (var i = 0; i < this.anims.length; ++i) {
@@ -2713,7 +2757,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		}
 
 		chao.log("Entity \"" + this.entity.name + "\" has no anim named \"" + key + "\".");
-	}
+	};
 
 	this.getCurrentAnim = function () {
 		if (this.currentAnim >= 0 && this.currentAnim < this.anims.length) {
@@ -2721,11 +2765,11 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		}
 
 		return null;
-	}
+	};
 
 	this.setAnimPause = function (value) {
 		this.animPaused = value;
-	}
+	};
 }
 
 /**
@@ -2763,7 +2807,7 @@ function ComponentText(font, text, size) {
 		}
 		this.image = chao.createImage(undefined, 1, 1);
 		this.changeText();
-	}
+	};
 
 	this.draw = function () {
 		if (this.text === "") {
@@ -2787,11 +2831,12 @@ function ComponentText(font, text, size) {
 			drawScaleX, drawScaleY,
 			this.entity.screenRotation,
 			this.entity.pivotX, this.entity.pivotY);
-	}
+	};
 
 	this.changeText = function (text) {
 		text = text || this.text;
 
+		var i, j;
 		var textLines = text.split("\n");
 		var chunks = [];
 		var rawLines = [];
@@ -2800,11 +2845,11 @@ function ComponentText(font, text, size) {
 
 		this.rawText = "";
 
-		for (var i = 0; i < textLines.length; ++i) {
+		for (i = 0; i < textLines.length; ++i) {
 			var currentChunk = "";
 			chunks.push([]);
 
-			for (var j = 0; j < textLines[i].length; ++j) {
+			for (j = 0; j < textLines[i].length; ++j) {
 				var breakChunk = false;
 				var newColor = undefined;
 				if (textLines[i][j] == "`") {
@@ -2849,7 +2894,7 @@ function ComponentText(font, text, size) {
 			}
 
 			var currentRawLine = "";
-			for (var j = 0; j < chunks[i].length; ++j) {
+			for (j = 0; j < chunks[i].length; ++j) {
 				this.rawText += chunks[i][j].text;
 				currentRawLine += chunks[i][j].text;
 			}
@@ -2863,7 +2908,7 @@ function ComponentText(font, text, size) {
 
 		var linesSizes = [];
 		var longestLineSize = 0;
-		for (var i = 0; i < rawLines.length; ++i) {
+		for (i = 0; i < rawLines.length; ++i) {
 			linesSizes.push(chao.getTextSize(this.image, rawLines[i]).width);
 			if (linesSizes[i] > longestLineSize) {
 				longestLineSize = linesSizes[i];
@@ -2878,7 +2923,7 @@ function ComponentText(font, text, size) {
 			chao.clearImage(this.image);
 		}
 
-		for (var i = 0; i < chunks.length; ++i) {
+		for (i = 0; i < chunks.length; ++i) {
 			var currentX = 0;
 			switch (this.align) {
 				case "center":
@@ -2887,25 +2932,25 @@ function ComponentText(font, text, size) {
 				case "right":
 					currentX = longestLineSize - linesSizes[i];
 			}
-			for (var j = 0; j < chunks[i].length; ++j) {
+			for (j = 0; j < chunks[i].length; ++j) {
 				chao.drawText(this.image,
 					this.font,
 					chunks[i][j].text,
-					currentX, -this.size * .25 + (i * this.size),
+					currentX, -this.size * 0.25 + (i * this.size),
 					this.size,
 					chunks[i][j].color,
 					"left",
 					this.outlineColor,
 					this.outlineSize);
 
-				currentX += chao.getTextSize(this.image, chunks[i][j].text).width;;
+				currentX += chao.getTextSize(this.image, chunks[i][j].text).width;
 			}
 		}
-	}
+	};
 
 	this.isNumber = function (c) {
 		return "0123456789".indexOf(c) !== -1;
-	}
+	};
 
 }
 ComponentText.prototype = {
@@ -3001,7 +3046,7 @@ function ComponentButton(image) {
 	this.create = function () {
 		this.setImage(this.imageKey);
 		this.entity.clickable = true;
-	}
+	};
 
 	this.update = function () {
 		if (!this.entity.visible) {
@@ -3053,7 +3098,7 @@ function ComponentButton(image) {
 				this.text.entity.alpha = buttonAlpha;
 			}
 		}
-	}
+	};
 
 	this.setImage = function (key) {
 		if (this.sprite) {
@@ -3068,7 +3113,7 @@ function ComponentButton(image) {
 		// Update Entity's size to be the same as button's sprite
 		this.entity.width = this.sprite.entity.width;
 		this.entity.height = this.sprite.entity.height;
-	}
+	};
 
 	this.setImagePressed = function (key) {
 		if (this.spritePressed) {
@@ -3078,7 +3123,7 @@ function ComponentButton(image) {
 		this.spritePressed = this.entity.addWithComponent(new Entity("Button Image Pressed"), new ComponentSprite(key));
 		this.spritePressed.entity.clickable = false;
 		this.spritePressed.entity.visible = false;
-	}
+	};
 
 	this.setText = function (text, font, size) {
 		if (!this.text) {
@@ -3095,7 +3140,7 @@ function ComponentButton(image) {
 		this.text.entity.alignToParent();
 
 		return this.text;
-	}
+	};
 
 	this.isAbove = function (x, y) {
 		if (!this.entity.visible) {
@@ -3103,7 +3148,7 @@ function ComponentButton(image) {
 		}
 
 		return chao.getCurrentState().rootEntity.getEntityAt(x, y) === this.entity;
-	}
+	};
 }
 
 function ComponentCamera() {
@@ -3135,7 +3180,7 @@ function ComponentCamera() {
 	this.slideTweens = [];
 
 	this.update = function () {
-		if (this.trackedEntity == null) {
+		if (this.trackedEntity === null) {
 			this.clampToBounds(this.entity);
 			return;
 		}
@@ -3144,17 +3189,17 @@ function ComponentCamera() {
 		var targetPos = {
 			x: this.trackedEntity.screenX,
 			y: this.trackedEntity.screenY
-		}
+		};
 
 		var relativePos = {
 			x: targetPos.x + this.entity.x,
 			y: targetPos.y + this.entity.y
-		}
+		};
 
 		var cameraPos = {
 			x: (-targetPos.x + chao.screenWidth) - this.offsetX,
 			y: (-targetPos.y + chao.screenHeight) - this.offsetY
-		}
+		};
 
 		// contrived deadzone calculations
 		if (this.deadzone.width > 0 && this.deadzone.height > 0) {
@@ -3188,7 +3233,7 @@ function ComponentCamera() {
 
 		this.entity.x = chao.interpolate(this.entity.x, cameraPos.x, chao.timeDelta * this.trackingSpeed);
 		this.entity.y = chao.interpolate(this.entity.y, cameraPos.y, chao.timeDelta * this.trackingSpeed);
-	}
+	};
 
 	this.follow = function (entity, trackingSpeed) {
 		this.removeSlideTweens();
@@ -3197,14 +3242,14 @@ function ComponentCamera() {
 		if (this.trackingSpeed <= 0) {
 			this.trackingSpeed = chao.FPS;
 		}
-	}
+	};
 
 	this.unfollow = function () {
 		this.trackedEntity = null;
-	}
+	};
 
 	this.slideToPosition = function (x, y, time, interpolationType, callback) {
-		interpolationType = interpolationType != undefined ? interpolationType : chao.INTERPOLATE_SMOOTH;
+		interpolationType = interpolationType !== undefined ? interpolationType : chao.INTERPOLATE_SMOOTH;
 
 		this.removeSlideTweens();
 		this.unfollow();
@@ -3214,14 +3259,14 @@ function ComponentCamera() {
 
 		this.slideTweens.push(ComponentTween.addTween(this.entity, "x", this.entity.x, x, time, interpolationType, chao.REPEAT_MODE_ONCE, 0, callback));
 		this.slideTweens.push(ComponentTween.addTween(this.entity, "y", this.entity.y, y, time, interpolationType, chao.REPEAT_MODE_ONCE));
-	}
+	};
 
 	this.removeSlideTweens = function () {
 		for (var i = 0; i < this.slideTweens.length; ++i) {
 			ComponentTween.removeTween(this.slideTweens[i]);
 		}
 		this.slideTweens = [];
-	}
+	};
 
 	this.clampToBounds = function (cameraPos) {
 		if (this.bounds.width > 0) {
@@ -3230,7 +3275,7 @@ function ComponentCamera() {
 		if (this.bounds.height > 0) {
 			cameraPos.y = -chao.clamp(-cameraPos.y, this.bounds.y, (this.bounds.y + this.bounds.height) - chao.screenHeight);
 		}
-	}
+	};
 }
 
 function ComponentTween(varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
@@ -3241,9 +3286,9 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 	this.varName = varName;
 	this.from = from;
 	this.to = to;
-	this.lifetime = time != undefined ? time : 1;
-	this.interpolationType = interpolationType != undefined ? interpolationType : chao.INTERPOLATE_LINEAR;
-	this.repeatMode = repeatMode != undefined ? repeatMode : chao.REPEAT_MODE_ONCE;
+	this.lifetime = time !== undefined ? time : 1;
+	this.interpolationType = interpolationType !== undefined ? interpolationType : chao.INTERPOLATE_LINEAR;
+	this.repeatMode = repeatMode !== undefined ? repeatMode : chao.REPEAT_MODE_ONCE;
 	this.delay = delay || 0;
 	this.finishCallback = finishCallback;
 
@@ -3255,7 +3300,7 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 
 	this.create = function () {
 		this.target = this.target || this.entity;
-	}
+	};
 
 	this.update = function () {
 		this.timer += this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
@@ -3299,17 +3344,17 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 			v = 1 - v;
 		}
 		this.updateVar(v);
-	}
+	};
 
 	this.updateVar = function (progress) {
 		this.target[this.varName] = chao.interpolate(this.from, this.to, progress, this.interpolationType);
-	}
+	};
 
 }
 
 ComponentTween.addTween = function (targetEntity, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
 	return targetEntity.addComponent(new ComponentTween(varName, from, to, time, interpolationType, repeatMode, delay, finishCallback));
-}
+};
 
 ComponentTween.removeTween = function (tween, finish) {
 	if (tween.finished) {
@@ -3319,14 +3364,17 @@ ComponentTween.removeTween = function (tween, finish) {
 		tween.updateVar(1);
 	}
 	tween.entity.removeComponent(tween);
-}
+};
 
 ComponentTween.removeTweensFromEntity = function (targetEntity, finish) {
 	var tweensToRemove = targetEntity.getComponentsByName("Tween");
 	for (var i = 0; i < tweensToRemove.length; ++i) {
+		if (finish) {
+			tweensToRemove[i].updateVar(1);
+		}
 		targetEntity.removeComponent(tweensToRemove[i]);
 	}
-}
+};
 
 ComponentTween.removeAllTweens = function (finish) {
 	var allTweens = chao.findComponents("Tween");
@@ -3338,7 +3386,7 @@ ComponentTween.removeAllTweens = function (finish) {
 		}
 		tween.entity.removeComponent(tween);
 	}
-}
+};
 
 function ComponentParticle(image) {
 	this.name = "Particle";
@@ -3374,7 +3422,7 @@ function ComponentParticle(image) {
 		if (!this.sprite) {
 			chao.log("ComponentParticle needs an existing ComponentSprite or image key passed in constructor.");
 		}
-	}
+	};
 
 	this.update = function () {
 		if (!this.sprite) {
@@ -3414,7 +3462,7 @@ function ComponentParticle(image) {
 		this.rotationVel += this.rotationAcc * delta;
 		this.entity.rotation += this.rotationVel * delta;
 
-	}
+	};
 }
 ComponentParticle.FADE_MODE_NONE = 0;
 ComponentParticle.FADE_MODE_LINEAR = 1;
@@ -3482,7 +3530,7 @@ function ComponentShake(force, time, damped) {
 			this.entity.x = this.shakenPosition.x = this.entityPosition.x + xChange;
 			this.entity.y = this.shakenPosition.y = this.entityPosition.y + yChange;
 		}
-	}
+	};
 
 	this.shake = function (force, time, damped) {
 		if (force) this.force = force;
@@ -3497,5 +3545,5 @@ function ComponentShake(force, time, damped) {
 		}
 
 		this.timer = this.duration;
-	}
+	};
 }
