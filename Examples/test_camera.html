@@ -84,7 +84,7 @@
 						chao.putPixel(background, chao.getRandom(background.width), chao.getRandom(background.height),
 							"#f9f7c7");
 					}
-					this.add(chao.helpers.createSprite("Sky", background, chao.screenWidth/2, chao.screenHeight/2).entity);
+					chao.helpers.createSprite(this, "Sky", background, chao.screenWidth/2, chao.screenHeight/2);
 
 					this.camera = (new Entity("Camera")).addComponent(new ComponentCamera());
 					this.add(this.camera.entity);
@@ -94,13 +94,12 @@
 					StateGame.addWorldElements("island_small2", 15, 0.7, 1.0, 0.3);
 					StateGame.addWorldElements("cloud", 15, 0.4, 1.0, 0.6);
 
-					var bouncyIsle = chao.helpers.createSprite("Small Island", "island_small1", -300, -300);
-					this.camera.entity.add(bouncyIsle.entity);
+					var bouncyIsle = chao.helpers.createSprite(this.camera.entity, "Small Island", "island_small1", -300, -300);
 					chao.helpers.addBounceTween(bouncyIsle.entity, 10, 1);
 					StateGame.bouncyIsle = bouncyIsle.entity;
 
 
-					this.camera.entity.add(chao.helpers.createSprite("Island", "island_large", 0, 0).entity);
+					chao.helpers.createSprite(this.camera.entity, "Island", "island_large", 0, 0);
 
 
 					this.gameObjects = new Entity("Game Objects");
@@ -109,8 +108,8 @@
 					this.ludzik = (new Entity("Buba", 0, 0)).addComponent(new ComponentLudzik());
 					this.gameObjects.add(this.ludzik.entity);
 
-					this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", -100, -100).entity);
-					this.gameObjects.add(chao.helpers.createSprite("Kurzyk", "cloudy", -130, -130).entity);
+					chao.helpers.createSprite(this.gameObjects, "Kurzyk", "cloudy", -100, -100);
+					chao.helpers.createSprite(this.gameObjects, "Kurzyk", "cloudy", -130, -130);
 
 
 					this.camera.follow(this.ludzik.entity, 3.0);
@@ -121,23 +120,19 @@
 					// 					height: 100};
 
 
-					this.textLogo = chao.helpers.createText("Logo", 10, 20, chao.font, "darknyeß", 35);
-					this.add(this.textLogo.entity);
-					this.textLogo.entity.alignToParentHorizontally();
-					ComponentTween.addTween(this.textLogo.entity, "rotation", -20, 20, 0.7,
+					var textLogo = chao.helpers.createText(this, "Logo", 10, 20, chao.font, "darknyeß", 35);
+					textLogo.entity.alignToParentHorizontally();
+					ComponentTween.addTween(textLogo.entity, "rotation", -20, 20, 0.7,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
 
-					var debugInfo = chao.helpers.createText("Debug Info", 0, 0, chao.font,
+					var debugInfo = chao.helpers.createText(this, "Debug Info", 0, 0, chao.font,
 						"[F] stick camera to the ludzik\n[U] unstick camera\n[SPACE] slide camera to the mysterious island of wonders\n[L] log hierarchy\n[S] screen shAaaAaaAkeeEEeE!",
 						20);
 					debugInfo.backgroundColor = chao.makeColor(255, 255, 255, 100);
-					this.add(debugInfo.entity);
 					debugInfo.entity.alignToParent(0.0, 1.0, 0.0, 1.0);
 
-					this.textFPS = chao.helpers.createText("FPS", 0, 0, chao.font, "FPS", 25);
-
-					chao.helpers.addFpsCounter();
+					chao.helpers.createFpsCounter(this, 16);
 					chao.helpers.fadeEntityIn(this.rootEntity, 1.0);
 				},
 
@@ -202,7 +197,7 @@
 					var createdElements = [];
 					var cols = 0;
 					for (var i = 0; i < count; ++i) {
-						var newElement = chao.helpers.createSprite(image, image, 0, 0);
+						var newElement = chao.helpers.createSprite(undefined, image, image, 0, 0);
 						newElement.entity.scaleX = newElement.entity.scaleY = scale;
 						var tries = 0;
 						while (tries < 108) {

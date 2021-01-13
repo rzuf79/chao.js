@@ -62,12 +62,11 @@
 				}
 
 				this.createThing = function (x, y, scaleX, scaleY, angle) {
-					var aThing = chao.helpers.createSprite("Thingie", "sticker", x, y);
+					var aThing = chao.helpers.createSprite(this, "Thingie", "sticker", x, y);
 					aThing.entity.scaleX = scaleX;
 					aThing.entity.scaleY = scaleY;
 					aThing.entity.rotation = angle;
 					this.entities.push(aThing.entity);
-					this.add(aThing.entity);
 					return aThing;
 				}
 			}

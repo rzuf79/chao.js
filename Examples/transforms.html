@@ -31,8 +31,7 @@
 					var frameImage = chao.createImage("frame", 400, 300);
 					chao.clearToColor(frameImage, chao.makeColor(255, 255, 255));
 
-					var frameSprite = chao.helpers.createSprite("Frame", "frame", 300, 200);
-					this.add(frameSprite.entity);
+					var frameSprite = chao.helpers.createSprite(this, "Frame", "frame", 300, 200);
 					frameSprite.entity.alignToParent();
 
 					ComponentTween.addTween(frameSprite.entity, "rotation", -20, 20, 1.25,
@@ -44,23 +43,19 @@
 					ComponentTween.addTween(frameSprite.entity, "scaleY", 0.8, 1.2, 0.9,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE, 0);
 
-					var title = chao.helpers.createText("Title", 0, 0, chao.font, "--- frame title ---", 24);
+					var title = chao.helpers.createText(frameSprite.entity, "Title", 0, 0, chao.font, "--- frame title ---", 24);
 					title.align = "center";
-					frameSprite.entity.add(title.entity);
 					title.entity.alignToParent(0.5, 0.0, 0.5, 0.0, 0, 5);
 
-					var textL = chao.helpers.createText("TextL", 0, 0, chao.font, "left-aligned\ntext", 24);
+					var textL = chao.helpers.createText(frameSprite.entity, "TextL", 0, 0, chao.font, "left-aligned\ntext", 24);
 					textL.align = "left";
-					frameSprite.entity.add(textL.entity);
 					textL.entity.alignToParent(0.0, 0.25, 0.0, 0.5, 5, 0);
 
-					var textL = chao.helpers.createText("TextL", 0, 0, chao.font, "right-aligned\ntext", 24);
+					var textL = chao.helpers.createText(frameSprite.entity, "TextL", 0, 0, chao.font, "right-aligned\ntext", 24);
 					textL.align = "right";
-					frameSprite.entity.add(textL.entity);
 					textL.entity.alignToParent(1.0, 0.25, 1.0, 0.5, -5, 0);
 
-					var island = chao.helpers.createSprite("Island", "island", 0, 0);
-					frameSprite.entity.add(island.entity);
+					var island = chao.helpers.createSprite(frameSprite.entity, "Island", "island", 0, 0);
 					island.entity.alignToParent();
 					chao.helpers.addBounceTween(island.entity, 15, 0.5);
 
@@ -69,8 +64,7 @@
 					aButton.setText("Rotating button", chao.font, 20);
 					aButton.onReleased = function() { chao.logHierarchy(); }
 
-					var cloudie1 = chao.helpers.createSprite("Cloudie", "cloudy", 0, 0);
-					frameSprite.entity.add(cloudie1.entity);
+					var cloudie1 = chao.helpers.createSprite(frameSprite.entity, "Cloudie", "cloudy", 0, 0);
 					cloudie1.entity.alignToParent(0.0, 1.0, 0.0, 1.0, 0, -5);
 					ComponentTween.addTween(cloudie1.entity, "x",
 						cloudie1.entity.x, cloudie1.entity.x + (frameSprite.entity.getWidth() - cloudie1.entity
@@ -78,8 +72,7 @@
 						1.0,
 						chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
 
-					var cloudie2 = chao.helpers.createSprite("Cloudie", "cloudy", 0, 0);
-					frameSprite.entity.add(cloudie2.entity);
+					var cloudie2 = chao.helpers.createSprite(frameSprite.entity, "Cloudie", "cloudy", 0, 0);
 					cloudie2.entity.alignToParent(1.0, 1.0, 1.0, 1.0, 0, -5);
 					ComponentTween.addTween(cloudie2.entity, "x",
 						cloudie2.entity.x, cloudie2.entity.x - (frameSprite.entity.getWidth() - cloudie1.entity
