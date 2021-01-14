@@ -62,7 +62,7 @@
 					var aButton = frameSprite.entity.addWithComponent(new Entity("Button"), new ComponentButton("button"));
 					aButton.entity.alignToParent(0.5, 0.8, 0.5, 0.5);
 					aButton.setText("Rotating button", chao.font, 20);
-					aButton.onReleased = function() { chao.logHierarchy(); }
+					aButton.onReleased.subscribe(function() { chao.logHierarchy(); } );
 
 					var cloudie1 = chao.helpers.createSprite(frameSprite.entity, "Cloudie", "cloudy", 0, 0);
 					cloudie1.entity.alignToParent(0.0, 1.0, 0.0, 1.0, 0, -5);

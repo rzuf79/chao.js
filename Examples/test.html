@@ -172,14 +172,14 @@
 
 			this.buttonMute = this.addWithComponent(new Entity("Button Mute"), new ComponentButton("button_sound_on"));
 			this.buttonMute.entity.alignToParent(1.0, 1.0, 1.0, 1.0, -10, -10);
-			this.buttonMute.onReleased = function(button){
+			this.buttonMute.onReleased.subscribe( function(button){
 				chao.toggleMute();
 				if(chao.muted){
-					this.setImage("button_sound_off");
+					this.buttonMute.setImage("button_sound_off");
 				} else {
-					this.setImage("button_sound_on");
+					this.buttonMute.setImage("button_sound_on");
 				}
-			};
+			}, this );
 
 			this.buttonSound = this.addWithComponent(new Entity("Button Sound"), new ComponentButton("button"));
 			this.buttonSound.entity.alignToParent(0.5, 1.0, 0.5, 1.0, 0, -20);
@@ -189,7 +189,7 @@
 			this.buttonLog = this.addWithComponent(new Entity("Button Log"), new ComponentButton("button"));
 			this.buttonLog.entity.alignToParent(0.5, 1.0, 0.5, 1.0, -200, -20);
 			this.buttonLog.setText("Log things", chao.font, 20);
-			this.buttonLog.onReleased = function() { chao.logHierarchy(); }
+			this.buttonLog.onReleased.subscribe( function() { chao.logHierarchy(); } );
 
 
 			var textTest = this.addWithComponent(new Entity("Text test", 300, 300), new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));

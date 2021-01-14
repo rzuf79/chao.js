@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.5",
+	VERSION: "0.51",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -522,18 +522,44 @@ var chao = {
 		return array;
 	},
 
-	findComponents: function (name, entity, array) {
+	findComponents: function (name, entity) {
 		entity = entity || chao.currentState.rootEntity;
-		array = array || [];
+		return entity.getComponentsInChildrenByName(name);
+	},
 
-		var foundComponents = entity.getComponentsByName(name);
-		array.push(foundComponents);
+	makeSignal: function() {
+		return {
+			observers: [],
 
-		for (var i = 0; i < entity.children.length; ++i) {
-			chao.findComponents(name, entity.children[i], array);
-		}
+			subscribe: function(func, targetObject) {
+				if (!this.observers.find(observer => observer.func === func)) {
+					this.observers.push( {
+						func: func,
+						target: targetObject
+					});
+				}
+			},
 
-		return array;
+			unsubscribe: function(func) {
+				this.observers = this.observers.filter(observer => observer.func !== func);
+			},
+
+			unsubscribeAll: function(target) {
+				if (!target) {
+					this.observers = [];
+				} else {
+					this.observers = this.observers.filter(observer => observer.target !== target);
+				}
+			},
+
+			fire: function() {
+				var i;
+				var n = this.observers.length;
+				for (var i = 0; i < n; ++i) {
+					this.observers[i].func.apply(this.observers[i].target, arguments);
+				}
+			},
+		};
 	},
 
 	createImage: function (key, width, height) {
@@ -587,6 +613,26 @@ var chao = {
 			newImage.height = img.height;
 			newImage.ready = true;
 		};
+
+		return newImage;
+	},
+
+	createTiledImage: function (image, newImageKey, tilesX, tilesY) {
+		var img = chao.getImage(image);
+		var newWidth = img.width * tilesX;
+		var newHeight = img.height * tilesY;
+		var newImage = chao.createImage(newImageKey, newWidth, newHeight);
+
+		var i, j;
+		for (i = 0; i < tilesX; ++i) {
+			for (j = 0; j < tilesY; ++j) {
+				chao.drawImage(newImage, image, i * img.width, j * img.height);
+			}
+		}
+
+		if (newImageKey) {
+			chao.addImage(newImage);
+		}
 
 		return newImage;
 	},
@@ -1757,6 +1803,16 @@ var chao = {
 		return Math.round(max * Math.random());
 	},
 
+	getRandomRange: function (min, max) {
+		max = (max - min) + 1;
+		return min + chao.getRandom(max);
+	},
+
+	coinToss: function (successChance) {
+		successChance = successChance || 50;
+		return chao.getRandom(100) < successChance;
+	},
+
 	rad2deg: function (radians) {
 		return radians * (180.0 / Math.PI);
 	},
@@ -2097,6 +2153,7 @@ function Entity(name, x, y) {
 		}
 
 		var i;
+
 		var componentsNum = this.components.length;
 		for (i = 0; i < componentsNum; ++i) {
 			if (this.components[i].draw) {
@@ -2118,6 +2175,19 @@ function Entity(name, x, y) {
 		}
 
 		var i;
+
+		if (this.removalQueuedComponents.length > 0) {
+			var compsNum = this.components.length;
+			for (i = 0; i < this.removalQueuedComponents.length; ++i) {
+				var component = this.removalQueuedComponents[i];
+				if (component.remove) {
+					component.remove();
+				}
+				this.components.splice(this.components.indexOf(component), 1);
+			}
+			this.removalQueuedComponents = [];
+		}
+
 		var componentsNum = this.components.length;
 		for (i = 0; i < componentsNum; ++i) {
 			if (this.components[i].update) {
@@ -2130,17 +2200,6 @@ function Entity(name, x, y) {
 			if (this.children[i].update) {
 				this.children[i].update();
 			}
-		}
-
-		if (this.removalQueuedComponents.length > 0) {
-			for (i = 0; i < this.removalQueuedComponents.length; ++i) {
-				var component = this.removalQueuedComponents[i];
-				if (component.remove) {
-					component.remove();
-				}
-				this.components.splice(this.components.indexOf(component), 1);
-			}
-			this.removalQueuedComponents = [];
 		}
 	};
 
@@ -2254,6 +2313,22 @@ function Entity(name, x, y) {
 		return null;
 	};
 
+	this.getComponentsInChildrenByName = function (componentName, outArray) {
+		var i;
+		outArray = outArray || [];
+
+		var foundComponents = this.getComponentsByName(componentName);
+		for (i = 0; i < foundComponents.length; ++i) {
+			outArray.push(foundComponents[i]);
+		}
+
+		for (i = 0; i < this.children.length; ++i) {
+			this.children[i].getComponentsInChildrenByName(componentName, outArray);
+		}
+
+		return outArray;
+	};
+
 	this.removeComponent = function (component) {
 		if (component.entity === this) {
 			this.removalQueuedComponents.push(component);
@@ -2321,11 +2396,17 @@ function Entity(name, x, y) {
 
 		this.width = this.parent.width;
 		this.height = this.parent.height;
-		this.x = this.y = 0;
+		this.alignToParent();
 
 		if (setAnchor) {
 			this.anchor.stretch = true;
 		}
+	};
+
+	// this one's the same as stretch but also sets pivot so coordinates are the same as screens.
+	this.makeFullscreen = function (setAnchor) {
+		this.pivotX = this.pivotY = 0.0;
+		this.stretchOnParent(setAnchor);
 	};
 
 	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor) {
@@ -3058,9 +3139,9 @@ function ComponentButton(image) {
 	this.disabled = false;
 	this.dimInactive = true;
 
-	this.onPress = function (button) {};
-	this.onHold = function (button) {};
-	this.onReleased = function (button) {};
+	this.onPress = chao.makeSignal();
+	this.onHold = chao.makeSignal();
+	this.onReleased = chao.makeSignal();
 
 	this.create = function () {
 		this.setImage(this.imageKey);
@@ -3079,23 +3160,19 @@ function ComponentButton(image) {
 			if (chao.mouse.justReleased) {
 				this.pressed = false;
 				buttonAlpha = 1.0;
-				if (this.onReleased) {
-					this.onReleased(this);
-					// hacky supress any other releases
-					// could do something like Godot's set_input_as_handled here
-					chao.mouse.justReleased = false;
-				}
+				this.onReleased.fire(this);
+				// hacky supress any other releases
+				// could do something like Godot's set_input_as_handled here
+				chao.mouse.justReleased = false;
 			}
 
 			if (chao.mouse.pressed) {
 				buttonAlpha = 0.5;
 
-				if (!this.pressed && this.onPress) {
-					this.onPress(this);
+				if (!this.pressed) {
+					this.onPress.fire(this);
 				}
-				if (this.onHold) {
-					this.onHold(this);
-				}
+				this.onHold.fire(this);
 
 				this.pressed = true;
 
@@ -3388,10 +3465,7 @@ ComponentTween.removeTween = function (tween, finish) {
 ComponentTween.removeTweensFromEntity = function (targetEntity, finish) {
 	var tweensToRemove = targetEntity.getComponentsByName("Tween");
 	for (var i = 0; i < tweensToRemove.length; ++i) {
-		if (finish) {
-			tweensToRemove[i].updateVar(1);
-		}
-		targetEntity.removeComponent(tweensToRemove[i]);
+		this.removeTween(tweensToRemove[i], finish);
 	}
 };
 
@@ -3400,10 +3474,7 @@ ComponentTween.removeAllTweens = function (finish) {
 	var n = allTweens.length;
 	for (var i = 0; i < n; ++i) {
 		var tween = allTweens[i];
-		if (finish) {
-			tween.updateVar(1);
-		}
-		tween.entity.removeComponent(tween);
+		this.removeTween(tween, finish);
 	}
 };
 
@@ -3536,11 +3607,11 @@ function ComponentShake(force, time, damped) {
 			}
 
 			// check for entity movement since the last frame.
-			if (this.shakenPosition.x != this.entity.x || this.shakenPosition.y != this.entity.y) {
-				this.entityPosition = {
-					x: this.entity.x,
-					y: this.entity.y
-				};
+			if (this.shakenPosition.x != this.entity.x) {
+				this.entityPosition.x = this.entity.x;
+			}
+			if (this.shakenPosition.y != this.entity.y) {
+				this.entityPosition.y = this.entity.y;
 			}
 
 			var xChange = chao.getRandom(range * 2) - range;
