@@ -10,20 +10,20 @@ function StateGame(){
 		newText.entity.alignToParent(0.5, 1.0, 0.5, 0.0, 10);
 		newText.color = chao.colorCodes[7];
 		newText.align = "center";
-	}
+	};
 
 	this.resize = function(){
 		//
-	}
+	};
 
 	this.update = function(){
 		if(chao.justPressed[chao.KEY_L]){
 			chao.logHierarchy(this.rootEntity);
 		}
-	}
+	};
 
 	this.draw = function(){
 		//
-	}
+	};
 
 }

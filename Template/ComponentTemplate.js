@@ -2,23 +2,21 @@ function ComponentTemplate(game) {
 	this.name = "Template";
 	this.entity = null;
 
-	this.game = game;
-
 	this.create = function() {
 		//
-	}
+	};
 
 	this.remove = function () {
 		//
-	}
+	};
 
 	this.destroy = function() {
 		//
-	}
+	};
 
 	this.draw = function() {
 		//
-	}
+	};
 
 	this.update = function() {
 		var entity = this.entity;
@@ -38,6 +36,6 @@ function ComponentTemplate(game) {
 
 		entity.x = chao.clamp(entity.x, entity.width/2, chao.screenWidth - entity.width / 2);
 		entity.y = chao.clamp(entity.y, entity.height/2, chao.screenHeight - entity.height / 2);
-	}
+	};
 
 }
