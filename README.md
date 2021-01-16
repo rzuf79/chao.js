@@ -7,7 +7,7 @@ aka
 
 Taking things I like from other game frameworks and throwing them into an entity-component flavored goulash.
 
-Mind that it's not something I intend to be widely used. This framework is a result of lots and lots of questionable habits I developed over the many years of making games.
+Mind that it's not something I intend to be used by anyone but myself. This framework is a result of lots and lots of questionable habits I developed over the many years of making games.
 
 
 # Goals

@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.51",
+	VERSION: "0.52",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -532,7 +532,7 @@ var chao = {
 			observers: [],
 
 			subscribe: function(func, targetObject) {
-				if (!this.observers.find(observer => observer.func === func)) {
+				if (this.findObserver(func) == -1) {
 					this.observers.push( {
 						func: func,
 						target: targetObject
@@ -541,23 +541,35 @@ var chao = {
 			},
 
 			unsubscribe: function(func) {
-				this.observers = this.observers.filter(observer => observer.func !== func);
+				var idx = this.findObserver(func);
+				if (idx != -1) {
+					this.observers.splice(idx, 1);
+				}
 			},
 
 			unsubscribeAll: function(target) {
-				if (!target) {
-					this.observers = [];
-				} else {
-					this.observers = this.observers.filter(observer => observer.target !== target);
-				}
+				this.observers = [];
 			},
 
 			fire: function() {
 				var i;
 				var n = this.observers.length;
-				for (var i = 0; i < n; ++i) {
-					this.observers[i].func.apply(this.observers[i].target, arguments);
+				for (i = 0; i < n; ++i) {
+					if (this.observers[i]) {
+						this.observers[i].func.apply(this.observers[i].target, arguments);
+					}
 				}
+			},
+
+			findObserver: function(func) {
+				var i;
+				var n = this.observers.length;
+				for (i = 0; i < n; ++i) {
+					if (this.observers[i].func === func) {
+						return i;
+					}
+				}
+				return -1;
 			},
 		};
 	},
@@ -634,6 +646,15 @@ var chao = {
 			chao.addImage(newImage);
 		}
 
+		return newImage;
+	},
+
+	createFlippedImage: function(image, newImageKey, flipX, flipY) {
+		var img = chao.getImage(image);
+		var newImage = chao.createImage(newImageKey, img.width, img.height);
+		var scaleX = flipX ? -1 : 1;
+		var scaleY = flipY ? -1 : 1;
+		chao.drawImage(newImage, img, 0, 0, 1, scaleX, scaleY);
 		return newImage;
 	},
 
@@ -720,24 +741,36 @@ var chao = {
 
 		image = chao.getImage(image);
 
-		if (!chao.smoothing) {
-			x = Math.round(x);
-			y = Math.round(y);
+		if (typeof(image) === "string") {
+			chao.log("No image of such id found: " + image);
+			return;
 		}
-
-		target.context.save();
-		target.context.globalAlpha = alpha;
 
 		var rotationPivot = {
 			x: (x + (image.width * scaleX * rotationOffsetX)),
 			y: (y + (image.height * scaleY * rotationOffsetY))
 		};
 
+		target.context.save();
+		target.context.globalAlpha = alpha;
 		target.context.translate(rotationPivot.x, rotationPivot.y);
 		target.context.rotate(chao.deg2rad(angle));
 		target.context.translate(-rotationPivot.x, -rotationPivot.y);
 
-		target.context.drawImage(image.canvas, x, y, image.width * scaleX, image.height * scaleY);
+		x = scaleX >= 0 ? x : x - image.width * scaleX;
+		y = scaleY >= 0 ? y : y - image.height * scaleY;
+
+		if (!chao.smoothing) {
+			x = Math.round(x);
+			y = Math.round(y);
+		}
+
+		target.context.translate(x, y);
+		target.context.scale(scaleX, scaleY);
+		target.context.drawImage(image.canvas,
+			0, 0,
+			image.width, image.height,
+			0, 0, image.width, image.height);
 
 		target.context.restore();
 	},
@@ -751,6 +784,11 @@ var chao = {
 		rotationOffsetY = rotationOffsetY === undefined ? 0.5 : rotationOffsetY;
 
 		image = chao.getImage(image);
+
+		if (typeof(image) === "string") {
+			chao.log("No image of such id found: " + image);
+			return;
+		}
 
 		var w = rect.width;
 		var h = rect.height;
@@ -1808,9 +1846,13 @@ var chao = {
 		return min + chao.getRandom(max);
 	},
 
-	coinToss: function (successChance) {
+	coinFlip: function (successChance) {
 		successChance = successChance || 50;
 		return chao.getRandom(100) < successChance;
+	},
+
+	getRandomElement: function (array) {
+		return array[chao.getRandom(array.length)];
 	},
 
 	rad2deg: function (radians) {
@@ -2505,13 +2547,6 @@ function Entity(name, x, y) {
 		return this.height * this.scaleY;
 	};
 
-	this.getScreenAlpha = function () {
-		if (this.parent === null) {
-			return this.alpha;
-		}
-		return this.alpha * this.parent.getScreenAlpha();
-	};
-
 	this.isPointInside = function (x, y) {
 		var sx = this.screenX;
 		var sy = this.screenY;
@@ -2636,6 +2671,12 @@ Entity.prototype = {
 	set screenY(value) {
 		this.transformMatrix.origin[1] += value - this.screenY;
 	},
+	get screenAlpha() {
+		if (this.parent === null) {
+			return this.alpha;
+		}
+		return this.alpha * this.parent.screenAlpha;
+	},
 	get scaleX() {
 		return this.getMatrixScaleX(this.transformMatrix);
 	},
@@ -2701,6 +2742,9 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 
 	this.flipX = false;
 	this.flipY = false;
+	this.imageFlippedX = null;
+	this.imageFlippedY = null;
+	this.imageFlippedXY = null;
 
 	this.scrollFactorX = 1.0;
 	this.scrollFactorY = 1.0;
@@ -2736,21 +2780,36 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			loop: true
 		};
 
+		var image = this.image;
+		if (this.flipX && this.flipY) {
+			if (!this.imageFlippedXY) {
+				this.imageFlippedXY = chao.createFlippedImage(this.image, undefined, true, true);
+			}
+			image = this.imageFlippedXY;
+		} else if (this.flipX) {
+			if (!this.imageFlippedX) {
+				this.imageFlippedX = chao.createFlippedImage(this.image, undefined, true, false);
+			}
+			image = this.imageFlippedX;
+		} else if (this.flipY) {
+			if (!this.imageFlippedY) {
+				this.imageFlippedY = chao.createFlippedImage(this.image, undefined, false, true);
+			}
+			image = this.imageFlippedY;
+		}
+
 		if (this.currentAnim != -1) {
 			anim = this.anims[this.currentAnim];
 		}
-
 
 		var parentMatrix = entity.parent.getTransformMatrix();
 		parentMatrix.origin[0] *= this.scrollFactorX;
 		parentMatrix.origin[1] *= this.scrollFactorY;
 		var currentMatrix = entity.multiplyMatrices(parentMatrix, entity.transformMatrix);
 
-		var drawScaleX = this.flipX ? -entity.screenScaleX : entity.screenScaleX;
-		var drawScaleY = this.flipY ? -entity.screenScaleY : entity.screenScaleY;
 		var drawX = currentMatrix.origin[0] - (entity.screenWidth * entity.pivotX);
 		var drawY = currentMatrix.origin[1] - (entity.screenHeight * entity.pivotY);
-		var drawAlpha = entity.getScreenAlpha();
+		var drawAlpha = entity.screenAlpha;
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
@@ -2761,18 +2820,28 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		};
 
 		if (this.currentAnim != -1) {
-			var framesNumX = this.image.width / entity.width;
+			var framesNumX = image.width / entity.width;
 			var frameX = anim.frames[this.currentFrame];
 			var frameY = Math.floor(frameX / framesNumX);
 			frameX -= frameY * framesNumX;
 
 			drawArea.x = Math.ceil(frameX * entity.width);
 			drawArea.y = Math.ceil(frameY * entity.height);
+
+			if (this.flipX) {
+				var maxFrameX = image.width - entity.width;
+				drawArea.x = Math.abs(maxFrameX - drawArea.x);
+			}
+			if (this.flipY) {
+				var maxFrameY = image.height - entity.height;
+				drawArea.y = Math.abs(maxFrameY - drawArea.y);
+			}
 		}
 
-		chao.drawImagePart(chao.canvas, this.image,
+		chao.drawImagePart(chao.canvas, image,
 			drawX, drawY, drawArea, drawAlpha,
-			drawScaleX, drawScaleY, entity.screenRotation,
+			entity.screenScaleX, entity.screenScaleY,
+			entity.screenRotation,
 			entity.pivotX, entity.pivotY);
 	};
 
@@ -2864,7 +2933,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 	this.setAnimPause = function (value) {
 		this.animPaused = value;
 	};
-}
+};
 
 /**
  * Text rendering component.
@@ -2915,7 +2984,7 @@ function ComponentText(font, text, size) {
 
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
-		var drawAlpha = this.entity.getScreenAlpha();
+		var drawAlpha = this.entity.screenAlpha;
 		var drawX = this.entity.screenX - (this.entity.screenWidth * this.entity.pivotX);
 		var drawY = this.entity.screenY - (this.entity.screenHeight * this.entity.pivotY);
 
@@ -3059,8 +3128,10 @@ ComponentText.prototype = {
 		return this._text;
 	},
 	set text(newText) {
-		this._text = newText;
-		this.changeText();
+		if (newText !== this.text) {
+			this._text = newText;
+			this.changeText();
+		}
 	},
 	get font() {
 		return this._font;
@@ -3415,13 +3486,16 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 				case chao.REPEAT_MODE_ONCE: {
 					this.timer = this.lifetime;
 					this.finished = true;
+					if (this.finishCallback) {
+						this.finishCallback.call(this, this);
+					}
 					this.entity.removeComponent(this);
 					break;
 				}
 				case chao.REPEAT_MODE_LOOP: {
 					this.timer = 0.0;
 					if (this.finishCallback) {
-						this.finishCallback.call(this.target);
+						this.finishCallback.call(this, this);
 					}
 					break;
 				}
@@ -3429,7 +3503,7 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 					this.timer = 0.0;
 					this.direction = this.direction == 1 ? -1 : 1;
 					if (this.finishCallback) {
-						this.finishCallback.call(this.target);
+						this.finishCallback.call(this, this);
 					}
 				}
 			}
@@ -3495,6 +3569,9 @@ function ComponentParticle(image) {
 		x: 0,
 		y: 0
 	};
+	this.velocityDamping = 0;
+	this.scaleVel = 0;
+	this.scaleAcc = 0;
 	this.rotationVel = 0;
 	this.rotationAcc = 0;
 
@@ -3546,11 +3623,19 @@ function ComponentParticle(image) {
 
 		this.velocity.x += this.acceleration.x * delta;
 		this.velocity.y += this.acceleration.y * delta;
+		this.velocity.x = chao.moveTowards(this.velocity.x, 0, this.velocityDamping * delta);
+		this.velocity.y = chao.moveTowards(this.velocity.y, 0, this.velocityDamping * delta);
 		this.entity.x += this.velocity.x * delta;
 		this.entity.y += this.velocity.y * delta;
 
 		this.rotationVel += this.rotationAcc * delta;
 		this.entity.rotation += this.rotationVel * delta;
+
+		this.scaleVel += this.scaleAcc * delta;
+		this.entity.scaleX += this.scaleVel * delta;
+		this.entity.scaleY += this.scaleVel * delta;
+		if (this.entity.scaleX < 0) this.entity.scaleX = 0.0;
+		if (this.entity.scaleY < 0) this.entity.scaleY = 0.0;
 
 	};
 }

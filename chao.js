@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.51",
+	VERSION: "0.52",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -654,18 +654,7 @@ var chao = {
 		var newImage = chao.createImage(newImageKey, img.width, img.height);
 		var scaleX = flipX ? -1 : 1;
 		var scaleY = flipY ? -1 : 1;
-
-		// drawImagePart: function (target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
-
 		chao.drawImage(newImage, img, 0, 0, 1, scaleX, scaleY);
-		// var drawArea = {
-		// 	x: 0,
-		// 	y: 0,
-		// 	width: img.width,
-		// 	height: img.height
-		// };
-
-		// chao.drawImagePart(newImage, img, 0, 0, drawArea, 1.0, scaleX, scaleY);
 		return newImage;
 	},
 
@@ -2558,13 +2547,6 @@ function Entity(name, x, y) {
 		return this.height * this.scaleY;
 	};
 
-	this.getScreenAlpha = function () {
-		if (this.parent === null) {
-			return this.alpha;
-		}
-		return this.alpha * this.parent.getScreenAlpha();
-	};
-
 	this.isPointInside = function (x, y) {
 		var sx = this.screenX;
 		var sy = this.screenY;
@@ -2688,6 +2670,12 @@ Entity.prototype = {
 	},
 	set screenY(value) {
 		this.transformMatrix.origin[1] += value - this.screenY;
+	},
+	get screenAlpha() {
+		if (this.parent === null) {
+			return this.alpha;
+		}
+		return this.alpha * this.parent.screenAlpha;
 	},
 	get scaleX() {
 		return this.getMatrixScaleX(this.transformMatrix);
@@ -2821,7 +2809,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 
 		var drawX = currentMatrix.origin[0] - (entity.screenWidth * entity.pivotX);
 		var drawY = currentMatrix.origin[1] - (entity.screenHeight * entity.pivotY);
-		var drawAlpha = entity.getScreenAlpha();
+		var drawAlpha = entity.screenAlpha;
 		if (drawAlpha > 1.0) drawAlpha = 1.0;
 
 		var drawArea = {
@@ -2996,7 +2984,7 @@ function ComponentText(font, text, size) {
 
 		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
 		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
-		var drawAlpha = this.entity.getScreenAlpha();
+		var drawAlpha = this.entity.screenAlpha;
 		var drawX = this.entity.screenX - (this.entity.screenWidth * this.entity.pivotX);
 		var drawY = this.entity.screenY - (this.entity.screenHeight * this.entity.pivotY);
 
@@ -3140,8 +3128,10 @@ ComponentText.prototype = {
 		return this._text;
 	},
 	set text(newText) {
-		this._text = newText;
-		this.changeText();
+		if (newText !== this.text) {
+			this._text = newText;
+			this.changeText();
+		}
 	},
 	get font() {
 		return this._font;
@@ -3497,7 +3487,7 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 					this.timer = this.lifetime;
 					this.finished = true;
 					if (this.finishCallback) {
-						this.finishCallback.call(this.target);
+						this.finishCallback.call(this, this);
 					}
 					this.entity.removeComponent(this);
 					break;
@@ -3505,7 +3495,7 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 				case chao.REPEAT_MODE_LOOP: {
 					this.timer = 0.0;
 					if (this.finishCallback) {
-						this.finishCallback.call(this.target);
+						this.finishCallback.call(this, this);
 					}
 					break;
 				}
@@ -3513,7 +3503,7 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 					this.timer = 0.0;
 					this.direction = this.direction == 1 ? -1 : 1;
 					if (this.finishCallback) {
-						this.finishCallback.call(this.target);
+						this.finishCallback.call(this, this);
 					}
 				}
 			}
@@ -3579,6 +3569,7 @@ function ComponentParticle(image) {
 		x: 0,
 		y: 0
 	};
+	this.velocityDamping = 0;
 	this.scaleVel = 0;
 	this.scaleAcc = 0;
 	this.rotationVel = 0;
@@ -3632,6 +3623,8 @@ function ComponentParticle(image) {
 
 		this.velocity.x += this.acceleration.x * delta;
 		this.velocity.y += this.acceleration.y * delta;
+		this.velocity.x = chao.moveTowards(this.velocity.x, 0, this.velocityDamping * delta);
+		this.velocity.y = chao.moveTowards(this.velocity.y, 0, this.velocityDamping * delta);
 		this.entity.x += this.velocity.x * delta;
 		this.entity.y += this.velocity.y * delta;
 
@@ -3641,6 +3634,8 @@ function ComponentParticle(image) {
 		this.scaleVel += this.scaleAcc * delta;
 		this.entity.scaleX += this.scaleVel * delta;
 		this.entity.scaleY += this.scaleVel * delta;
+		if (this.entity.scaleX < 0) this.entity.scaleX = 0.0;
+		if (this.entity.scaleY < 0) this.entity.scaleY = 0.0;
 
 	};
 }
