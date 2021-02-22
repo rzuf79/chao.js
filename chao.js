@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.52",
+	VERSION: "0.55",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -662,6 +662,12 @@ var chao = {
 		var scaleY = flipY ? -1 : 1;
 		chao.drawImage(newImage, img, 0, 0, 1, scaleX, scaleY);
 		return newImage;
+	},
+
+	resizeImage: function (image, newWidth, newHeight) {
+		var img = chao.getImage(image);
+		img.width = img.canvas.width = newWidth;
+		img.height = img.canvas.height = newHeight;
 	},
 
 	addImage: function (image) {
@@ -1692,6 +1698,10 @@ var chao = {
 		};
 	},
 
+	comparePoints: function(point1, point2) {
+		return point1.x == point2.x && point1.y == point2.y;
+	},
+
 	rotatePoint: function (point, originX, originY, rotation) {
 		rotation = chao.deg2rad(rotation);
 		var s = Math.sin(rotation);
@@ -1730,6 +1740,90 @@ var chao = {
 		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x) + (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
 		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x) + (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
 		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
+	},
+
+	makeTransformMatrix: function(x, y) {
+		return {
+			x: [1, 0],
+			y: [0, 1],
+			origin: [x || 0, y || 0],
+
+			getDuplicate: function() {
+				var newMatrix = chao.makeTransformMatrix(x, y);
+				newMatrix.x = this.x;
+				newMatrix.y = this.y;
+				return newMatrix;
+			},
+
+			getMultiplied: function(parent) {
+				var x0 = parent.x[0] * this.x[0] + parent.y[0] * this.x[1];
+				var x1 = parent.x[1] * this.x[0] + parent.y[1] * this.x[1];
+				var y0 = parent.x[0] * this.y[0] + parent.y[0] * this.y[1];
+				var y1 = parent.x[1] * this.y[0] + parent.y[1] * this.y[1];
+				
+				var newMatrix = chao.makeTransformMatrix();
+				newMatrix.origin[0] = parent.x[0] * this.origin[0] + parent.y[0] * this.origin[1] + parent.origin[0];
+				newMatrix.origin[1] = parent.x[1] * this.origin[0] + parent.y[1] * this.origin[1] + parent.origin[1];
+				newMatrix.x = [x0, x1];
+				newMatrix.y = [y0, y1];
+
+				return newMatrix;
+			},
+
+			getX: function() {
+				return this.origin[0];
+			},
+
+			getY: function() {
+				return this.origin[1];
+			},
+
+			setX: function(value) {
+				this.origin[0] = value;
+			},
+
+			setY: function(value) {
+				this.origin[1] = value;
+			},
+
+			getScaleX: function() {
+				return Math.sqrt((this.x[0] * this.x[0]) + (this.y[0] * this.y[0]));
+			},
+
+			getScaleY: function() {
+				return Math.sqrt((this.x[1] * this.x[1]) + (this.y[1] * this.y[1]));
+			},
+
+			setScaleX: function(value) {
+				var currentScale = this.getScaleX();
+				this.x[0] = (this.x[0] / currentScale) * value;
+				this.y[0] = (this.y[0] / currentScale) * value;
+			},
+			
+			setScaleY: function(value) {
+				var currentScale = this.getScaleY();
+				this.x[1] = (this.x[1] / currentScale) * value;
+				this.y[1] = (this.y[1] / currentScale) * value;
+			},
+
+			getRotation: function() {
+				return chao.rad2deg(Math.atan2(this.x[1], this.x[0]));
+			},
+
+			setRotation: function(value) {
+				var rads = chao.deg2rad(value);
+				var scaleX = this.getScaleX();
+				var scaleY = this.getScaleY();
+				var cr = Math.cos(rads);
+				var sr = Math.sin(rads);
+				this.x[0] = cr * scaleX;
+				this.y[0] = -sr * scaleX;
+				this.x[1] = sr * scaleY;
+				this.y[1] = cr * scaleY;
+			},
+
+
+		}
 	},
 
 	// Points - All the points shaping the polygon. 
@@ -1957,12 +2051,12 @@ var chao = {
 		});
 	},
 
-	log: function (thingie) {
+	log: function (thingie, logTrace) {
 		if (chao.loggingEnabled) {
 			if (chao.debugLogTarget) {
 				chao.debugLogTarget.innerHTML += String(thingie).replace(/\n/g, "<br/>") + "<br/>";
 			} else {
-				console.log(thingie);
+				logTrace ? console.trace(thingie) : console.log(thingie);
 			}
 		}
 	},
@@ -1973,7 +2067,6 @@ var chao = {
 	},
 
 	logEntity: function (entity, indent) {
-
 		entity = entity || chao.getCurrentState().rootEntity;
 		indent = indent || 0;
 
@@ -2011,7 +2104,6 @@ var chao = {
 	},
 
 	installVisibilityHandler: function () {
-
 		if (chao.visibilityHandlerInstalled) {
 			chao.log("Visibility Handler is already installed!");
 			return;
@@ -2152,11 +2244,7 @@ var chao = {
 function Entity(name, x, y) {
 	this.name = name || "Entity";
 
-	this.transformMatrix = {
-		x: [1, 0],
-		y: [0, 1],
-		origin: [x || 0, y || 0],
-	};
+	this.transformMatrix = chao.makeTransformMatrix(x, y);
 
 	this.pivotX = 0.5;
 	this.pivotY = 0.5;
@@ -2327,7 +2415,7 @@ function Entity(name, x, y) {
 	this.getComponentByName = function (componentName) {
 		for (var i = 0; i < this.components.length; ++i) {
 			var c = this.components[i];
-			if (c.name === componentName && this.removalQueuedComponents.indexOf(c) == -1) {
+			if (c.name === componentName && !this.isComponentQueuedForRemoval(c)) {
 				return this.components[i];
 			}
 		}
@@ -2340,7 +2428,7 @@ function Entity(name, x, y) {
 
 		for (var i = 0; i < this.components.length; ++i) {
 			var c = this.components[i];
-			if (c.name === componentName && this.removalQueuedComponents.indexOf(c) == -1) {
+			if (c.name === componentName && !this.isComponentQueuedForRemoval(c)) {
 				allComponents.push(this.components[i]);
 			}
 		}
@@ -2382,7 +2470,9 @@ function Entity(name, x, y) {
 
 	this.removeComponent = function (component) {
 		if (component.entity === this) {
-			this.removalQueuedComponents.push(component);
+			if (!this.isComponentQueuedForRemoval(component)) {
+				this.removalQueuedComponents.push(component);
+			}
 		} else {
 			chao.log("Entity " + this + " have no such component: " + component);
 		}
@@ -2400,6 +2490,10 @@ function Entity(name, x, y) {
 			}
 			this.removeComponent(component);
 		}
+	};
+
+	this.isComponentQueuedForRemoval = function(component) {
+		return this.removalQueuedComponents.indexOf(component) != -1;
 	};
 
 	this.onClick = function () {
@@ -2455,6 +2549,7 @@ function Entity(name, x, y) {
 	};
 
 	// this one's the same as stretch but also sets pivot so coordinates are the same as screens.
+	// (0x0 is top-right)
 	this.makeFullscreen = function (setAnchor) {
 		this.pivotX = this.pivotY = 0.0;
 		this.stretchOnParent(setAnchor);
@@ -2512,40 +2607,12 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.multiplyMatrices = function (parent, child) {
-		var x0 = parent.x[0] * child.x[0] + parent.y[0] * child.x[1];
-		var x1 = parent.x[1] * child.x[0] + parent.y[1] * child.x[1];
-		var y0 = parent.x[0] * child.y[0] + parent.y[0] * child.y[1];
-		var y1 = parent.x[1] * child.y[0] + parent.y[1] * child.y[1];
-
-		return {
-			origin: [
-				parent.x[0] * child.origin[0] + parent.y[0] * child.origin[1] + parent.origin[0],
-				parent.x[1] * child.origin[0] + parent.y[1] * child.origin[1] + parent.origin[1],
-			],
-			x: [x0, x1],
-			y: [y0, y1],
-		};
-	};
-
 	// mind that this one gets you just a copy of the thing
 	this.getTransformMatrix = function () {
 		if (this.parent === null) {
-			return {
-				origin: this.transformMatrix.origin,
-				x: this.transformMatrix.x,
-				y: this.transformMatrix.y
-			};
+			return this.transformMatrix.getDuplicate();
 		}
-		return this.multiplyMatrices(this.parent.getTransformMatrix(), this.transformMatrix);
-	};
-
-	this.getMatrixScaleX = function (matrix) {
-		return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
-	};
-
-	this.getMatrixScaleY = function (matrix) {
-		return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
+		return this.transformMatrix.getMultiplied(this.parent.getTransformMatrix());
 	};
 
 	this.getWidth = function () {
@@ -2657,25 +2724,25 @@ function Entity(name, x, y) {
 }
 Entity.prototype = {
 	get x() {
-		return this.transformMatrix.origin[0];
+		return this.transformMatrix.getX();
 	},
 	set x(value) {
-		this.transformMatrix.origin[0] = value;
+		this.transformMatrix.setX(value);
 	},
 	get y() {
-		return this.transformMatrix.origin[1];
+		return this.transformMatrix.getY();
 	},
 	set y(value) {
-		this.transformMatrix.origin[1] = value;
+		this.transformMatrix.setY(value);
 	},
 	get screenX() {
-		return this.getTransformMatrix().origin[0];
+		return this.getTransformMatrix().getX();
 	},
 	set screenX(value) {
 		this.transformMatrix.origin[0] += value - this.screenX;
 	},
 	get screenY() {
-		return this.getTransformMatrix().origin[1];
+		return this.getTransformMatrix().getY();
 	},
 	set screenY(value) {
 		this.transformMatrix.origin[1] += value - this.screenY;
@@ -2687,47 +2754,31 @@ Entity.prototype = {
 		return this.alpha * this.parent.screenAlpha;
 	},
 	get scaleX() {
-		return this.getMatrixScaleX(this.transformMatrix);
+		return this.transformMatrix.getScaleX();
 	},
 	set scaleX(value) {
-		var mat = this.transformMatrix;
-		var currentScale = this.scaleX;
-		mat.x[0] = (mat.x[0] / currentScale) * value;
-		mat.y[0] = (mat.y[0] / currentScale) * value;
+		this.transformMatrix.setScaleX(value);
 	},
 	get scaleY() {
-		return this.getMatrixScaleY(this.transformMatrix);
+		return this.transformMatrix.getScaleY();
 	},
 	set scaleY(value) {
-		var mat = this.transformMatrix;
-		var currentScale = this.scaleY;
-		mat.x[1] = (mat.x[1] / currentScale) * value;
-		mat.y[1] = (mat.y[1] / currentScale) * value;
+		this.transformMatrix.setScaleY(value);
 	},
 	get screenScaleX() {
-		return this.getMatrixScaleX(this.getTransformMatrix());
+		return this.getTransformMatrix().getScaleX();
 	},
 	get screenScaleY() {
-		return this.getMatrixScaleY(this.getTransformMatrix());
+		return this.getTransformMatrix().getScaleY();
 	},
 	get rotation() {
-		var mat = this.transformMatrix;
-		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+		return this.transformMatrix.getRotation();
 	},
 	set rotation(value) {
-		var rads = chao.deg2rad(value);
-		var scaleX = this.scaleX;
-		var scaleY = this.scaleY;
-		var cr = Math.cos(rads);
-		var sr = Math.sin(rads);
-		this.transformMatrix.x[0] = cr * scaleX;
-		this.transformMatrix.y[0] = -sr * scaleX;
-		this.transformMatrix.x[1] = sr * scaleY;
-		this.transformMatrix.y[1] = cr * scaleY;
+		this.transformMatrix.setRotation(value);
 	},
 	get screenRotation() {
-		var mat = this.getTransformMatrix();
-		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+		return this.getTransformMatrix().getRotation();
 	},
 	set screenRotation(value) {
 		this.rotation += value - this.screenRotation;
@@ -2814,7 +2865,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		var parentMatrix = entity.parent.getTransformMatrix();
 		parentMatrix.origin[0] *= this.scrollFactorX;
 		parentMatrix.origin[1] *= this.scrollFactorY;
-		var currentMatrix = entity.multiplyMatrices(parentMatrix, entity.transformMatrix);
+		var currentMatrix = entity.transformMatrix.getMultiplied(parentMatrix);
 
 		var drawX = currentMatrix.origin[0] - (entity.screenWidth * entity.pivotX);
 		var drawY = currentMatrix.origin[1] - (entity.screenHeight * entity.pivotY);
@@ -3336,16 +3387,7 @@ function ComponentCamera() {
 
 	this.offsetX = 0;
 	this.offsetY = 0;
-	this.deadzone = {
-		x: 0,
-		y: 0,
-		width: 0,
-		height: 0
-	};
-	this.previousPos = {
-		x: 0,
-		y: 0
-	};
+	
 	this.bounds = {
 		x: 0,
 		y: 0,
@@ -3361,50 +3403,16 @@ function ComponentCamera() {
 			return;
 		}
 
-		// figuring out some basic stuff
-		var targetPos = {
-			x: this.trackedEntity.screenX,
-			y: this.trackedEntity.screenY
-		};
-
-		var relativePos = {
-			x: targetPos.x + this.entity.x,
-			y: targetPos.y + this.entity.y
+		var targetPosOffset = {
+			x: chao.screenWidth / 2 - this.trackedEntity.screenX,
+			y: chao.screenHeight / 2 - this.trackedEntity.screenY
 		};
 
 		var cameraPos = {
-			x: (-targetPos.x + chao.screenWidth) - this.offsetX,
-			y: (-targetPos.y + chao.screenHeight) - this.offsetY
+			x: this.entity.x + targetPosOffset.x,
+			y: this.entity.y + targetPosOffset.y
 		};
 
-		// contrived deadzone calculations
-		if (this.deadzone.width > 0 && this.deadzone.height > 0) {
-			if (targetPos.x > (this.deadzone.x - this.entity.x) + this.deadzone.width / 2) {
-				cameraPos.x += Math.abs(((this.deadzone.x - cameraPos.x) + this.deadzone.width) - targetPos.x);
-			} else {
-				cameraPos.x -= Math.abs((this.deadzone.x - cameraPos.x) - targetPos.x);
-			}
-			if (targetPos.y > (this.deadzone.y - this.entity.y) + this.deadzone.height / 2) {
-				cameraPos.y += Math.abs(((this.deadzone.y - cameraPos.y) + this.deadzone.height) - targetPos.y);
-			} else {
-				cameraPos.y -= Math.abs((this.deadzone.y - cameraPos.y) - targetPos.y);
-			}
-
-			var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x + this.deadzone.width;
-			var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y + this.deadzone.height;
-			if (deadZonedX) {
-				cameraPos.x = this.previousPos.x;
-			} else {
-				this.previousPos.x = cameraPos.x;
-			}
-			if (deadZonedY) {
-				cameraPos.y = this.previousPos.y;
-			} else {
-				this.previousPos.y = cameraPos.y;
-			}
-		}
-
-		// clamping camera position to the set bounds
 		this.clampToBounds(cameraPos);
 
 		this.entity.x = chao.interpolate(this.entity.x, cameraPos.x, chao.timeDelta * this.trackingSpeed);
@@ -3444,6 +3452,13 @@ function ComponentCamera() {
 		this.slideTweens = [];
 	};
 
+	this.setBounds = function(x, y, width, height) {
+		this.bounds.x = x;
+		this.bounds.y = y;
+		this.bounds.width = width;
+		this.bounds.height = height;
+	};
+
 	this.clampToBounds = function (cameraPos) {
 		if (this.bounds.width > 0) {
 			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x + this.bounds.width) - chao.screenWidth);
@@ -3457,6 +3472,8 @@ function ComponentCamera() {
 function ComponentTween(varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
 	this.name = "Tween";
 	this.entity = null;
+
+	this.id = chao.getRandomRange(10000, 99999);
 
 	this.target = null;
 	this.varName = varName;
@@ -3651,6 +3668,123 @@ function ComponentParticle(image) {
 ComponentParticle.FADE_MODE_NONE = 0;
 ComponentParticle.FADE_MODE_LINEAR = 1;
 ComponentParticle.FADE_MODE_LAST_SECOND = 2;
+
+function ComponentParticles(image) {
+	this.name = "Particles";
+	this.entity = null;
+
+	this.emitting = true;
+	this.amount = 1;
+
+	this.lifetime = 1.0;
+	this.useUnscaledTime = false;
+	this.oneShot = false;
+	this.disposable = false;
+	this.explosiveness = 0.0;
+
+	this.emissionShapeSize = 0.0;
+
+	this.velocity = chao.makePoint(0, 0);
+	this.velocityRandomness = 0.0;
+	this.acceleration = chao.makePoint(0, 0);
+	this.velocityDamping = 0;
+	this.scaleVel = 0;
+	this.scaleAcc = 0;
+	this.rotationVel = 0;
+	this.rotationAcc = 0;
+
+	this.fadeOutStartTime = 0.8; // percentwise, 0-1
+
+	this.create = function () {
+		image = chao.getImage(image);
+
+		this.particles = [];
+	};
+
+	this.update = function () {
+		var entity = this.entity;
+		var x = entity.screenX;
+		var y = entity.screenY;
+		var i;
+		var deadParticles = [];
+		var delta = this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
+
+		// spawning new particles
+		if (this.emitting) {
+			var interval = this.lifetime / this.amount;
+			var nextEmit = interval * this.emittedAmount;
+
+			this.timer += delta;
+			if (this.timerLast <= nextEmit && this.timer > nextEmit) {
+				this.emittedAmount ++;
+
+				var newParticle = {
+					x: chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
+					y: chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
+					vel: chao.makePoint(this.velocity.x * this.velocityRandomness, this.velocity.y * this.velocityRandomness),
+					scaleVel: chao.makePoint(this.scaleVel.x, this.scaleVel.y),
+					rotationVel: chao.makePoint(this.rotationVel, this.rotationVel),
+					timer: 0.0
+				};
+				this.particles.push(newParticle);
+			}
+		} else if (this.disposable){
+			if (this.particles.length <= 0) {
+				entity.removeComponent(this);
+				return;
+			}
+		}
+
+		// upadting particles
+		for (i = 0; i < this.particles.length; ++i) {
+			var particle = this.particles[i];
+
+			particle.timer += delta;
+			if (particle.timer >= this.lifetime) {
+				deadParticles.push(particle);
+				continue;
+			}
+
+			particle.vel.x += this.acceleration.x * delta;
+			particle.vel.x += this.acceleration.x * delta;
+			particle.vel.x = chao.moveTowards(particle.vel.x, 0, this.velocityDamping * delta);
+			particle.vel.y = chao.moveTowards(particle.vel.y, 0, this.velocityDamping * delta);
+			particle.x += particle.vel.x * delta;
+			particle.y += particle.vel.y * delta;
+		}
+
+		for (i = 0; i < deadParticles.length; ++i) {
+			this.particles.splice(this.particles.indexOf(deadParticles[i]), 1);
+		}
+
+		this.timerLast = this.timer;
+	};
+
+	this.draw = function() {
+		var entity = this.entity;
+		var x = entity.screenX;
+		var y = entity.screenY;
+		var i;
+
+		for (i = 0; i < this.particles.length; ++i) {
+			var particle = this.particles[i];
+			
+		}
+	};
+
+	this.play = function () {
+		this.emittedAmount = 0;
+		this.timer = this.timerLast = 0.0;
+		this.emitting = true;
+	};
+
+	this.stop = function (immediately) {
+		if (immediately) {
+			this.particles = [];
+		}
+		this.emitting = false;
+	}
+}
 
 function ComponentShake(force, time, damped) {
 	this.name = "Shake";
