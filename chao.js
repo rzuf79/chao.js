@@ -3655,7 +3655,6 @@ function ComponentParticles(image) {
 
 	this.create = function () {
 		image = chao.getImage(image);
-
 		this.particles = [];
 	};
 

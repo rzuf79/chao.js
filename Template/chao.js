@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.52",
+	VERSION: "0.6",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -662,6 +662,12 @@ var chao = {
 		var scaleY = flipY ? -1 : 1;
 		chao.drawImage(newImage, img, 0, 0, 1, scaleX, scaleY);
 		return newImage;
+	},
+
+	resizeImage: function (image, newWidth, newHeight) {
+		var img = chao.getImage(image);
+		img.width = img.canvas.width = newWidth;
+		img.height = img.canvas.height = newHeight;
 	},
 
 	addImage: function (image) {
@@ -1685,55 +1691,186 @@ var chao = {
 		};
 	},
 
-	makePoint: function (x, y) {
+	makeVector2: function(x, y) {
 		return {
-			x: x,
-			y: y
+			x: x || 0,
+			y: y || 0,
+
+			set: function(x, y) {
+				this.x = x;
+				this.y = y;
+			},
+
+			compare: function (vector, epsilon) {
+				epsilon = epsilon || 0.001;
+				return Math.abs(this.x - vector.x) < epsilon
+					&& Math.abs(this.y - vector.y) < epsilon;
+			},
+
+			toString: function() {
+				var roundX = Math.round(1000 * this.x) / 1000;
+				var roundY = Math.round(1000 * this.y) / 1000;
+				return "" + roundX + "x" + roundY;
+			},
+
+			duplicate: function() {
+				return chao.makeVector2(this.x, this.y);
+			},
+
+			add: function (vector) {
+				this.x += vector.x;
+				this.y += vector.y;
+			},
+
+			substract: function (vector) {
+				this.x -= vector.x;
+				this.y -= vector.y;
+			},
+
+			multiply: function (value1, value2) {
+				if (typeof(value1) === "object") {
+					this.x *= value1.x;
+					this.y *= value1.y;
+				} else if (value2 !== undefined) {
+					this.x *= value1;
+					this.y *= value2;
+				} else {
+					this.x *= value1;
+					this.y *= value1;
+				}
+			},
+
+			divide: function (value1, value2) {
+				if (typeof(value1) === "object") {
+					this.x /= value1.x;
+					this.y /= value1.y;
+				} else if (value2 !== undefined) {
+					this.x /= value1;
+					this.y /= value2;
+				} else {
+					this.x /= value1;
+					this.y /= value1;
+				}
+			},
+
+			getLength: function () {
+				return Math.sqrt((this.x * this.x) + (this.y * this.y));
+			},
+
+			normalize: function () {
+				var len = this.getLength();
+				this.x /= len;
+				this.y /= len;
+			},
+
+			rotate: function (degrees) {
+				degrees = chao.deg2rad(degrees);
+				var newX = this.x * Math.cos(degrees) - this.y * Math.sin(degrees);
+				var newY = this.x * Math.sin(degrees) + this.y * Math.cos(degrees);
+				this.x = newX;
+				this.y = newY;
+			},
+
+			rotateAroundPoint: function(pointX, pointY, degrees) {
+				degrees = chao.deg2rad(degrees);
+				var s = Math.sin(degrees);
+				var c = Math.cos(degrees);
+				this.x -= pointX;
+				this.y -= pointY;
+				var newX = this.x * c - this.y * s;
+				var newY = this.x * s + this.y * c;
+				this.x = newX + pointX;
+				this.y = newY + pointY;
+			},
 		};
 	},
 
-	rotatePoint: function (point, originX, originY, rotation) {
-		rotation = chao.deg2rad(rotation);
-		var s = Math.sin(rotation);
-		var c = Math.cos(rotation);
-		point.x -= originX;
-		point.y -= originY;
-		var newX = point.x * c - point.y * s;
-		var newY = point.x * s + point.y * c;
-		point.x = newX + originX;
-		point.y = newY + originY;
-	},
-
-	makeVector: function (pointFrom, pointTo) {
+	makeTransformMatrix: function(x, y) {
 		return {
-			x: pointTo.x - pointFrom.x,
-			y: pointTo.y - pointFrom.y
-		};
-	},
+			x: [1, 0],
+			y: [0, 1],
+			origin: [x || 0, y || 0],
 
-	getVectorLength: function (vec) {
-		return Math.sqrt((vec.x * vec.x) + (vec.y * vec.y));
-	},
+			getDuplicate: function() {
+				var newMatrix = chao.makeTransformMatrix(x, y);
+				newMatrix.x = this.x;
+				newMatrix.y = this.y;
+				return newMatrix;
+			},
 
-	normalizeVector: function (vec) {
-		var len = chao.getVectorLength(vec);
-		vec.x /= len;
-		vec.y /= len;
-	},
+			getMultiplied: function(parent) {
+				var x0 = parent.x[0] * this.x[0] + parent.y[0] * this.x[1];
+				var x1 = parent.x[1] * this.x[0] + parent.y[1] * this.x[1];
+				var y0 = parent.x[0] * this.y[0] + parent.y[0] * this.y[1];
+				var y1 = parent.x[1] * this.y[0] + parent.y[1] * this.y[1];
+				
+				var newMatrix = chao.makeTransformMatrix();
+				newMatrix.origin[0] = parent.x[0] * this.origin[0] + parent.y[0] * this.origin[1] + parent.origin[0];
+				newMatrix.origin[1] = parent.x[1] * this.origin[0] + parent.y[1] * this.origin[1] + parent.origin[1];
+				newMatrix.x = [x0, x1];
+				newMatrix.y = [y0, y1];
 
-	areLinesIntersecting: function (line1a, line1b, line2a, line2b) {
-		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y) - (line2b.x - line2a.x) * (line1b.y - line1a.y);
-		if (det === 0) {
-			return false;
+				return newMatrix;
+			},
+
+			getX: function() {
+				return this.origin[0];
+			},
+
+			getY: function() {
+				return this.origin[1];
+			},
+
+			setX: function(value) {
+				this.origin[0] = value;
+			},
+
+			setY: function(value) {
+				this.origin[1] = value;
+			},
+
+			getScaleX: function() {
+				return Math.sqrt((this.x[0] * this.x[0]) + (this.y[0] * this.y[0]));
+			},
+
+			getScaleY: function() {
+				return Math.sqrt((this.x[1] * this.x[1]) + (this.y[1] * this.y[1]));
+			},
+
+			setScaleX: function(value) {
+				var currentScale = this.getScaleX();
+				this.x[0] = (this.x[0] / currentScale) * value;
+				this.y[0] = (this.y[0] / currentScale) * value;
+			},
+			
+			setScaleY: function(value) {
+				var currentScale = this.getScaleY();
+				this.x[1] = (this.x[1] / currentScale) * value;
+				this.y[1] = (this.y[1] / currentScale) * value;
+			},
+
+			getRotation: function() {
+				return chao.rad2deg(Math.atan2(this.x[1], this.x[0]));
+			},
+
+			setRotation: function(value) {
+				var rads = chao.deg2rad(value);
+				var scaleX = this.getScaleX();
+				var scaleY = this.getScaleY();
+				var cr = Math.cos(rads);
+				var sr = Math.sin(rads);
+				this.x[0] = cr * scaleX;
+				this.y[0] = -sr * scaleX;
+				this.x[1] = sr * scaleY;
+				this.y[1] = cr * scaleY;
+			},
+
+
 		}
-
-		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x) + (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
-		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x) + (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
-		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
 	// Points - All the points shaping the polygon. 
-	// Can be array of points (see makePoint()) or just a simple array built like this: [x1, y1, x2, y2, ...].
+	// Can be array of Vector2s (see makeVector2()) or just a simple array built like this: [x1, y1, x2, y2, ...].
 	makePolygon: function (points) {
 		if (!Array.isArray(points) || points.length < 1) {
 			chao.log("makePolygon: points param is not an array or has no elements. :(");
@@ -1766,80 +1903,93 @@ var chao = {
 		}
 
 		return {
-			points: points, // Points shaping the poly
-			left: left, // The far left point
-			right: right, // The far right point
-			top: top, // Highest point
-			bottom: bottom // Lowest point
+			points: points,
+			left: left,
+			right: right,
+			top: top,
+			bottom: bottom,
+
+			intersects: function (otherPoly) {
+				var polys = [this, otherPoly];
+				var i1, pi, point, projected;
+				for (var i = 0; i < polys.length; ++i) {
+					var polygon = polys[i];
+
+					for (i1 = 0; i1 < polygon.points.length; i1++) {
+						var i2 = (i1 + 1) % polygon.points.length;
+						var p1 = polygon.points[i1];
+						var p2 = polygon.points[i2];
+
+						var normal = chao.makeVector2(p2.y - p1.y, p1.x - p2.x);
+
+						var minA = null,
+							maxA = null;
+						for (pi = 0; pi < this.points.length; ++pi) {
+							point = this.points[pi];
+							projected = normal.x * point.x + normal.y * point.y;
+							if (minA === null || projected < minA)
+								minA = projected;
+							if (maxA === null || projected > maxA)
+								maxA = projected;
+						}
+
+						var minB = null,
+							maxB = null;
+						for (pi = 0; pi < otherPoly.points.length; ++pi) {
+							point = otherPoly.points[pi];
+							projected = normal.x * point.x + normal.y * point.y;
+							if (minB === null || projected < minB)
+								minB = projected;
+							if (maxB === null || projected > maxB)
+								maxB = projected;
+						}
+
+						if (maxA < minB || maxB < minA)
+							return false;
+					}
+				}
+				return true;
+			},
+
+			isPointInside: function(point) {
+				if (point.x < this.left || point.x > this.right || point.y < this.top || point.y > this.bottom) {
+					return false;
+				}
+
+				var intersections = 0;
+				var raycastOrigin = {
+					x: this.left - 1,
+					y: point.y
+				};
+				var pointsNum = this.points.length;
+				var polyLineA;
+				var polyLineB;
+
+				for (var i = 0; i < pointsNum; ++i) {
+					polyLineA = this.points[i];
+					polyLineB = i === 0 ? this.points[pointsNum - 1] : this.points[i - 1];
+
+					if (chao.areLinesIntersecting(raycastOrigin, point, polyLineA, polyLineB)) {
+						intersections++;
+					}
+				}
+
+				return intersections & 1 == 1;
+			},
+
+
 		};
 	},
 
-	arePolygonsIntersecting: function (poly1, poly2) {
-		var polys = [poly1, poly2];
-		var i1, pi, point, projected;
-		for (var i = 0; i < polys.length; ++i) {
-			var polygon = polys[i];
-
-			for (i1 = 0; i1 < polygon.points.length; i1++) {
-				var i2 = (i1 + 1) % polygon.points.length;
-				var p1 = polygon.points[i1];
-				var p2 = polygon.points[i2];
-
-				var normal = chao.makePoint(p2.y - p1.y, p1.x - p2.x);
-
-				var minA = null,
-					maxA = null;
-				for (pi = 0; pi < poly1.points.length; ++pi) {
-					point = poly1.points[pi];
-					projected = normal.x * point.x + normal.y * point.y;
-					if (minA === null || projected < minA)
-						minA = projected;
-					if (maxA === null || projected > maxA)
-						maxA = projected;
-				}
-
-				var minB = null,
-					maxB = null;
-				for (pi = 0; pi < poly2.points.length; ++pi) {
-					point = poly2.points[pi];
-					projected = normal.x * point.x + normal.y * point.y;
-					if (minB === null || projected < minB)
-						minB = projected;
-					if (maxB === null || projected > maxB)
-						maxB = projected;
-				}
-
-				if (maxA < minB || maxB < minA)
-					return false;
-			}
-		}
-		return true;
-	},
-
-	isPointInsidePolygon: function (point, polygon) {
-		if (point.x < polygon.left || point.x > polygon.right || point.y < polygon.top || point.y > polygon.bottom) {
+	areLinesIntersecting: function (line1a, line1b, line2a, line2b) {
+		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y) - (line2b.x - line2a.x) * (line1b.y - line1a.y);
+		if (det === 0) {
 			return false;
 		}
 
-		var intersections = 0;
-		var raycastOrigin = {
-			x: polygon.left - 1,
-			y: point.y
-		};
-		var pointsNum = polygon.points.length;
-		var polyLineA;
-		var polyLineB;
-
-		for (var i = 0; i < pointsNum; ++i) {
-			polyLineA = polygon.points[i];
-			polyLineB = i === 0 ? polygon.points[pointsNum - 1] : polygon.points[i - 1];
-
-			if (chao.areLinesIntersecting(raycastOrigin, point, polyLineA, polyLineB)) {
-				intersections++;
-			}
-		}
-
-		return intersections & 1 == 1;
+		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x) + (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
+		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x) + (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
+		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
 	getRandom: function (max) {
@@ -1848,8 +1998,12 @@ var chao = {
 	},
 
 	getRandomRange: function (min, max) {
-		max = (max - min) + 1;
-		return min + chao.getRandom(max);
+		max -= min;
+		return min + max * Math.random();
+	},
+
+	getRandiRange: function (min, max) {
+		return Math.round(chao.getRandomRange(min, max));
 	},
 
 	coinFlip: function (successChance) {
@@ -1957,12 +2111,12 @@ var chao = {
 		});
 	},
 
-	log: function (thingie) {
+	log: function (thingie, logTrace) {
 		if (chao.loggingEnabled) {
 			if (chao.debugLogTarget) {
 				chao.debugLogTarget.innerHTML += String(thingie).replace(/\n/g, "<br/>") + "<br/>";
 			} else {
-				console.log(thingie);
+				logTrace ? console.trace(thingie) : console.log(thingie);
 			}
 		}
 	},
@@ -1973,7 +2127,6 @@ var chao = {
 	},
 
 	logEntity: function (entity, indent) {
-
 		entity = entity || chao.getCurrentState().rootEntity;
 		indent = indent || 0;
 
@@ -2011,7 +2164,6 @@ var chao = {
 	},
 
 	installVisibilityHandler: function () {
-
 		if (chao.visibilityHandlerInstalled) {
 			chao.log("Visibility Handler is already installed!");
 			return;
@@ -2152,11 +2304,7 @@ var chao = {
 function Entity(name, x, y) {
 	this.name = name || "Entity";
 
-	this.transformMatrix = {
-		x: [1, 0],
-		y: [0, 1],
-		origin: [x || 0, y || 0],
-	};
+	this.transformMatrix = chao.makeTransformMatrix(x, y);
 
 	this.pivotX = 0.5;
 	this.pivotY = 0.5;
@@ -2327,7 +2475,7 @@ function Entity(name, x, y) {
 	this.getComponentByName = function (componentName) {
 		for (var i = 0; i < this.components.length; ++i) {
 			var c = this.components[i];
-			if (c.name === componentName && this.removalQueuedComponents.indexOf(c) == -1) {
+			if (c.name === componentName && !this.isComponentQueuedForRemoval(c)) {
 				return this.components[i];
 			}
 		}
@@ -2340,7 +2488,7 @@ function Entity(name, x, y) {
 
 		for (var i = 0; i < this.components.length; ++i) {
 			var c = this.components[i];
-			if (c.name === componentName && this.removalQueuedComponents.indexOf(c) == -1) {
+			if (c.name === componentName && !this.isComponentQueuedForRemoval(c)) {
 				allComponents.push(this.components[i]);
 			}
 		}
@@ -2382,7 +2530,9 @@ function Entity(name, x, y) {
 
 	this.removeComponent = function (component) {
 		if (component.entity === this) {
-			this.removalQueuedComponents.push(component);
+			if (!this.isComponentQueuedForRemoval(component)) {
+				this.removalQueuedComponents.push(component);
+			}
 		} else {
 			chao.log("Entity " + this + " have no such component: " + component);
 		}
@@ -2400,6 +2550,10 @@ function Entity(name, x, y) {
 			}
 			this.removeComponent(component);
 		}
+	};
+
+	this.isComponentQueuedForRemoval = function(component) {
+		return this.removalQueuedComponents.indexOf(component) != -1;
 	};
 
 	this.onClick = function () {
@@ -2455,6 +2609,7 @@ function Entity(name, x, y) {
 	};
 
 	// this one's the same as stretch but also sets pivot so coordinates are the same as screens.
+	// (0x0 is top-right)
 	this.makeFullscreen = function (setAnchor) {
 		this.pivotX = this.pivotY = 0.0;
 		this.stretchOnParent(setAnchor);
@@ -2512,40 +2667,12 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.multiplyMatrices = function (parent, child) {
-		var x0 = parent.x[0] * child.x[0] + parent.y[0] * child.x[1];
-		var x1 = parent.x[1] * child.x[0] + parent.y[1] * child.x[1];
-		var y0 = parent.x[0] * child.y[0] + parent.y[0] * child.y[1];
-		var y1 = parent.x[1] * child.y[0] + parent.y[1] * child.y[1];
-
-		return {
-			origin: [
-				parent.x[0] * child.origin[0] + parent.y[0] * child.origin[1] + parent.origin[0],
-				parent.x[1] * child.origin[0] + parent.y[1] * child.origin[1] + parent.origin[1],
-			],
-			x: [x0, x1],
-			y: [y0, y1],
-		};
-	};
-
 	// mind that this one gets you just a copy of the thing
 	this.getTransformMatrix = function () {
 		if (this.parent === null) {
-			return {
-				origin: this.transformMatrix.origin,
-				x: this.transformMatrix.x,
-				y: this.transformMatrix.y
-			};
+			return this.transformMatrix.getDuplicate();
 		}
-		return this.multiplyMatrices(this.parent.getTransformMatrix(), this.transformMatrix);
-	};
-
-	this.getMatrixScaleX = function (matrix) {
-		return Math.sqrt((matrix.x[0] * matrix.x[0]) + (matrix.y[0] * matrix.y[0]));
-	};
-
-	this.getMatrixScaleY = function (matrix) {
-		return Math.sqrt((matrix.x[1] * matrix.x[1]) + (matrix.y[1] * matrix.y[1]));
+		return this.transformMatrix.getMultiplied(this.parent.getTransformMatrix());
 	};
 
 	this.getWidth = function () {
@@ -2561,10 +2688,10 @@ function Entity(name, x, y) {
 		var sy = this.screenY;
 		var sw = this.screenWidth;
 		var sh = this.screenHeight;
-		var point = chao.makePoint(x, y);
-		chao.rotatePoint(point, sx, sy, -this.screenRotation);
-		x = point.x - sx;
-		y = point.y - sy;
+		var vec = chao.makeVector2(x, y);
+		vec.rotateAroundPoint(sx, sy, -this.screenRotation);
+		x = vec.x - sx;
+		y = vec.y - sy;
 
 		return (x > -sw * this.pivotX &&
 			x < sw * this.pivotX &&
@@ -2601,32 +2728,20 @@ function Entity(name, x, y) {
 	};
 
 	this.checkCollision = function (entity) {
-		var thisPos = {
-			x: this.screenX,
-			y: this.screenY
-		};
-		var thisSize = {
-			x: this.getWidth(),
-			y: this.getHeight()
-		};
-		var otherPos = {
-			x: entity.screenX,
-			y: entity.screenY
-		};
-		var otherSize = {
-			x: entity.getWidth(),
-			y: entity.getHeight()
-		};
+		var thisPos = chao.makeVector2(this.screenX, this.screenY);
+		var thisSize = chao.makeVector2(this.getWidth(), this.getHeight());
+		var otherPos = chao.makeVector2(entity.screenX, entity.screenY);
+		var otherSize = chao.makeVector2(entity.getWidth(), entity.getHeight());
 
 		// first unholy wall of nopes
-		var tl1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y - otherSize.y * entity.pivotY);
-		var tr1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
-		var bl1 = chao.makePoint(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y + otherSize.y * (1.0 - entity.pivotY));
-		var br1 = chao.makePoint(otherPos.x - otherSize.x * entity.pivotX, otherPos.y + otherSize.y * (1.0 - entity.pivotY));
-		var tl2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y - thisSize.y * this.pivotY);
-		var tr2 = chao.makePoint(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y - thisSize.y * this.pivotY);
-		var bl2 = chao.makePoint(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y + thisSize.y * (1.0 - this.pivotY));
-		var br2 = chao.makePoint(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1.0 - this.pivotY));
+		var tl1 = chao.makeVector2(otherPos.x - otherSize.x * entity.pivotX, otherPos.y - otherSize.y * entity.pivotY);
+		var tr1 = chao.makeVector2(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
+		var bl1 = chao.makeVector2(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var br1 = chao.makeVector2(otherPos.x - otherSize.x * entity.pivotX, otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var tl2 = chao.makeVector2(thisPos.x - thisSize.x * this.pivotX, thisPos.y - thisSize.y * this.pivotY);
+		var tr2 = chao.makeVector2(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y - thisSize.y * this.pivotY);
+		var bl2 = chao.makeVector2(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y + thisSize.y * (1.0 - this.pivotY));
+		var br2 = chao.makeVector2(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1.0 - this.pivotY));
 
 		// a "good enough" check for not rotated rects
 		if (Math.abs(this.rotation) < 10.0 && Math.abs(entity.rotation) < 10.0) {
@@ -2634,48 +2749,48 @@ function Entity(name, x, y) {
 		}
 
 		// preliminary check if polygon counting is even worth the effort
-		var vec = chao.makeVector(thisPos, otherPos);
+		var vec = chao.makeVector2(thisPos.x - otherPos.x, thisPos.y - otherPos.y);
 		var distMinSqrt = Math.pow(Math.max(thisSize.x, thisSize.y) + Math.max(otherSize.x, otherSize.y), 2);
 		if (vec.x * vec.x + vec.y * vec.y > distMinSqrt) {
 			return false;
 		}
 
 		// second, slightly less unholy wall of nopes
-		chao.rotatePoint(tl1, otherPos.x, otherPos.y, entity.rotation);
-		chao.rotatePoint(tr1, otherPos.x, otherPos.y, entity.rotation);
-		chao.rotatePoint(bl1, otherPos.x, otherPos.y, entity.rotation);
-		chao.rotatePoint(br1, otherPos.x, otherPos.y, entity.rotation);
-		chao.rotatePoint(tl2, thisPos.x, thisPos.y, this.rotation);
-		chao.rotatePoint(tr2, thisPos.x, thisPos.y, this.rotation);
-		chao.rotatePoint(bl2, thisPos.x, thisPos.y, this.rotation);
-		chao.rotatePoint(br2, thisPos.x, thisPos.y, this.rotation);
+		tl1.rotateAroundPoint(otherPos.x, otherPos.y, entity.rotation);
+		tr1.rotateAroundPoint(otherPos.x, otherPos.y, entity.rotation);
+		bl1.rotateAroundPoint(otherPos.x, otherPos.y, entity.rotation);
+		br1.rotateAroundPoint(otherPos.x, otherPos.y, entity.rotation);
+		tl2.rotateAroundPoint(thisPos.x, thisPos.y, this.rotation);
+		tr2.rotateAroundPoint(thisPos.x, thisPos.y, this.rotation);
+		bl2.rotateAroundPoint(thisPos.x, thisPos.y, this.rotation);
+		br2.rotateAroundPoint(thisPos.x, thisPos.y, this.rotation);
 		var poly1 = chao.makePolygon([tl1, tr1, bl1, br1]);
 		var poly2 = chao.makePolygon([tl2, tr2, bl2, br2]);
 
-		return chao.arePolygonsIntersecting(poly1, poly2);
+		return poly1.intersects(poly2);
 	};
 }
 Entity.prototype = {
 	get x() {
-		return this.transformMatrix.origin[0];
+		return this.transformMatrix.getX();
 	},
 	set x(value) {
-		this.transformMatrix.origin[0] = value;
+		this.transformMatrix.setX(value);
 	},
 	get y() {
-		return this.transformMatrix.origin[1];
+		return this.transformMatrix.getY();
 	},
 	set y(value) {
-		this.transformMatrix.origin[1] = value;
+		this.transformMatrix.setY(value);
 	},
 	get screenX() {
-		return this.getTransformMatrix().origin[0];
+		return this.getTransformMatrix().getX();
 	},
 	set screenX(value) {
 		this.transformMatrix.origin[0] += value - this.screenX;
 	},
 	get screenY() {
-		return this.getTransformMatrix().origin[1];
+		return this.getTransformMatrix().getY();
 	},
 	set screenY(value) {
 		this.transformMatrix.origin[1] += value - this.screenY;
@@ -2687,47 +2802,31 @@ Entity.prototype = {
 		return this.alpha * this.parent.screenAlpha;
 	},
 	get scaleX() {
-		return this.getMatrixScaleX(this.transformMatrix);
+		return this.transformMatrix.getScaleX();
 	},
 	set scaleX(value) {
-		var mat = this.transformMatrix;
-		var currentScale = this.scaleX;
-		mat.x[0] = (mat.x[0] / currentScale) * value;
-		mat.y[0] = (mat.y[0] / currentScale) * value;
+		this.transformMatrix.setScaleX(value);
 	},
 	get scaleY() {
-		return this.getMatrixScaleY(this.transformMatrix);
+		return this.transformMatrix.getScaleY();
 	},
 	set scaleY(value) {
-		var mat = this.transformMatrix;
-		var currentScale = this.scaleY;
-		mat.x[1] = (mat.x[1] / currentScale) * value;
-		mat.y[1] = (mat.y[1] / currentScale) * value;
+		this.transformMatrix.setScaleY(value);
 	},
 	get screenScaleX() {
-		return this.getMatrixScaleX(this.getTransformMatrix());
+		return this.getTransformMatrix().getScaleX();
 	},
 	get screenScaleY() {
-		return this.getMatrixScaleY(this.getTransformMatrix());
+		return this.getTransformMatrix().getScaleY();
 	},
 	get rotation() {
-		var mat = this.transformMatrix;
-		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+		return this.transformMatrix.getRotation();
 	},
 	set rotation(value) {
-		var rads = chao.deg2rad(value);
-		var scaleX = this.scaleX;
-		var scaleY = this.scaleY;
-		var cr = Math.cos(rads);
-		var sr = Math.sin(rads);
-		this.transformMatrix.x[0] = cr * scaleX;
-		this.transformMatrix.y[0] = -sr * scaleX;
-		this.transformMatrix.x[1] = sr * scaleY;
-		this.transformMatrix.y[1] = cr * scaleY;
+		this.transformMatrix.setRotation(value);
 	},
 	get screenRotation() {
-		var mat = this.getTransformMatrix();
-		return chao.rad2deg(Math.atan2(mat.x[1], mat.x[0]));
+		return this.getTransformMatrix().getRotation();
 	},
 	set screenRotation(value) {
 		this.rotation += value - this.screenRotation;
@@ -2814,7 +2913,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		var parentMatrix = entity.parent.getTransformMatrix();
 		parentMatrix.origin[0] *= this.scrollFactorX;
 		parentMatrix.origin[1] *= this.scrollFactorY;
-		var currentMatrix = entity.multiplyMatrices(parentMatrix, entity.transformMatrix);
+		var currentMatrix = entity.transformMatrix.getMultiplied(parentMatrix);
 
 		var drawX = currentMatrix.origin[0] - (entity.screenWidth * entity.pivotX);
 		var drawY = currentMatrix.origin[1] - (entity.screenHeight * entity.pivotY);
@@ -3336,16 +3435,7 @@ function ComponentCamera() {
 
 	this.offsetX = 0;
 	this.offsetY = 0;
-	this.deadzone = {
-		x: 0,
-		y: 0,
-		width: 0,
-		height: 0
-	};
-	this.previousPos = {
-		x: 0,
-		y: 0
-	};
+	
 	this.bounds = {
 		x: 0,
 		y: 0,
@@ -3361,50 +3451,16 @@ function ComponentCamera() {
 			return;
 		}
 
-		// figuring out some basic stuff
-		var targetPos = {
-			x: this.trackedEntity.screenX,
-			y: this.trackedEntity.screenY
-		};
-
-		var relativePos = {
-			x: targetPos.x + this.entity.x,
-			y: targetPos.y + this.entity.y
+		var targetPosOffset = {
+			x: chao.screenWidth / 2 - this.trackedEntity.screenX,
+			y: chao.screenHeight / 2 - this.trackedEntity.screenY
 		};
 
 		var cameraPos = {
-			x: (-targetPos.x + chao.screenWidth) - this.offsetX,
-			y: (-targetPos.y + chao.screenHeight) - this.offsetY
+			x: this.entity.x + targetPosOffset.x,
+			y: this.entity.y + targetPosOffset.y
 		};
 
-		// contrived deadzone calculations
-		if (this.deadzone.width > 0 && this.deadzone.height > 0) {
-			if (targetPos.x > (this.deadzone.x - this.entity.x) + this.deadzone.width / 2) {
-				cameraPos.x += Math.abs(((this.deadzone.x - cameraPos.x) + this.deadzone.width) - targetPos.x);
-			} else {
-				cameraPos.x -= Math.abs((this.deadzone.x - cameraPos.x) - targetPos.x);
-			}
-			if (targetPos.y > (this.deadzone.y - this.entity.y) + this.deadzone.height / 2) {
-				cameraPos.y += Math.abs(((this.deadzone.y - cameraPos.y) + this.deadzone.height) - targetPos.y);
-			} else {
-				cameraPos.y -= Math.abs((this.deadzone.y - cameraPos.y) - targetPos.y);
-			}
-
-			var deadZonedX = relativePos.x > this.deadzone.x && relativePos.x < this.deadzone.x + this.deadzone.width;
-			var deadZonedY = relativePos.y > this.deadzone.y && relativePos.y < this.deadzone.y + this.deadzone.height;
-			if (deadZonedX) {
-				cameraPos.x = this.previousPos.x;
-			} else {
-				this.previousPos.x = cameraPos.x;
-			}
-			if (deadZonedY) {
-				cameraPos.y = this.previousPos.y;
-			} else {
-				this.previousPos.y = cameraPos.y;
-			}
-		}
-
-		// clamping camera position to the set bounds
 		this.clampToBounds(cameraPos);
 
 		this.entity.x = chao.interpolate(this.entity.x, cameraPos.x, chao.timeDelta * this.trackingSpeed);
@@ -3444,6 +3500,13 @@ function ComponentCamera() {
 		this.slideTweens = [];
 	};
 
+	this.setBounds = function(x, y, width, height) {
+		this.bounds.x = x;
+		this.bounds.y = y;
+		this.bounds.width = width;
+		this.bounds.height = height;
+	};
+
 	this.clampToBounds = function (cameraPos) {
 		if (this.bounds.width > 0) {
 			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x + this.bounds.width) - chao.screenWidth);
@@ -3457,6 +3520,8 @@ function ComponentCamera() {
 function ComponentTween(varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
 	this.name = "Tween";
 	this.entity = null;
+
+	this.id = chao.getRandomRange(10000, 99999);
 
 	this.target = null;
 	this.varName = varName;
@@ -3561,96 +3626,174 @@ ComponentTween.removeAllTweens = function (finish) {
 	}
 };
 
-function ComponentParticle(image) {
-	this.name = "Particle";
+function ComponentParticles(image) {
+	this.name = "Particles";
 	this.entity = null;
 
-	this.sprite = null;
-	this.imageKey = image;
+	this.emitting = false;
+	this.amount = 1;
 
 	this.lifetime = 1.0;
-	this.fadeOutMode = ComponentParticle.FADE_MODE_NONE;
-	this.velocity = {
-		x: 0,
-		y: 0
-	};
-	this.acceleration = {
-		x: 0,
-		y: 0
-	};
-	this.velocityDamping = 0;
-	this.scaleVel = 0;
-	this.scaleAcc = 0;
+	this.useUnscaledTime = false;
+	this.oneShot = false;
+	this.disposable = false;
+	this.explosiveness = 0.0;
+
+	this.emissionShapeSize = 0.0;
+
+	this.velocity = chao.makeVector2(0, 0);
+	this.velocityRandomness = chao.makeVector2(0, 0); // percentwise, 0-1
+	this.velocitySpread = 0.0; // in degrees 0-360
+	this.acceleration = chao.makeVector2(0, 0);
+	this.velocityDamping = chao.makeVector2(0, 0);
+	this.scaleVel = chao.makeVector2(0, 0);
+	this.scaleAcc = chao.makeVector2(0, 0);
 	this.rotationVel = 0;
 	this.rotationAcc = 0;
 
-	this.useUnscaledTime = false;
-
-	this.timer = 0;
+	this.fadeOutStartTime = 0.8; // percentwise, 0-1
 
 	this.create = function () {
-		if (!this.imageKey) {
-			this.sprite = this.entity.getComponentByName("Sprite");
-		} else {
-			this.sprite = this.entity.addComponent(new ComponentSprite(this.imageKey));
-		}
-
-		if (!this.sprite) {
-			chao.log("ComponentParticle needs an existing ComponentSprite or image key passed in constructor.");
-		}
+		image = chao.getImage(image);
+		this.particles = [];
 	};
 
 	this.update = function () {
-		if (!this.sprite) {
-			return;
-		}
-
+		var entity = this.entity;
+		var x = entity.screenX;
+		var y = entity.screenY;
+		var i;
+		var deadParticles = [];
 		var delta = this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
 
-		this.timer += delta;
+		// spawning new particles
+		if (this.emitting) {
+			var interval = this.lifetime / this.amount;
+			
 
-		if (this.timer >= this.lifetime) {
-			chao.destroyEntity(this.entity);
-			return;
+			this.timer += delta;
+
+			do {
+				var nextEmit = interval * this.emittedAmount * (1.0 - this.explosiveness);
+
+				if (this.timer >= nextEmit) {
+					this.emittedAmount ++;
+
+					var newVel = this.velocity.duplicate();
+					var rand = chao.makeVector2(this.velocityRandomness.x/2, this.velocityRandomness.y/2);
+					newVel.x += this.velocity.x * chao.getRandomRange(-rand.x, rand.x);
+					newVel.y += this.velocity.y * chao.getRandomRange(-rand.y, rand.y);
+					newVel.rotate(chao.getRandomRange(-this.velocitySpread/2, this.velocitySpread/2));
+
+					var newParticle = {
+						transform: chao.makeTransformMatrix(
+							chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
+							chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
+						),
+						vel: newVel,
+						scaleVel: this.scaleVel.duplicate(),
+						rotationVel: this.rotationVel,
+						timer: 0.0
+					};
+
+					this.particles.push(newParticle);
+
+					if (this.emittedAmount >= this.amount) {
+						this.emitting = false;
+					}
+				}
+			} while (this.timer >= nextEmit && this.emitting)
+			
+		} else { 
+			if (this.particles.length <= 0) {
+				if (this.disposable) {
+					entity.removeComponent(this);
+				} else if (!this.oneShot){
+					chao.log("uh?");
+					this.play();
+				}
+				return;
+			}
 		}
 
-		switch (this.fadeOutMode) {
-			case ComponentParticle.FADE_MODE_NONE: {
-				this.entity.alpha = 1.0;
-				break;
+		// upadting particles
+		for (i = 0; i < this.particles.length; ++i) {
+			var particle = this.particles[i];
+
+			particle.timer += delta;
+			if (particle.timer >= this.lifetime) {
+				deadParticles.push(particle);
+				continue;
 			}
-			case ComponentParticle.FADE_MODE_LINEAR: {
-				this.entity.alpha = 1.0 - (this.timer / this.lifetime);
-				break;
-			}
-			case ComponentParticle.FADE_MODE_LAST_SECOND: {
-				var v = this.lifetime - this.timer;
-				this.entity.alpha = v > 1.0 ? 1.0 : v;
-				break;
-			}
+
+			particle.vel.x += this.acceleration.x * delta;
+			particle.vel.y += this.acceleration.y * delta;
+			particle.vel.x = chao.moveTowards(particle.vel.x, 0, this.velocityDamping.x * delta);
+			particle.vel.y = chao.moveTowards(particle.vel.y, 0, this.velocityDamping.y * delta);
+			particle.transform.origin[0] += particle.vel.x * delta;
+			particle.transform.origin[1] += particle.vel.y * delta;
+
+			var rot = particle.transform.getRotation() + (particle.rotationVel * delta);
+			particle.transform.setRotation(rot);
+
+			var scale = chao.makeVector2(particle.transform.getScaleX(), particle.transform.getScaleY());
+			particle.scaleVel.x += this.scaleAcc.x * delta;
+			particle.scaleVel.y += this.scaleAcc.y * delta;
+			scale.x += particle.scaleVel.x * delta;
+			scale.y += particle.scaleVel.y * delta;
+			particle.transform.setScaleX(scale.x);
+			particle.transform.setScaleY(scale.y);
 		}
 
-		this.velocity.x += this.acceleration.x * delta;
-		this.velocity.y += this.acceleration.y * delta;
-		this.velocity.x = chao.moveTowards(this.velocity.x, 0, this.velocityDamping * delta);
-		this.velocity.y = chao.moveTowards(this.velocity.y, 0, this.velocityDamping * delta);
-		this.entity.x += this.velocity.x * delta;
-		this.entity.y += this.velocity.y * delta;
-
-		this.rotationVel += this.rotationAcc * delta;
-		this.entity.rotation += this.rotationVel * delta;
-
-		this.scaleVel += this.scaleAcc * delta;
-		this.entity.scaleX += this.scaleVel * delta;
-		this.entity.scaleY += this.scaleVel * delta;
-		if (this.entity.scaleX < 0) this.entity.scaleX = 0.0;
-		if (this.entity.scaleY < 0) this.entity.scaleY = 0.0;
-
+		for (i = 0; i < deadParticles.length; ++i) {
+			this.particles.splice(this.particles.indexOf(deadParticles[i]), 1);
+		}
 	};
+
+	this.draw = function() {
+		var entity = this.entity;
+		var i;
+		var n = this.particles.length;
+		var entityTransform = entity.getTransformMatrix();
+		var drawAlpha = entity.screenAlpha;
+
+		for (i = 0; i < n; ++i) {
+			var particle = this.particles[i];
+			var transform = particle.transform.getMultiplied(entityTransform);
+			
+			var drawScaleX = transform.getScaleX();
+			var drawScaleY = transform.getScaleY();
+			var screenWidth = image.width * drawScaleX;
+			var screenHeight = image.height * drawScaleY;
+			var drawX = transform.origin[0] - (screenWidth * 0.5);
+			var drawY = transform.origin[1] - (screenHeight * 0.5);
+			
+			var thisAlpha = drawAlpha;
+			var fadeOutThreshold = this.lifetime * this.fadeOutStartTime;
+			if (particle.timer > fadeOutThreshold) {
+				var v = (particle.timer - fadeOutThreshold) / (this.lifetime - fadeOutThreshold);
+				thisAlpha *= 1.0 - v;
+			}
+
+			chao.drawImage(chao.canvas, image, drawX, drawY, thisAlpha,
+					drawScaleX, drawScaleY, transform.getRotation(), 
+					0.5, 0.5);
+		}
+	};
+
+	this.play = function () {
+		this.emittedAmount = 0;
+		this.timer = this.timerLast = 0.0;
+		this.emitting = true;
+	};
+
+	this.stop = function (immediately) {
+		if (immediately) {
+			this.particles = [];
+		}
+		this.emitting = false;
+	}
 }
-ComponentParticle.FADE_MODE_NONE = 0;
-ComponentParticle.FADE_MODE_LINEAR = 1;
-ComponentParticle.FADE_MODE_LAST_SECOND = 2;
 
 function ComponentShake(force, time, damped) {
 	this.name = "Shake";
