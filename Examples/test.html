@@ -184,7 +184,7 @@
 			this.buttonSound = this.addWithComponent(new Entity("Button Sound"), new ComponentButton("button"));
 			this.buttonSound.entity.alignToParent(0.5, 1.0, 0.5, 1.0, 0, -20);
 			this.buttonSound.setText("Hmmm!", chao.font, 20);
-			this.buttonSound.onRelease = this.playSound;
+			this.buttonSound.onReleased.subscribe(this.playSound, this);
 
 			this.buttonLog = this.addWithComponent(new Entity("Button Log"), new ComponentButton("button"));
 			this.buttonLog.entity.alignToParent(0.5, 1.0, 0.5, 1.0, -200, -20);
@@ -237,25 +237,37 @@
 		},
 
 		spawnParticle: function(image, x, y, velX, velY, gravity){
-			var newParticle = (new Entity("Particle", x, y)).addComponent(new ComponentParticle(image));
-			newParticle.velocity.x 		= velX;
-			newParticle.velocity.y 		= velY;
-			newParticle.acceleration.y 	= gravity;
-			newParticle.rotationVel		= velX * 10;
-			newParticle.lifetime		= 2.0;
-			newParticle.fadeOutMode		= ComponentParticle.FADE_MODE_LAST_SECOND;
-			chao.currentState.add(newParticle.entity);
+			// var newParticle = (new Entity("Particle", x, y)).addComponent(new ComponentParticle(image));
+			// newParticle.velocity.x 		= velX;
+			// newParticle.velocity.y 		= velY;
+			// newParticle.acceleration.y 	= gravity;
+			// newParticle.rotationVel		= velX * 10;
+			// newParticle.lifetime		= 2.0;
+			// newParticle.fadeOutMode		= ComponentParticle.FADE_MODE_LAST_SECOND;
+			// chao.currentState.add(newParticle.entity);
+
+			var system = this.addWithComponent("Particles", new ComponentParticles(image));
+			system.entity.screenX = x;
+			system.entity.screenY = y;
+			system.oneShot = true;
+			system.amount = 10;
+			system.explosiveness = 1.0;
+			system.lifetime = 2.0;
+			system.velocity = chao.makePoint(100, -80);
+			system.velocityRandomness = chao.makePoint(2.0, 0.4);
+			system.acceleration.y = gravity;
+			system.rotationVel = velX * 10;
+			system.play();
+
 		},
 
 		playSound: function(button){
 			chao.playSound("oh");
-			for(var i = 0; i < 23; ++i){
-				chao.currentState.spawnParticle("cloudy",
-					chao.screenWidth/2, chao.screenHeight/2,
-					-60 + chao.getRandom(120),
-					-80 - chao.getRandom(40),
-					100);
-			}
+			this.spawnParticle("cloudy",
+				chao.screenWidth/2, chao.screenHeight/2,
+				-60 + chao.getRandom(120),
+				-80 - chao.getRandom(40),
+				100);
 		},
 
 	};
