@@ -1696,6 +1696,11 @@ var chao = {
 			x: x || 0,
 			y: y || 0,
 
+			set: function(x, y) {
+				this.x = x;
+				this.y = y;
+			},
+
 			compare: function (vector, epsilon) {
 				epsilon = epsilon || 0.001;
 				return Math.abs(this.x - vector.x) < epsilon
@@ -3625,7 +3630,7 @@ function ComponentParticles(image) {
 	this.name = "Particles";
 	this.entity = null;
 
-	this.emitting = true;
+	this.emitting = false;
 	this.amount = 1;
 
 	this.lifetime = 1.0;
@@ -3641,8 +3646,8 @@ function ComponentParticles(image) {
 	this.velocitySpread = 0.0; // in degrees 0-360
 	this.acceleration = chao.makeVector2(0, 0);
 	this.velocityDamping = chao.makeVector2(0, 0);
-	this.scaleVel = 0;
-	this.scaleAcc = 0;
+	this.scaleVel = chao.makeVector2(0, 0);
+	this.scaleAcc = chao.makeVector2(0, 0);
 	this.rotationVel = 0;
 	this.rotationAcc = 0;
 
@@ -3671,7 +3676,6 @@ function ComponentParticles(image) {
 
 			do {
 				var nextEmit = interval * this.emittedAmount * (1.0 - this.explosiveness);
-				chao.log(nextEmit);
 
 				if (this.timer >= nextEmit) {
 					this.emittedAmount ++;
@@ -3688,7 +3692,7 @@ function ComponentParticles(image) {
 							chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
 						),
 						vel: newVel,
-						scaleVel: chao.makeVector2(this.scaleVel.x, this.scaleVel.y),
+						scaleVel: this.scaleVel.duplicate(),
 						rotationVel: this.rotationVel,
 						timer: 0.0
 					};
@@ -3732,6 +3736,14 @@ function ComponentParticles(image) {
 
 			var rot = particle.transform.getRotation() + (particle.rotationVel * delta);
 			particle.transform.setRotation(rot);
+
+			var scale = chao.makeVector2(particle.transform.getScaleX(), particle.transform.getScaleY());
+			particle.scaleVel.x += this.scaleAcc.x * delta;
+			particle.scaleVel.y += this.scaleAcc.y * delta;
+			scale.x += particle.scaleVel.x * delta;
+			scale.y += particle.scaleVel.y * delta;
+			particle.transform.setScaleX(scale.x);
+			particle.transform.setScaleY(scale.y);
 		}
 
 		for (i = 0; i < deadParticles.length; ++i) {

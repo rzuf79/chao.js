@@ -192,6 +192,22 @@
 			this.buttonLog.onReleased.subscribe( function() { chao.logHierarchy(); } );
 
 
+			this.particles = this.addWithComponent("Particles", new ComponentParticles("cloudy"));
+			this.particles.entity.screenX = chao.screenWidth/2;
+			this.particles.entity.screenY = chao.screenHeight/2;
+			this.particles.oneShot = true;
+			this.particles.amount = 10;
+			this.particles.explosiveness = 1.0;
+			this.particles.lifetime = 2.0;
+			this.particles.velocity.set(0, -150);
+			this.particles.velocityRandomness.set(0, 0.8);
+			this.particles.velocityDamping.set(50.0, 0.0);
+			this.particles.velocitySpread = 90.0;
+			this.particles.acceleration.y = 100.0;
+			this.particles.rotationVel = chao.getRandomRange(-50, 50);
+			this.particles.scaleVel.set(1, 0.5);
+
+
 			var textTest = this.addWithComponent(new Entity("Text test", 300, 300), new ComponentText(chao.font, "Food `10th`14is ````way -->", 25));
 			textTest.align = "center";
 			textTest.backgroundColor = "gray";
@@ -236,31 +252,9 @@
 
 		},
 
-		spawnParticle: function(image, x, y, velX, velY, gravity){
-			var system = this.addWithComponent("Particles", new ComponentParticles(image));
-			system.entity.screenX = x;
-			system.entity.screenY = y;
-			system.oneShot = true;
-			system.amount = 10;
-			system.explosiveness = 1.0;
-			system.lifetime = 2.0;
-			system.velocity = chao.makeVector2(0, -150);
-			system.velocityRandomness = chao.makeVector2(0, 0.8);
-			system.velocityDamping = chao.makeVector2(50.0, 0.0);
-			system.velocitySpread = 90.0;
-			system.acceleration.y = gravity;
-			system.rotationVel = velX * 10;
-			system.play();
-
-		},
-
 		playSound: function(button){
 			chao.playSound("oh");
-			this.spawnParticle("cloudy",
-				chao.screenWidth/2, chao.screenHeight/2,
-				-60 + chao.getRandom(120),
-				-80 - chao.getRandom(40),
-				100);
+			this.particles.play();
 		},
 
 	};
