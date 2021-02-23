@@ -192,9 +192,8 @@
 			this.buttonLog.onReleased.subscribe( function() { chao.logHierarchy(); } );
 
 
-			this.particles = this.addWithComponent("Particles", new ComponentParticles("cloudy"));
-			this.particles.entity.screenX = chao.screenWidth/2;
-			this.particles.entity.screenY = chao.screenHeight/2;
+			this.particles = zbylut.addWithComponent("Particles", new ComponentParticles("cloudy"));
+			this.particles.useLocalCoords = false;
 			this.particles.oneShot = true;
 			this.particles.amount = 10;
 			this.particles.explosiveness = 1.0;
@@ -249,6 +248,8 @@
 			if(chao.justPressed[chao.KEY_L]){
 				chao.logHierarchy(this.rootEntity);
 			}
+
+			// this.particles.entity.rotation += chao.getTimeDelta() * 50.0;
 
 		},
 

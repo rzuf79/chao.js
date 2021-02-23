@@ -3637,6 +3637,8 @@ function ComponentParticles(image) {
 	this.useUnscaledTime = false;
 	this.oneShot = false;
 	this.disposable = false;
+	this.useLocalCoords = true;
+	
 	this.explosiveness = 0.0;
 
 	this.emissionShapeSize = 0.0;
@@ -3660,8 +3662,6 @@ function ComponentParticles(image) {
 
 	this.update = function () {
 		var entity = this.entity;
-		var x = entity.screenX;
-		var y = entity.screenY;
 		var i;
 		var deadParticles = [];
 		var delta = this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
@@ -3679,6 +3679,15 @@ function ComponentParticles(image) {
 				if (this.timer >= nextEmit) {
 					this.emittedAmount ++;
 
+					var newTransform = chao.makeTransformMatrix(
+						chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
+						chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
+					);
+					if (!this.useLocalCoords) {
+						newTransform.origin[0] += entity.screenX;
+						newTransform.origin[1] += entity.screenY;
+					}
+
 					var newVel = this.velocity.duplicate();
 					var rand = chao.makeVector2(this.velocityRandomness.x/2, this.velocityRandomness.y/2);
 					newVel.x += this.velocity.x * chao.getRandomRange(-rand.x, rand.x);
@@ -3686,10 +3695,7 @@ function ComponentParticles(image) {
 					newVel.rotate(chao.getRandomRange(-this.velocitySpread/2, this.velocitySpread/2));
 
 					var newParticle = {
-						transform: chao.makeTransformMatrix(
-							chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
-							chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
-						),
+						transform: newTransform,
 						vel: newVel,
 						scaleVel: this.scaleVel.duplicate(),
 						rotationVel: this.rotationVel,
@@ -3759,7 +3765,11 @@ function ComponentParticles(image) {
 
 		for (i = 0; i < n; ++i) {
 			var particle = this.particles[i];
-			var transform = particle.transform.getMultiplied(entityTransform);
+			var transform = particle.transform;
+
+			if (this.useLocalCoords) {
+				transform = particle.transform.getMultiplied(entityTransform);
+			}
 			
 			var drawScaleX = transform.getScaleX();
 			var drawScaleY = transform.getScaleY();
