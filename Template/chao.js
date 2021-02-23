@@ -156,7 +156,9 @@ var chao = {
 	 * 14 = Yellow 0xffffff55
 	 * 15 = BrightWhite 0xffffffff
 	 */
-	colorCodes: [0xff000000, 0xff0000aa, 0xff00ff00, 0xff00aaaa, 0xffaa0000, 0xff800080, 0xff995500, 0xffaaaaaa, 0xff555555, 0xff5555ff, 0xff54ff3f, 0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff],
+	colorCodes: [0xff000000, 0xff0000aa, 0xff00ff00, 0xff00aaaa, 0xffaa0000, 
+		0xff800080, 0xff995500, 0xffaaaaaa, 0xff555555, 0xff5555ff, 0xff54ff3f, 
+		0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff],
 
 	/** String for testing if a font was loaded. */
 	fontTestString: "giItT1WQy@!-/#", // this only looks like it's random, but it's not!
@@ -731,7 +733,9 @@ var chao = {
 			image.canvas.style['image-rendering'] = 'auto';
 			image.canvas.style.msInterpolationMode = 'bicubic';
 		} else {
-			var renderTypes = ['optimizeSpeed', 'crisp-edges', '-moz-crisp-edges', '-webkit-optimize-contrast', 'optimize-contrast', 'pixelated'];
+			var renderTypes = [
+				'optimizeSpeed', 'crisp-edges', '-moz-crisp-edges',
+				'-webkit-optimize-contrast', 'optimize-contrast', 'pixelated'];
 			for (var i = 0; i < renderTypes.length; ++i) {
 				image.canvas.style['image-rendering'] = renderTypes[i];
 			}
@@ -987,7 +991,9 @@ var chao = {
 		s.id = fontname;
 		s.type = "text/css";
 		document.head.appendChild(s);
-		s.textContent = "@font-face { font-family: " + fontname + "; src:url('data:application/font-woff;base64," + data + "') format('woff');}";
+		s.textContent = "@font-face { font-family: " + fontname 
+			+ "; src:url('data:application/font-woff;base64," + data 
+			+ "') format('woff');}";
 
 		var newFont = {
 			key: key,
@@ -1196,7 +1202,8 @@ var chao = {
 		}
 
 		if (sound.isMusic || !chao.muted) {
-			// Play the sound. Don't if sound it muted, but if it's a music, play it regardless. It will be paused in the next lines. :)
+			// Play the sound. Don't if sound it muted, but if it's a music, 
+			// play it regardless. It will be paused in the next lines. :)
 
 			sound.currentChannel++;
 			if (sound.currentChannel >= sound.channels.length) {
@@ -1214,7 +1221,8 @@ var chao = {
 					// Whoa! We are fine!
 				}).catch(function () {
 					// Was unable to play sound. :(
-					// Prolly the browser is messing with audio permissions. Will try to resume it on the first input.
+					// Prolly the browser is messing with audio permissions.
+					// Will try to resume it on the first input.
 					if (sound.isMusic) {
 						chao.musicWasSupressed = true;
 					}
@@ -1300,7 +1308,8 @@ var chao = {
 				break;
 			}
 			case "opus": {
-				if (audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '') || audioTest.canPlayType('audio/opus;').replace(/^no$/, '')) {
+				if (audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '') 
+						|| audioTest.canPlayType('audio/opus;').replace(/^no$/, '')) {
 					return true;
 				}
 				break;
@@ -1318,7 +1327,8 @@ var chao = {
 				break;
 			}
 			case "m4a": {
-				if (audioTest.canPlayType('audio/x-m4a;') || audioTest.canPlayType('audio/aac;').replace(/^no$/, '')) {
+				if (audioTest.canPlayType('audio/x-m4a;')
+					|| audioTest.canPlayType('audio/aac;').replace(/^no$/, '')) {
 					return true;
 				}
 			}
@@ -1806,8 +1816,10 @@ var chao = {
 				var y1 = parent.x[1] * this.y[0] + parent.y[1] * this.y[1];
 				
 				var newMatrix = chao.makeTransformMatrix();
-				newMatrix.origin[0] = parent.x[0] * this.origin[0] + parent.y[0] * this.origin[1] + parent.origin[0];
-				newMatrix.origin[1] = parent.x[1] * this.origin[0] + parent.y[1] * this.origin[1] + parent.origin[1];
+				newMatrix.origin[0] = parent.x[0] * this.origin[0] 
+					+ parent.y[0] * this.origin[1] + parent.origin[0];
+				newMatrix.origin[1] = parent.x[1] * this.origin[0] 
+					+ parent.y[1] * this.origin[1] + parent.origin[1];
 				newMatrix.x = [x0, x1];
 				newMatrix.y = [y0, y1];
 
@@ -1983,13 +1995,17 @@ var chao = {
 	},
 
 	areLinesIntersecting: function (line1a, line1b, line2a, line2b) {
-		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y) - (line2b.x - line2a.x) * (line1b.y - line1a.y);
+		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y)
+			- (line2b.x - line2a.x) * (line1b.y - line1a.y);
+		
 		if (det === 0) {
 			return false;
 		}
 
-		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x) + (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
-		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x) + (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
+		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x)
+			+ (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
+		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x)
+			+ (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
 		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
@@ -2269,17 +2285,21 @@ var chao = {
 		},
 
 		fadeEntityOut: function (entity, time, delay) {
-			return ComponentTween.addTween(entity, "alpha", 1.0, 0.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
+			return ComponentTween.addTween(entity, "alpha", 1.0, 0.0,
+				time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
 		fadeEntityIn: function (entity, time, delay) {
-			return ComponentTween.addTween(entity, "alpha", 0.0, 1.0, time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
+			return ComponentTween.addTween(entity, "alpha", 0.0, 1.0,
+				time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
 		addBounceTween: function (entity, amplitude, time) {
 			var tweenName = "BounceTween";
 			entity.removeComponentsByName(tweenName);
-			var newTween = ComponentTween.addTween(entity, "y", entity.y - amplitude / 2, entity.y + amplitude / 2, time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
+			var newTween = ComponentTween.addTween(entity, "y",
+				entity.y - amplitude / 2, entity.y + amplitude / 2,
+				time, chao.INTERPOLATE_SMOOTH, chao.REPEAT_MODE_BOUNCE);
 			newTween.name = tweenName;
 			return newTween;
 		},
@@ -2736,13 +2756,13 @@ function Entity(name, x, y) {
 
 		// first unholy wall of nopes
 		var tl1 = chao.makeVector2(otherPos.x - otherSize.x * entity.pivotX, otherPos.y - otherSize.y * entity.pivotY);
-		var tr1 = chao.makeVector2(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
-		var bl1 = chao.makeVector2(otherPos.x + otherSize.x * (1.0 - entity.pivotX), otherPos.y + otherSize.y * (1.0 - entity.pivotY));
-		var br1 = chao.makeVector2(otherPos.x - otherSize.x * entity.pivotX, otherPos.y + otherSize.y * (1.0 - entity.pivotY));
+		var tr1 = chao.makeVector2(otherPos.x + otherSize.x * (1 - entity.pivotX), otherPos.y - otherSize.y * entity.pivotY);
+		var bl1 = chao.makeVector2(otherPos.x + otherSize.x * (1 - entity.pivotX), otherPos.y + otherSize.y * (1 - entity.pivotY));
+		var br1 = chao.makeVector2(otherPos.x - otherSize.x * entity.pivotX, otherPos.y + otherSize.y * (1 - entity.pivotY));
 		var tl2 = chao.makeVector2(thisPos.x - thisSize.x * this.pivotX, thisPos.y - thisSize.y * this.pivotY);
-		var tr2 = chao.makeVector2(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y - thisSize.y * this.pivotY);
-		var bl2 = chao.makeVector2(thisPos.x + thisSize.x * (1.0 - this.pivotX), thisPos.y + thisSize.y * (1.0 - this.pivotY));
-		var br2 = chao.makeVector2(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1.0 - this.pivotY));
+		var tr2 = chao.makeVector2(thisPos.x + thisSize.x * (1 - this.pivotX), thisPos.y - thisSize.y * this.pivotY);
+		var bl2 = chao.makeVector2(thisPos.x + thisSize.x * (1 - this.pivotX), thisPos.y + thisSize.y * (1 - this.pivotY));
+		var br2 = chao.makeVector2(thisPos.x - thisSize.x * this.pivotX, thisPos.y + thisSize.y * (1 - this.pivotY));
 
 		// a "good enough" check for not rotated rects
 		if (Math.abs(this.rotation) < 10.0 && Math.abs(entity.rotation) < 10.0) {
@@ -3047,9 +3067,11 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 /**
  * Text rendering component.
  * Use "\n" to break lines.
- * You can colorize parts of the text using color codes, eg. `2 is a color code for green and `` removes the effect of the last color code.
+ * You can colorize parts of the text using color codes, eg. `2 is a color code for green 
+ * and `` removes the effect of the last color code.
  * Color codes are defined in colorCodes array in the chao namespace.
- * Example: "This is a text\nwith a `14yellow`` word inside." will create a two-line text object with the "yellow" word colored yellow.
+ * Example: "This is a text\nwith a `14yellow`` word inside." will create a
+ * two-line text object with the "yellow" word colored yellow.
  *
  * @param font - Font or id of the font used to display the text
  * @param text - Text to be displayed
@@ -3490,8 +3512,10 @@ function ComponentCamera() {
 		x = -x + chao.screenWidth / 2;
 		y = -y + chao.screenHeight / 2;
 
-		this.slideTweens.push(ComponentTween.addTween(this.entity, "x", this.entity.x, x, time, interpolationType, chao.REPEAT_MODE_ONCE, 0, callback));
-		this.slideTweens.push(ComponentTween.addTween(this.entity, "y", this.entity.y, y, time, interpolationType, chao.REPEAT_MODE_ONCE));
+		this.slideTweens.push(ComponentTween.addTween(this.entity, "x", 
+			this.entity.x, x, time, interpolationType, chao.REPEAT_MODE_ONCE, 0, callback));
+		this.slideTweens.push(ComponentTween.addTween(this.entity, "y", 
+			this.entity.y, y, time, interpolationType, chao.REPEAT_MODE_ONCE));
 	};
 
 	this.removeSlideTweens = function () {
@@ -3598,7 +3622,10 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 }
 
 ComponentTween.addTween = function (targetEntity, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
-	return targetEntity.addComponent(new ComponentTween(varName, from, to, time, interpolationType, repeatMode, delay, finishCallback));
+	return targetEntity.addComponent(
+		new ComponentTween(varName, from, to,
+			time, interpolationType, repeatMode, delay, finishCallback)
+	);
 };
 
 ComponentTween.removeTween = function (tween, finish) {
@@ -3842,7 +3869,8 @@ function ComponentShake(force, time, damped) {
 				return;
 			}
 
-			// Put this component at the end if it's not already. So we can take the position changes made by other components into account.
+			// Put this component at the end if it's not already. 
+			// So we can take the position changes made by other components into account.
 			var id = this.entity.components.indexOf(this);
 			if (id != this.entity.components.length - 1) {
 				this.entity.components.splice(id, 1);
