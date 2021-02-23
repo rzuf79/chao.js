@@ -197,7 +197,7 @@
 			textTest.backgroundColor = "gray";
 			textTest.text = "`1albowiem `3zaprawde `6kilka `8kolorkow\noraz niesamowita istnie\nmulti`12linia!";
 
-			chao.playSound("nature");
+			// chao.playSound("nature");
 
 		},
 
@@ -237,15 +237,6 @@
 		},
 
 		spawnParticle: function(image, x, y, velX, velY, gravity){
-			// var newParticle = (new Entity("Particle", x, y)).addComponent(new ComponentParticle(image));
-			// newParticle.velocity.x 		= velX;
-			// newParticle.velocity.y 		= velY;
-			// newParticle.acceleration.y 	= gravity;
-			// newParticle.rotationVel		= velX * 10;
-			// newParticle.lifetime		= 2.0;
-			// newParticle.fadeOutMode		= ComponentParticle.FADE_MODE_LAST_SECOND;
-			// chao.currentState.add(newParticle.entity);
-
 			var system = this.addWithComponent("Particles", new ComponentParticles(image));
 			system.entity.screenX = x;
 			system.entity.screenY = y;
@@ -253,8 +244,10 @@
 			system.amount = 10;
 			system.explosiveness = 1.0;
 			system.lifetime = 2.0;
-			system.velocity = chao.makeVector2(100, -80);
-			system.velocityRandomness = chao.makeVector2(2.0, 0.4);
+			system.velocity = chao.makeVector2(0, -150);
+			system.velocityRandomness = chao.makeVector2(0, 0.8);
+			system.velocityDamping = chao.makeVector2(50.0, 0.0);
+			system.velocitySpread = 90.0;
 			system.acceleration.y = gravity;
 			system.rotationVel = velX * 10;
 			system.play();
