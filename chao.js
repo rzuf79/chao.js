@@ -1691,13 +1691,6 @@ var chao = {
 		};
 	},
 
-	makePoint: function (x, y) {
-		return {
-			x: x,
-			y: y
-		};
-	},
-
 	makeVector2: function(x, y) {
 		return {
 			x: x || 0,
@@ -1918,7 +1911,7 @@ var chao = {
 						var p1 = polygon.points[i1];
 						var p2 = polygon.points[i2];
 
-						var normal = chao.makePoint(p2.y - p1.y, p1.x - p2.x);
+						var normal = chao.makeVector2(p2.y - p1.y, p1.x - p2.x);
 
 						var minA = null,
 							maxA = null;
@@ -3726,10 +3719,10 @@ function ComponentParticles(image) {
 
 	this.emissionShapeSize = 0.0;
 
-	this.velocity = chao.makePoint(0, 0);
-	this.velocityRandomness = chao.makePoint(0, 0); // percentwise, 0-1
+	this.velocity = chao.makeVector2(0, 0);
+	this.velocityRandomness = chao.makeVector2(0, 0); // percentwise, 0-1
 	this.velocitySpread = 0.0; // in degrees 0-360
-	this.acceleration = chao.makePoint(0, 0);
+	this.acceleration = chao.makeVector2(0, 0);
 	this.velocityDamping = 0;
 	this.scaleVel = 0;
 	this.scaleAcc = 0;
@@ -3766,10 +3759,10 @@ function ComponentParticles(image) {
 						chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
 						chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
 					),
-					vel: chao.makePoint(
+					vel: chao.makeVector2(
 						this.velocity.x + (this.velocity.x * chao.getRandomRange(0, this.velocityRandomness.x)),
 						this.velocity.y + (this.velocity.y * chao.getRandomRange(0, this.velocityRandomness.y))),
-					scaleVel: chao.makePoint(this.scaleVel.x, this.scaleVel.y),
+					scaleVel: chao.makeVector2(this.scaleVel.x, this.scaleVel.y),
 					rotationVel: this.rotationVel,
 					timer: 0.0
 				};
