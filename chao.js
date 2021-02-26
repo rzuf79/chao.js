@@ -3659,16 +3659,14 @@ function ComponentParticles(image) {
 	this.entity = null;
 
 	this.emitting = false;
+	
 	this.amount = 1;
-
 	this.lifetime = 1.0;
+	this.explosiveness = 0.0;
 	this.useUnscaledTime = false;
 	this.oneShot = false;
 	this.disposable = false;
 	this.useLocalCoords = true;
-	
-	this.explosiveness = 0.0;
-
 	this.emissionShapeSize = 0.0;
 
 	this.velocity = chao.makeVector2(0, 0);
@@ -3841,18 +3839,12 @@ function ComponentShake(force, time, damped) {
 	this.force = force || 0.0;
 	this.duration = time || 0.0;
 	this.useUnscaledTime = false;
+	this.timer = 0.0;
 
 	this.disposable = false;
 
-	this.entityPosition = {
-		x: 0,
-		y: 0
-	};
-	this.shakenPosition = {
-		x: 0,
-		y: 0
-	};
-	this.timer = 0.0;
+	this.entityPosition = chao.makeVector2();
+	this.shakenPosition = chao.makeVector2();
 
 	this.update = function () {
 		if (this.timer > 0.0) {
