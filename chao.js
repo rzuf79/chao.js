@@ -1443,7 +1443,7 @@ var chao = {
 
 	onMouseWheel: function (e) {
 		chao.mouse.wheelDelta = e.deltaY;
-		e.preventDefault();
+		// e.preventDefault();
 	},
 
 	setMouseVisibility: function (value) {
@@ -1982,7 +1982,7 @@ var chao = {
 					polyLineA = this.points[i];
 					polyLineB = i === 0 ? this.points[pointsNum - 1] : this.points[i - 1];
 
-					if (chao.areLinesIntersecting(raycastOrigin, point, polyLineA, polyLineB)) {
+					if (chao.getLinesIntersection(raycastOrigin, point, polyLineA, polyLineB) !== false) {
 						intersections++;
 					}
 				}
@@ -2007,6 +2007,35 @@ var chao = {
 		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x)
 			+ (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
 		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
+	},
+
+	getLinesIntersection: function(line1a, line1b, line2a, line2b) {
+
+		// Check if none of the lines are of length 0
+		if ((line1a.x === line1b.x && line1a.y === line1b.y) || (line2a.x === line2b.x && line2a.y === line2b.y)) {
+			return false;
+		}
+
+		denominator = ((line2b.y - line2a.y) * (line1b.x - line1a.x) - (line2b.x - line2a.x) * (line1b.y - line1a.y));
+
+		// Lines are parallel
+		if (denominator === 0) {
+			return false;
+		}
+
+		let ua = ((line2b.x - line2a.x) * (line1a.y - line2a.y) - (line2b.y - line2a.y) * (line1a.x - line2a.x)) / denominator;
+		let ub = ((line1b.x - line1a.x) * (line1a.y - line2a.y) - (line1b.y - line1a.y) * (line1a.x - line2a.x)) / denominator;
+
+		// is the intersection along the segments
+		if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+			return false;
+		}
+
+		// Return a object with the x and y coordinates of the intersection
+		let x = line1a.x + ua * (line1b.x - x1);
+		let y = line1a.y + ua * (line1b.y - line1a.y);
+
+		return { x, y };
 	},
 
 	getRandom: function (max) {
@@ -2615,6 +2644,22 @@ function Entity(name, x, y) {
 		}
 	};
 
+	this.setPosition = function(x, y, screenCoordinates) {
+		if (screenCoordinates === true) {
+			this.screenX = x;
+			this.screenY = y;
+		} else {
+			this.x = x;
+			this.y = y;
+		}
+	};
+
+	this.setScale = function(x, y) {
+		y = y || x;
+		this.scaleX = x;
+		this.scaleY = y;
+	}
+
 	this.stretchOnParent = function (setAnchor) {
 		if (setAnchor === undefined) {
 			setAnchor = true;
@@ -3062,6 +3107,10 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 	this.setAnimPause = function (value) {
 		this.animPaused = value;
 	};
+};
+
+function ComponentFrame(image, cornerSize) {
+	//
 };
 
 /**
