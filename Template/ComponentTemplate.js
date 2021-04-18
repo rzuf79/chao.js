@@ -1,16 +1,8 @@
 function ComponentTemplate(game) {
 	this.name = "Template";
-	this.entity = null;
+	this.entity = undefined; // will be assigned when added to an Entity
 
 	this.create = function() {
-		//
-	};
-
-	this.remove = function () {
-		//
-	};
-
-	this.destroy = function() {
 		//
 	};
 
@@ -38,4 +30,11 @@ function ComponentTemplate(game) {
 		entity.y = chao.clamp(entity.y, entity.height/2, chao.screenHeight - entity.height / 2);
 	};
 
+	this.remove = function () {}; // Component removed from entity
+	this.destroy = function () {}; // Entity was destroyed :(
+	this.resize = function () {};
+	this.onClick = function (relativeX, relativeY) {};
+	this.onMove = function (relativeX, relativeY) {};
+	this.onCancel = function () {};
+	this.onRelease = function (relativeX, relativeY) {};
 }

@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.6",
+	VERSION: "0.7",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -156,14 +156,14 @@ var chao = {
 	 * 14 = Yellow 0xffffff55
 	 * 15 = BrightWhite 0xffffffff
 	 */
-	colorCodes: [0xff000000, 0xff0000aa, 0xff00ff00, 0xff00aaaa, 0xffaa0000, 
-		0xff800080, 0xff995500, 0xffaaaaaa, 0xff555555, 0xff5555ff, 0xff54ff3f, 
+	colorCodes: [0xff000000, 0xff0000aa, 0xff00ff00, 0xff00aaaa, 0xffaa0000,
+		0xff800080, 0xff995500, 0xffaaaaaa, 0xff555555, 0xff5555ff, 0xff54ff3f,
 		0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff],
 
 	/** String for testing if a font was loaded. */
 	fontTestString: "giItT1WQy@!-/#", // this only looks like it's random, but it's not!
 
-	init: function (width, height, scalingMode, canvasId) {
+	init (width, height, scalingMode, canvasId) {
 
 		// Some cross-browser compatibility stuff below
 		if (!Date.now) {
@@ -279,9 +279,9 @@ var chao = {
 		chao.loadingState = undefined;
 		chao.newState = undefined;
 
-		// A default loading state that can be overwritten 
+		// A default loading state that can be overwritten
 		chao.setLoadingState({
-			draw: function () {
+			draw () {
 				var barWidth = chao.screenWidth * 0.6;
 				var barHeight = barWidth * 0.1;
 				var barX = chao.screenWidth / 2 - barWidth / 2;
@@ -313,12 +313,12 @@ var chao = {
 
 	},
 
-	setFPS: function (FPS) {
+	setFPS (FPS) {
 		chao.framerate = FPS;
 		chao.updateInterval = setInterval(chao.update, 1000 / FPS);
 	},
 
-	clearScreen: function () {
+	clearScreen () {
 		if (chao.backgroundColor === undefined) {
 			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height);
 		} else {
@@ -327,7 +327,7 @@ var chao = {
 		}
 	},
 
-	onFocusChange: function (isFocused) {
+	onFocusChange (isFocused) {
 		if (chao.hasFocus == isFocused) {
 			return;
 		}
@@ -355,7 +355,7 @@ var chao = {
 		}
 	},
 
-	resetInput: function () {
+	resetInput () {
 		for (var i = 0; i < 0x80; ++i) {
 			chao.pressed[i] = false;
 			chao.justPressed[i] = false;
@@ -369,7 +369,7 @@ var chao = {
 		chao.focusedEntity = null;
 	},
 
-	update: function () {
+	update () {
 		if (chao.enableFontsLoadCheck) {
 			chao.updateFontsLoading();
 		}
@@ -437,7 +437,7 @@ var chao = {
 		}
 	},
 
-	switchState: function (newState) {
+	switchState (newState) {
 		if (chao.currentState === undefined) {
 			chao.destroyCurrentStateAndInitNewOne(newState);
 		} else {
@@ -445,7 +445,7 @@ var chao = {
 		}
 	},
 
-	destroyCurrentStateAndInitNewOne: function (newState) {
+	destroyCurrentStateAndInitNewOne (newState) {
 		chao.resetInput();
 
 		chao.destroyState(chao.currentState);
@@ -458,7 +458,7 @@ var chao = {
 		}
 	},
 
-	setLoadingState: function (newLoadingState) {
+	setLoadingState (newLoadingState) {
 		chao.destroyState(chao.loadingState);
 
 		chao.loadingState = newLoadingState;
@@ -466,7 +466,7 @@ var chao = {
 
 	},
 
-	initState: function (state) {
+	initState (state) {
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
 		state.rootEntity.height = chao.screenHeight;
@@ -488,15 +488,15 @@ var chao = {
 		chao.resize();
 	},
 
-	initCurrentState: function () {
+	initCurrentState () {
 		chao.initState(chao.currentState);
 	},
 
-	getCurrentState: function () {
+	getCurrentState () {
 		return chao.getLoadingProgress() >= 1.0 ? chao.currentState : chao.loadingState;
 	},
 
-	destroyState: function (state) {
+	destroyState (state) {
 		if (!state) {
 			return;
 		}
@@ -508,11 +508,11 @@ var chao = {
 		state.rootEntity = null;
 	},
 
-	destroyEntity: function (entity) {
+	destroyEntity (entity) {
 		chao.entitiesToDestroy.push(entity);
 	},
 
-	findEntities: function (name, entity, array) {
+	findEntities (name, entity, array) {
 		entity = entity || chao.currentState.rootEntity;
 		array = array || [];
 
@@ -527,59 +527,62 @@ var chao = {
 		return array;
 	},
 
-	findComponents: function (name, entity) {
+	findComponents (name, entity) {
 		entity = entity || chao.currentState.rootEntity;
 		return entity.getComponentsInChildrenByName(name);
 	},
 
-	makeSignal: function() {
-		return {
-			observers: [],
+	makeSignal() {
+		var observers = [];
 
-			subscribe: function(func, targetObject) {
-				if (this.findObserver(func) == -1) {
-					this.observers.push( {
+		var findObserver = function(func) {
+			var i;
+			var n = observers.length;
+			for (i = 0; i < n; ++i) {
+				if (observers[i].func === func) {
+					return i;
+				}
+			}
+			return -1;
+		};
+
+		return {
+
+			subscribe(func, targetObject) {
+				if (findObserver(func) == -1) {
+					observers.push( {
 						func: func,
 						target: targetObject
 					});
 				}
 			},
 
-			unsubscribe: function(func) {
-				var idx = this.findObserver(func);
+			unsubscribe(func) {
+				var idx = findObserver(func);
 				if (idx != -1) {
-					this.observers.splice(idx, 1);
+					observers.splice(idx, 1);
 				}
 			},
 
-			unsubscribeAll: function(target) {
-				this.observers = [];
+			unsubscribeAll(target) {
+				observers = [];
 			},
 
-			fire: function() {
+			fire() {
 				var i;
-				var n = this.observers.length;
+				var n = observers.length;
 				for (i = 0; i < n; ++i) {
-					if (this.observers[i]) {
-						this.observers[i].func.apply(this.observers[i].target, arguments);
+					if (observers[i]) {
+						observers[i].func.apply(observers[i].target, arguments);
 					}
 				}
 			},
 
-			findObserver: function(func) {
-				var i;
-				var n = this.observers.length;
-				for (i = 0; i < n; ++i) {
-					if (this.observers[i].func === func) {
-						return i;
-					}
-				}
-				return -1;
-			},
+
 		};
 	},
 
-	createImage: function (key, width, height) {
+	createImage (key, width, height) {
 		var newCanvas = document.createElement("canvas");
 		var newContext = newCanvas.getContext("2d");
 		newCanvas.width = width;
@@ -603,7 +606,7 @@ var chao = {
 		return newImage;
 	},
 
-	loadImage: function (key, path) {
+	loadImage (key, path) {
 		var img = new Image();
 		img.src = path;
 		var newCanvas = document.createElement("canvas");
@@ -634,7 +637,7 @@ var chao = {
 		return newImage;
 	},
 
-	createTiledImage: function (image, newImageKey, tilesX, tilesY) {
+	createTiledImage (image, newImageKey, tilesX, tilesY) {
 		var img = chao.getImage(image);
 		var newWidth = img.width * tilesX;
 		var newHeight = img.height * tilesY;
@@ -654,7 +657,7 @@ var chao = {
 		return newImage;
 	},
 
-	createFlippedImage: function(image, newImageKey, flipX, flipY) {
+	createFlippedImage(image, newImageKey, flipX, flipY) {
 		var img = chao.getImage(image);
 		var newImage = chao.createImage(newImageKey, img.width, img.height);
 		var scaleX = flipX ? -1 : 1;
@@ -663,13 +666,13 @@ var chao = {
 		return newImage;
 	},
 
-	resizeImage: function (image, newWidth, newHeight) {
+	resizeImage (image, newWidth, newHeight) {
 		var img = chao.getImage(image);
 		img.width = img.canvas.width = newWidth;
 		img.height = img.canvas.height = newHeight;
 	},
 
-	addImage: function (image) {
+	addImage (image) {
 		var oldImage = -1;
 
 		var n = chao.images.length;
@@ -687,7 +690,7 @@ var chao = {
 		chao.images.push(image);
 	},
 
-	getImage: function (key) {
+	getImage (key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.images.length;
 			for (var i = 0; i < n; ++i) {
@@ -699,7 +702,7 @@ var chao = {
 		return key;
 	},
 
-	tintImage: function (image, color) {
+	tintImage (image, color) {
 		image = chao.getImage(image);
 
 		var tint = chao.createImage(undefined, image.width, image.height);
@@ -709,7 +712,7 @@ var chao = {
 		image.context.drawImage(tint.canvas, 0, 0, image.width, image.height);
 	},
 
-	setImagesSmoothing: function (value) {
+	setImagesSmoothing (value) {
 		chao.smoothing = value;
 
 		chao.setSmoothingForImage(chao.canvas, value);
@@ -721,7 +724,7 @@ var chao = {
 
 	},
 
-	setSmoothingForImage: function (image, value) {
+	setSmoothingForImage (image, value) {
 		// // some of these are deprecated and throw warnings. will just leave them here - who knows
 		// image.context.mozImageSmoothingEnabled = value;
 		image.context.webkitImageSmoothingEnabled = value;
@@ -743,7 +746,7 @@ var chao = {
 		}
 	},
 
-	drawImage: function (target, image, x, y, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
+	drawImage (target, image, x, y, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
@@ -788,7 +791,7 @@ var chao = {
 		target.context.restore();
 	},
 
-	drawImagePart: function (target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
+	drawImagePart (target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 		angle = angle || 0;
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
@@ -841,7 +844,7 @@ var chao = {
 		target.context.restore();
 	},
 
-	setFillStyle: function (image, color) {
+	setFillStyle (image, color) {
 		if (typeof color === "string") {
 			image.context.fillStyle = color;
 		} else {
@@ -849,7 +852,7 @@ var chao = {
 		}
 	},
 
-	setStrokeStyle: function (image, color, width) {
+	setStrokeStyle (image, color, width) {
 		width = width || image.context.lineWidth;
 		image.context.lineWidth = width;
 		if (typeof color === "string") {
@@ -860,19 +863,19 @@ var chao = {
 	},
 
 	// Creates a color in a 0xFFFFFFFF form. Values in 0-255 range.
-	makeColor: function (r, g, b, a) {
+	makeColor (r, g, b, a) {
 		a = a || 255;
 		return (a << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | ((b & 0xff));
 	},
 
 	// Creates a color in a 0xFFFFFFFF form. Values in 0-1 range.
-	makeColorf: function (r, g, b, a) {
+	makeColorf (r, g, b, a) {
 		a = a || 1;
 		return chao.makeColor(r * 255, g * 255, b * 255, a * 255);
 	},
 
 	// Creates a color string in "rgba(r,g,b,a)" format.
-	getRGBAString: function (hexColor) {
+	getRGBAString (hexColor) {
 		var r = (hexColor >> 16) & 0xff;
 		var g = (hexColor >> 8) & 0xff;
 		var b = hexColor & 0xff;
@@ -880,27 +883,27 @@ var chao = {
 		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
 	},
 
-	getPixel: function (image, x, y) {
+	getPixel (image, x, y) {
 		var data = image.context.getImageData(x, y, 1, 1).data;
 		return (data[3] << 24) | ((data[0] & 0xff) << 16) | ((data[1] & 0xff) << 8) | ((data[2] & 0xff));
 	},
 
-	putPixel: function (image, x, y, color) {
+	putPixel (image, x, y, color) {
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, 1, 1);
 	},
 
-	clearImage: function (image) {
+	clearImage (image) {
 		image.context.clearRect(0, 0, image.width, image.height);
 	},
 
-	clearToColor: function (image, color) {
+	clearToColor (image, color) {
 		image.context.clearRect(0, 0, image.width, image.height);
 		chao.setFillStyle(image, color);
 		image.context.fillRect(0, 0, image.width, image.height);
 	},
 
-	drawLine: function (image, x1, y1, x2, y2, color, width) {
+	drawLine (image, x1, y1, x2, y2, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		image.context.beginPath();
 		image.context.moveTo(x1, y1);
@@ -909,17 +912,31 @@ var chao = {
 		image.context.stroke();
 	},
 
-	drawRect: function (image, x, y, w, h, color, width) {
+	drawRect (image, x, y, w, h, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		image.context.strokeRect(x, y, w, h);
 	},
 
-	drawRectFill: function (image, x, y, w, h, color) {
+	drawRectFill (image, x, y, w, h, color) {
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, w, h);
 	},
 
-	drawPolygonLines: function (image, points) {
+	drawCircle (image, x, y, radius, color, width) {
+		chao.setStrokeStyle(image, color, width || 2);
+		image.context.beginPath();
+		image.context.arc(x, y, radius, 0, 2 * Math.PI);
+		image.context.stroke();
+	},
+
+	drawCircleFill (image, x, y, radius, color) {
+		chao.setFillStyle(image, color);
+		image.context.beginPath();
+		image.context.arc(x, y, radius, 0, 2 * Math.PI);
+		image.context.fill();
+	},
+
+	drawPolygonLines (image, points) {
 		image.context.beginPath();
 		for (var i = 0; i < points.length; i++) {
 			if (i) {
@@ -931,19 +948,19 @@ var chao = {
 		image.context.closePath();
 	},
 
-	drawPolygon: function (image, points, color, width) {
+	drawPolygon (image, points, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		chao.drawPolygonLines(image, points);
 		image.context.stroke();
 	},
 
-	drawPolygonFill: function (image, points, color) {
+	drawPolygonFill (image, points, color) {
 		chao.setFillStyle(image, color);
 		chao.drawPolygonLines(image, points);
 		image.context.fill();
 	},
 
-	updatePauseFadeImage: function () {
+	updatePauseFadeImage () {
 		var playWidth = chao.screenWidth * 0.3;
 		var playHeight = chao.screenWidth * 0.3;
 		var center = {
@@ -962,7 +979,7 @@ var chao = {
 		chao.drawPolygonFill(chao.imagePauseFade, poly.points, chao.makeColor(255, 255, 255, 170));
 	},
 
-	loadFont: function (key, path) {
+	loadFont (key, path) {
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
 		s.id = fontname;
@@ -985,14 +1002,14 @@ var chao = {
 		return newFont;
 	},
 
-	loadBase64Font: function (key, data) {
+	loadBase64Font (key, data) {
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
 		s.id = fontname;
 		s.type = "text/css";
 		document.head.appendChild(s);
-		s.textContent = "@font-face { font-family: " + fontname 
-			+ "; src:url('data:application/font-woff;base64," + data 
+		s.textContent = "@font-face { font-family: " + fontname
+			+ "; src:url('data:application/font-woff;base64," + data
 			+ "') format('woff');}";
 
 		var newFont = {
@@ -1006,7 +1023,7 @@ var chao = {
 		return newFont;
 	},
 
-	addFont: function (font) {
+	addFont (font) {
 		var oldFont = -1;
 
 		for (var i = 0; i < chao.fonts.length; ++i) {
@@ -1029,7 +1046,7 @@ var chao = {
 		chao.fonts.push(font);
 	},
 
-	getFont: function (key) {
+	getFont (key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.fonts.length;
 			for (var i = 0; i < n; ++i) {
@@ -1041,7 +1058,7 @@ var chao = {
 		return key;
 	},
 
-	drawText: function (image, font, text, x, y, size, color, align, outlineColor, outlineSize) {
+	drawText (image, font, text, x, y, size, color, align, outlineColor, outlineSize) {
 		color = color || 0xff000000;
 		align = align || "left";
 		outlineColor = outlineColor || 0xff000000;
@@ -1058,14 +1075,14 @@ var chao = {
 		}
 	},
 
-	getTextSize: function (image, text) {
+	getTextSize (image, text) {
 		return {
 			width: image.context.measureText(text).width,
 			height: image.context.measureText("M").width // well, it seems good enough.
 		};
 	},
 
-	updateFontsLoading: function () {
+	updateFontsLoading () {
 		var n = chao.fonts.length;
 		var currentSize = 0;
 		for (var i = 0; i < n; ++i) {
@@ -1080,7 +1097,7 @@ var chao = {
 		}
 	},
 
-	loadSound: function (key, path, volume, looped, channels) {
+	loadSound (key, path, volume, looped, channels) {
 		if (channels < 1) {
 			chao.log("Can't add a sound with no channels, you silly goose.");
 			return null;
@@ -1147,7 +1164,7 @@ var chao = {
 		return sound;
 	},
 
-	loadMusic: function (key, path, fallbackFormatPath, volume) {
+	loadMusic (key, path, fallbackFormatPath, volume) {
 		var sound = null;
 		var mainExtension = path.split('.').pop();
 		var fallbackExtension = fallbackFormatPath ? fallbackFormatPath.split('.').pop() : "";
@@ -1165,7 +1182,7 @@ var chao = {
 		return sound;
 	},
 
-	getSound: function (key) {
+	getSound (key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.sounds.length;
 			for (var i = 0; i < n; ++i) {
@@ -1180,7 +1197,7 @@ var chao = {
 		return key;
 	},
 
-	playSound: function (key, force) {
+	playSound (key, force) {
 
 		if (force === undefined) {
 			force = true;
@@ -1202,7 +1219,7 @@ var chao = {
 		}
 
 		if (sound.isMusic || !chao.muted) {
-			// Play the sound. Don't if sound it muted, but if it's a music, 
+			// Play the sound. Don't if sound it muted, but if it's a music,
 			// play it regardless. It will be paused in the next lines. :)
 
 			sound.currentChannel++;
@@ -1235,7 +1252,7 @@ var chao = {
 		}
 	},
 
-	setMute: function (value) {
+	setMute (value) {
 		if (chao.muted != value) {
 			chao.muted = value;
 
@@ -1259,11 +1276,11 @@ var chao = {
 		}
 	},
 
-	toggleMute: function () {
+	toggleMute () {
 		chao.setMute(!chao.muted);
 	},
 
-	stopSound: function (key) {
+	stopSound (key) {
 		var sound = chao.getSound(key);
 
 		for (var i = 0; i < sound.channels.length; ++i) {
@@ -1272,29 +1289,29 @@ var chao = {
 		}
 	},
 
-	getSoundPosition: function (key) {
+	getSoundPosition (key) {
 		var sound = chao.getSound(key);
 		return sound.channels[sound.currentChannel].currentTime;
 	},
 
-	setSoundPosition: function (key, position) {
+	setSoundPosition (key, position) {
 		var sound = chao.getSound(key);
 		sound.channels[sound.currentChannel].currentTime = position;
 	},
 
-	pauseSound: function (key) {
+	pauseSound (key) {
 		var sound = chao.getSound(key);
 		sound.channels[sound.currentChannel].pause();
 	},
 
-	resumeMusicPlaybackIfNeeded: function () {
+	resumeMusicPlaybackIfNeeded () {
 		if (chao.musicWasSupressed) {
 			chao.musicWasSupressed = false;
 			chao.playSound(chao.currentMusic);
 		}
 	},
 
-	canPlayAudioType: function (extension) {
+	canPlayAudioType (extension) {
 		var audioTest = document.createElement('audio');
 		if (!audioTest || !audioTest.canPlayType) {
 			return false;
@@ -1308,7 +1325,7 @@ var chao = {
 				break;
 			}
 			case "opus": {
-				if (audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '') 
+				if (audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '')
 						|| audioTest.canPlayType('audio/opus;').replace(/^no$/, '')) {
 					return true;
 				}
@@ -1337,7 +1354,7 @@ var chao = {
 		return false;
 	},
 
-	updateMouse: function () {
+	updateMouse () {
 		chao.mouse.wheelDelta = 0;
 		chao.mouse.justPressed = false;
 		chao.mouse.justReleased = false;
@@ -1347,11 +1364,11 @@ var chao = {
 		chao.mouse.justReleasedMiddle = false;
 	},
 
-	getEntityUnderMouse: function () {
+	getEntityUnderMouse () {
 		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
 	},
 
-	handleMouseDown: function (button) {
+	handleMouseDown (button) {
 		chao.resumeMusicPlaybackIfNeeded();
 
 		if (chao.mouse.suppressUntilUp) {
@@ -1375,7 +1392,7 @@ var chao = {
 		}
 	},
 
-	handleMouseUp: function (button) {
+	handleMouseUp (button) {
 
 		if (chao.mouse.suppressUntilUp) {
 			chao.mouse.suppressUntilUp = false;
@@ -1405,7 +1422,7 @@ var chao = {
 		}
 	},
 
-	handleMouseMove: function (x, y) {
+	handleMouseMove (x, y) {
 		chao.mouse.x = x;
 		chao.mouse.y = y;
 
@@ -1426,37 +1443,37 @@ var chao = {
 		}
 	},
 
-	onMouseDown: function (e) {
+	onMouseDown (e) {
 		chao.handleMouseDown(e.which);
 		e.preventDefault();
 	},
 
-	onMouseUp: function (e) {
+	onMouseUp (e) {
 		chao.handleMouseUp(e.which);
 		e.preventDefault();
 	},
 
-	onMouseMove: function (e) {
+	onMouseMove (e) {
 		chao.handleMouseMove(e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 
-	onMouseWheel: function (e) {
+	onMouseWheel (e) {
 		chao.mouse.wheelDelta = e.deltaY;
-		e.preventDefault();
+		// e.preventDefault();
 	},
 
-	setMouseVisibility: function (value) {
+	setMouseVisibility (value) {
 		chao.canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
-	updateTouches: function () {
+	updateTouches () {
 		for (var i = 0; i < chao.touches.length; ++i) {
 			chao.touches[i].justPressed = false;
 		}
 	},
 
-	onTouchStart: function (e) {
+	onTouchStart (e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touchPos = chao.getTouchPos(touches[i]);
@@ -1480,7 +1497,7 @@ var chao = {
 		}
 	},
 
-	onTouchMove: function (e) {
+	onTouchMove (e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touch = chao.getTouch(touches[i].identifier);
@@ -1499,7 +1516,7 @@ var chao = {
 		}
 	},
 
-	onTouchEnd: function (e) {
+	onTouchEnd (e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touch = chao.getTouch(touches[i].identifier);
@@ -1518,7 +1535,7 @@ var chao = {
 		}
 	},
 
-	getTouch: function (id) {
+	getTouch (id) {
 		for (var i = 0; i < chao.touches.length; ++i) {
 			if (chao.touches[i].id == id) {
 				return chao.touches[i];
@@ -1527,21 +1544,21 @@ var chao = {
 		return null;
 	},
 
-	getTouchPos: function (touch) {
+	getTouchPos (touch) {
 		return {
 			x: (touch.pageX - touch.target.offsetLeft) / chao.screenScaleX,
 			y: (touch.pageY - touch.target.offsetTop) / chao.screenScaleY
 		};
 	},
 
-	updateKeyboard: function () {
+	updateKeyboard () {
 		for (var i = 0; i < 0x80; ++i) {
 			chao.justPressed[i] = false;
 			chao.justReleased[i] = false;
 		}
 	},
 
-	onKeyDown: function (e) {
+	onKeyDown (e) {
 		if (!chao.pressed[e.keyCode]) {
 			chao.justPressed[e.keyCode] = true;
 		}
@@ -1550,14 +1567,14 @@ var chao = {
 		e.preventDefault();
 	},
 
-	onKeyUp: function (e) {
+	onKeyUp (e) {
 		chao.justReleased[e.keyCode] = true;
 		chao.pressed[e.keyCode] = false;
 
 		e.preventDefault();
 	},
 
-	resize: function () {
+	resize () {
 		if (chao.scalingMode <= chao.SCALING_MODE_NONE || chao.scalingMode >= chao.SCALING_MODE_END) {
 			return;
 		}
@@ -1645,7 +1662,7 @@ var chao = {
 		}
 	},
 
-	setCanvasScale: function (x, y) {
+	setCanvasScale (x, y) {
 		chao.screenScaleX = x;
 		chao.screenScaleY = y;
 
@@ -1665,7 +1682,7 @@ var chao = {
 		canvas.style.transform = "scale(" + x + "," + y + ")";
 	},
 
-	getLoadingProgress: function () {
+	getLoadingProgress () {
 		var allData = chao.images.length + chao.sounds.length;
 		var loadedData = 0;
 		var i;
@@ -1685,15 +1702,15 @@ var chao = {
 		return loadedData / allData;
 	},
 
-	getTimeDelta: function () {
+	getTimeDelta () {
 		return chao.timeDelta * chao.timeScale;
 	},
 
-	getUnscaledDelta: function () {
+	getUnscaledDelta () {
 		return chao.timeDelta;
 	},
 
-	makeRect: function (x, y, width, height) {
+	makeRect (x, y, width, height) {
 		return {
 			x: x,
 			y: y,
@@ -1702,43 +1719,43 @@ var chao = {
 		};
 	},
 
-	makeVector2: function(x, y) {
+	makeVector2(x, y) {
 		return {
 			x: x || 0,
 			y: y || 0,
 
-			set: function(x, y) {
+			set(x, y) {
 				this.x = x;
 				this.y = y;
 			},
 
-			compare: function (vector, epsilon) {
+			compare (vector, epsilon) {
 				epsilon = epsilon || 0.001;
 				return Math.abs(this.x - vector.x) < epsilon
 					&& Math.abs(this.y - vector.y) < epsilon;
 			},
 
-			toString: function() {
+			toString() {
 				var roundX = Math.round(1000 * this.x) / 1000;
 				var roundY = Math.round(1000 * this.y) / 1000;
 				return "" + roundX + "x" + roundY;
 			},
 
-			duplicate: function() {
+			duplicate() {
 				return chao.makeVector2(this.x, this.y);
 			},
 
-			add: function (vector) {
+			add (vector) {
 				this.x += vector.x;
 				this.y += vector.y;
 			},
 
-			substract: function (vector) {
+			substract (vector) {
 				this.x -= vector.x;
 				this.y -= vector.y;
 			},
 
-			multiply: function (value1, value2) {
+			multiply (value1, value2) {
 				if (typeof(value1) === "object") {
 					this.x *= value1.x;
 					this.y *= value1.y;
@@ -1751,7 +1768,7 @@ var chao = {
 				}
 			},
 
-			divide: function (value1, value2) {
+			divide (value1, value2) {
 				if (typeof(value1) === "object") {
 					this.x /= value1.x;
 					this.y /= value1.y;
@@ -1764,17 +1781,23 @@ var chao = {
 				}
 			},
 
-			getLength: function () {
+			getLength () {
 				return Math.sqrt((this.x * this.x) + (this.y * this.y));
 			},
 
-			normalize: function () {
+			getNormalized () {
+				var copy = this.duplicate();
+				copy.normalize();
+				return copy;
+			},
+
+			normalize () {
 				var len = this.getLength();
 				this.x /= len;
 				this.y /= len;
 			},
 
-			rotate: function (degrees) {
+			rotate (degrees) {
 				degrees = chao.deg2rad(degrees);
 				var newX = this.x * Math.cos(degrees) - this.y * Math.sin(degrees);
 				var newY = this.x * Math.sin(degrees) + this.y * Math.cos(degrees);
@@ -1782,7 +1805,7 @@ var chao = {
 				this.y = newY;
 			},
 
-			rotateAroundPoint: function(pointX, pointY, degrees) {
+			rotateAroundPoint(pointX, pointY, degrees) {
 				degrees = chao.deg2rad(degrees);
 				var s = Math.sin(degrees);
 				var c = Math.cos(degrees);
@@ -1793,32 +1816,36 @@ var chao = {
 				this.x = newX + pointX;
 				this.y = newY + pointY;
 			},
+
+			log() {
+				chao.log("" + Math.round(this.x * 100) / 100 + "x" + Math.round(this.y * 100) / 100);
+			}
 		};
 	},
 
-	makeTransformMatrix: function(x, y) {
+	makeTransformMatrix(x, y) {
 		return {
 			x: [1, 0],
 			y: [0, 1],
 			origin: [x || 0, y || 0],
 
-			getDuplicate: function() {
+			getDuplicate() {
 				var newMatrix = chao.makeTransformMatrix(x, y);
 				newMatrix.x = this.x;
 				newMatrix.y = this.y;
 				return newMatrix;
 			},
 
-			getMultiplied: function(parent) {
+			getMultiplied(parent) {
 				var x0 = parent.x[0] * this.x[0] + parent.y[0] * this.x[1];
 				var x1 = parent.x[1] * this.x[0] + parent.y[1] * this.x[1];
 				var y0 = parent.x[0] * this.y[0] + parent.y[0] * this.y[1];
 				var y1 = parent.x[1] * this.y[0] + parent.y[1] * this.y[1];
-				
+
 				var newMatrix = chao.makeTransformMatrix();
-				newMatrix.origin[0] = parent.x[0] * this.origin[0] 
+				newMatrix.origin[0] = parent.x[0] * this.origin[0]
 					+ parent.y[0] * this.origin[1] + parent.origin[0];
-				newMatrix.origin[1] = parent.x[1] * this.origin[0] 
+				newMatrix.origin[1] = parent.x[1] * this.origin[0]
 					+ parent.y[1] * this.origin[1] + parent.origin[1];
 				newMatrix.x = [x0, x1];
 				newMatrix.y = [y0, y1];
@@ -1826,47 +1853,47 @@ var chao = {
 				return newMatrix;
 			},
 
-			getX: function() {
+			getX() {
 				return this.origin[0];
 			},
 
-			getY: function() {
+			getY() {
 				return this.origin[1];
 			},
 
-			setX: function(value) {
+			setX(value) {
 				this.origin[0] = value;
 			},
 
-			setY: function(value) {
+			setY(value) {
 				this.origin[1] = value;
 			},
 
-			getScaleX: function() {
+			getScaleX() {
 				return Math.sqrt((this.x[0] * this.x[0]) + (this.y[0] * this.y[0]));
 			},
 
-			getScaleY: function() {
+			getScaleY() {
 				return Math.sqrt((this.x[1] * this.x[1]) + (this.y[1] * this.y[1]));
 			},
 
-			setScaleX: function(value) {
+			setScaleX(value) {
 				var currentScale = this.getScaleX();
 				this.x[0] = (this.x[0] / currentScale) * value;
 				this.y[0] = (this.y[0] / currentScale) * value;
 			},
-			
-			setScaleY: function(value) {
+
+			setScaleY(value) {
 				var currentScale = this.getScaleY();
 				this.x[1] = (this.x[1] / currentScale) * value;
 				this.y[1] = (this.y[1] / currentScale) * value;
 			},
 
-			getRotation: function() {
+			getRotation() {
 				return chao.rad2deg(Math.atan2(this.x[1], this.x[0]));
 			},
 
-			setRotation: function(value) {
+			setRotation(value) {
 				var rads = chao.deg2rad(value);
 				var scaleX = this.getScaleX();
 				var scaleY = this.getScaleY();
@@ -1882,9 +1909,9 @@ var chao = {
 		}
 	},
 
-	// Points - All the points shaping the polygon. 
+	// Points - All the points shaping the polygon.
 	// Can be array of Vector2s (see makeVector2()) or just a simple array built like this: [x1, y1, x2, y2, ...].
-	makePolygon: function (points) {
+	makePolygon (points) {
 		if (!Array.isArray(points) || points.length < 1) {
 			chao.log("makePolygon: points param is not an array or has no elements. :(");
 			return;
@@ -1922,7 +1949,7 @@ var chao = {
 			top: top,
 			bottom: bottom,
 
-			intersects: function (otherPoly) {
+			intersects (otherPoly) {
 				var polys = [this, otherPoly];
 				var i1, pi, point, projected;
 				for (var i = 0; i < polys.length; ++i) {
@@ -1964,7 +1991,7 @@ var chao = {
 				return true;
 			},
 
-			isPointInside: function(point) {
+			isPointInside(point) {
 				if (point.x < this.left || point.x > this.right || point.y < this.top || point.y > this.bottom) {
 					return false;
 				}
@@ -1982,7 +2009,7 @@ var chao = {
 					polyLineA = this.points[i];
 					polyLineB = i === 0 ? this.points[pointsNum - 1] : this.points[i - 1];
 
-					if (chao.areLinesIntersecting(raycastOrigin, point, polyLineA, polyLineB)) {
+					if (chao.getLinesIntersection(raycastOrigin, point, polyLineA, polyLineB) !== false) {
 						intersections++;
 					}
 				}
@@ -1994,10 +2021,10 @@ var chao = {
 		};
 	},
 
-	areLinesIntersecting: function (line1a, line1b, line2a, line2b) {
+	areLinesIntersecting (line1a, line1b, line2a, line2b) {
 		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y)
 			- (line2b.x - line2a.x) * (line1b.y - line1a.y);
-		
+
 		if (det === 0) {
 			return false;
 		}
@@ -2009,44 +2036,73 @@ var chao = {
 		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
-	getRandom: function (max) {
+	getLinesIntersection(line1a, line1b, line2a, line2b) {
+
+		// Check if none of the lines are of length 0
+		if ((line1a.x === line1b.x && line1a.y === line1b.y) || (line2a.x === line2b.x && line2a.y === line2b.y)) {
+			return false;
+		}
+
+		denominator = ((line2b.y - line2a.y) * (line1b.x - line1a.x) - (line2b.x - line2a.x) * (line1b.y - line1a.y));
+
+		// Lines are parallel
+		if (denominator === 0) {
+			return false;
+		}
+
+		var ua = ((line2b.x - line2a.x) * (line1a.y - line2a.y) - (line2b.y - line2a.y) * (line1a.x - line2a.x)) / denominator;
+		var ub = ((line1b.x - line1a.x) * (line1a.y - line2a.y) - (line1b.y - line1a.y) * (line1a.x - line2a.x)) / denominator;
+
+		// is the intersection along the segments
+		if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+			return false;
+		}
+
+		// Return a object with the x and y coordinates of the intersection
+		var x = line1a.x + ua * (line1b.x - x1);
+		var y = line1a.y + ua * (line1b.y - line1a.y);
+
+		return { x, y };
+	},
+
+	getRandom (max) {
 		max -= 1;
 		return Math.round(max * Math.random());
 	},
 
-	getRandomRange: function (min, max) {
+	getRandomRange (min, max) {
 		max -= min;
 		return min + max * Math.random();
 	},
 
-	getRandiRange: function (min, max) {
+	getRandiRange (min, max) {
 		return Math.round(chao.getRandomRange(min, max));
 	},
 
-	coinFlip: function (successChance) {
+	coinFlip (successChance) {
 		successChance = successChance || 50;
 		return chao.getRandom(100) < successChance;
 	},
 
-	getRandomElement: function (array) {
+	getRandomElement (array) {
 		return array[chao.getRandom(array.length)];
 	},
 
-	rad2deg: function (radians) {
+	rad2deg (radians) {
 		return radians * (180.0 / Math.PI);
 	},
 
-	deg2rad: function (degrees) {
+	deg2rad (degrees) {
 		return degrees * (Math.PI / 180.0);
 	},
 
-	clamp: function (value, min, max) {
+	clamp (value, min, max) {
 		if (value < min) value = min;
 		if (value > max) value = max;
 		return value;
 	},
 
-	moveTowards: function (a, b, maxStep) {
+	moveTowards (a, b, maxStep) {
 		if (b > a) {
 			a += maxStep;
 			if (a > b) {
@@ -2061,7 +2117,7 @@ var chao = {
 		return a;
 	},
 
-	interpolate: function (a, b, v, interpolationType) {
+	interpolate (a, b, v, interpolationType) {
 		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR;
 		v = chao.clamp(v, 0.0, 1.0);
 
@@ -2112,14 +2168,14 @@ var chao = {
 		return (b * v) + (a * (1.0 - v));
 	},
 
-	interpolateVector: function (a, b, v, interpolationType) {
+	interpolateVector (a, b, v, interpolationType) {
 		return {
 			x: chao.interpolate(a.x, b.x, v, interpolationType),
 			y: chao.interpolate(a.y, b.y, v, interpolationType)
 		};
 	},
 
-	setupLogTarget: function (htmlElementId) {
+	setupLogTarget (htmlElementId) {
 		chao.debugLogTarget = document.getElementById(htmlElementId);
 		window.addEventListener("error", function (e) {
 			var fa = e.filename.split("/");
@@ -2128,7 +2184,7 @@ var chao = {
 		});
 	},
 
-	log: function (thingie, logTrace) {
+	log (thingie, logTrace) {
 		if (chao.loggingEnabled) {
 			if (chao.debugLogTarget) {
 				chao.debugLogTarget.innerHTML += String(thingie).replace(/\n/g, "<br/>") + "<br/>";
@@ -2138,12 +2194,12 @@ var chao = {
 		}
 	},
 
-	logHierarchy: function (entity) {
+	logHierarchy (entity) {
 		var logString = chao.logEntity(entity, 0);
 		chao.log(logString);
 	},
 
-	logEntity: function (entity, indent) {
+	logEntity (entity, indent) {
 		entity = entity || chao.getCurrentState().rootEntity;
 		indent = indent || 0;
 
@@ -2180,7 +2236,7 @@ var chao = {
 		return "\n" + entityLog;
 	},
 
-	installVisibilityHandler: function () {
+	installVisibilityHandler () {
 		if (chao.visibilityHandlerInstalled) {
 			chao.log("Visibility Handler is already installed!");
 			return;
@@ -2225,7 +2281,7 @@ var chao = {
 
 	helpers: {
 
-		createSprite: function (parent, entityName, image, x, y) {
+		createSprite (parent, entityName, image, x, y) {
 			var newSprite = (new Entity(entityName, x, y)).addComponent(new ComponentSprite(image));
 			if (parent) {
 				parent.add(newSprite.entity);
@@ -2233,7 +2289,7 @@ var chao = {
 			return newSprite;
 		},
 
-		createText: function (parent, entityName, x, y, font, text, size) {
+		createText (parent, entityName, x, y, font, text, size) {
 			var newText = (new Entity(entityName, x, y)).addComponent(new ComponentText(font, text, size));
 			if (parent) {
 				parent.add(newText.entity);
@@ -2241,7 +2297,7 @@ var chao = {
 			return newText;
 		},
 
-		createButton: function (parent, entityName, x, y, image, imagePressed, font, fontSize, text) {
+		createButton (parent, entityName, x, y, image, imagePressed, font, fontSize, text) {
 			var newButton = (new Entity(entityName, x, y)).addComponent(new ComponentButton(image));
 
 			if (imagePressed) {
@@ -2260,7 +2316,7 @@ var chao = {
 			return newButton;
 		},
 
-		createFpsCounter: function (parent, size) {
+		createFpsCounter (parent, size) {
 			size = size || 25;
 			chao.countFPS = true;
 
@@ -2271,7 +2327,7 @@ var chao = {
 			var componentCounter = {
 				name: "FPS Counter",
 				textComponent: textFPS,
-				update: function () {
+				update () {
 					this.textComponent.text = "" + chao.currentFPS + " fps";
 				}
 			};
@@ -2284,17 +2340,17 @@ var chao = {
 			return textFPS;
 		},
 
-		fadeEntityOut: function (entity, time, delay) {
+		fadeEntityOut (entity, time, delay) {
 			return ComponentTween.addTween(entity, "alpha", 1.0, 0.0,
 				time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
-		fadeEntityIn: function (entity, time, delay) {
+		fadeEntityIn (entity, time, delay) {
 			return ComponentTween.addTween(entity, "alpha", 0.0, 1.0,
 				time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
-		addBounceTween: function (entity, amplitude, time) {
+		addBounceTween (entity, amplitude, time) {
 			var tweenName = "BounceTween";
 			entity.removeComponentsByName(tweenName);
 			var newTween = ComponentTween.addTween(entity, "y",
@@ -2304,7 +2360,7 @@ var chao = {
 			return newTween;
 		},
 
-		shake: function (entity, force, time, damped) {
+		shake (entity, force, time, damped) {
 			var shakerName = "Disposable Shake";
 
 			var oldShake = entity.getComponentByName(shakerName);
@@ -2614,6 +2670,22 @@ function Entity(name, x, y) {
 			}
 		}
 	};
+
+	this.setPosition = function(x, y, screenCoordinates) {
+		if (screenCoordinates === true) {
+			this.screenX = x;
+			this.screenY = y;
+		} else {
+			this.x = x;
+			this.y = y;
+		}
+	};
+
+	this.setScale = function(x, y) {
+		y = y || x;
+		this.scaleX = x;
+		this.scaleY = y;
+	}
 
 	this.stretchOnParent = function (setAnchor) {
 		if (setAnchor === undefined) {
@@ -3064,10 +3136,94 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 	};
 };
 
+function ComponentFrame(image, cornerSize) {
+	this.name = "Frame";
+	this.entity = null;
+	this.sourceImage = null;
+	this.frameImage = null;
+	this.lastSize = chao.makeVector2(-1, -1);
+
+	this.create = function() {
+		this.sourceImage = chao.getImage(image);
+		this.updateImage();
+	};
+
+	this.draw = function () {
+		var entity = this.entity;
+		var drawX = entity.screenX - (entity.screenWidth * entity.pivotX);
+		var drawY = entity.screenY - (entity.screenHeight * entity.pivotY);
+
+		chao.drawImage(chao.canvas, this.frameImage,
+			drawX, drawY,
+			entity.screenAlpha,
+			entity.screenScaleX, entity.screenScaleY,
+			entity.screenRotation,
+			entity.pivotX, entity.pivotY);
+	};
+
+	this.update = function () {
+		var entity = this.entity;
+		if (this.lastSize.x != entity.width || this.lastSize.y != entity.height) {
+			this.lastSize.set(entity.width, entity.height);
+			this.updateImage();
+		}
+	};
+
+	this.updateImage = function() {
+		var entity = this.entity;
+		var minSize = cornerSize * 2;
+		var newSize = chao.makeVector2(
+			Math.max(minSize, entity.width),
+			Math.max(minSize, entity.height));
+		
+		if (this.frameImage == null) {
+			this.frameImage = chao.createImage(undefined, newSize.x, newSize.y);
+		} else {
+			chao.resizeImage(this.frameImage, newSize.x, newSize.y);
+		}
+
+		var frameImg = this.frameImage;
+		var sourceImg = this.sourceImage;
+
+		var doubleCorner = cornerSize * 2;
+		var sourceBorderWidth = sourceImg.width - doubleCorner;
+		var sourceBorderHeight = sourceImg.height - doubleCorner;
+		var borderWidth = entity.width - doubleCorner;
+		var borderHeight = entity.height - doubleCorner;
+		var borderScaleX = borderWidth / sourceBorderWidth;
+		var borderScaleY = borderHeight / sourceBorderHeight;
+		
+		var rectMid = chao.makeRect(cornerSize, cornerSize, sourceBorderWidth, sourceImg.height - doubleCorner);
+		var rectTop = chao.makeRect(cornerSize, 0, sourceBorderWidth, cornerSize);
+		var rectBottom = chao.makeRect(cornerSize, sourceImg.height - cornerSize , sourceBorderWidth, cornerSize);
+		var rectLeft = chao.makeRect(0, cornerSize, cornerSize, sourceImg.height - doubleCorner);
+		var rectRight = chao.makeRect(sourceImg.width - cornerSize, cornerSize, cornerSize, sourceImg.height - doubleCorner);
+		var rectTL = chao.makeRect(0, 0, cornerSize, cornerSize);
+		var rectTR = chao.makeRect(sourceImg.width - cornerSize, 0, cornerSize, cornerSize);
+		var rectBL = chao.makeRect(0, sourceImg.height - cornerSize, cornerSize, cornerSize);
+		var rectBR = chao.makeRect(sourceImg.width - cornerSize, sourceImg.height - cornerSize, cornerSize, cornerSize);
+
+		this.drawFramePart(cornerSize, cornerSize, rectMid, borderScaleX, borderScaleY);
+		this.drawFramePart(cornerSize, 0, rectTop, borderScaleX, 1.0);
+		this.drawFramePart(cornerSize, frameImg.height - cornerSize, rectBottom, borderScaleX, 1.0);
+		this.drawFramePart(0, cornerSize, rectLeft, 1.0, borderScaleY);
+		this.drawFramePart(frameImg.width - cornerSize, cornerSize, rectRight, 1.0, borderScaleY);
+
+		this.drawFramePart(0, 0, rectTL);
+		this.drawFramePart(entity.width-cornerSize, 0, rectTR);
+		this.drawFramePart(0, entity.height-cornerSize, rectBL);
+		this.drawFramePart(entity.width-cornerSize, entity.height-cornerSize, rectBR);
+	};
+
+	this.drawFramePart = function(x, y, sourceRect, scaleX, scaleY) {
+		chao.drawImagePart(this.frameImage, this.sourceImage, x, y, sourceRect, 1.0, scaleX || 1.0, scaleY || 1.0);
+	};
+};
+
 /**
  * Text rendering component.
  * Use "\n" to break lines.
- * You can colorize parts of the text using color codes, eg. `2 is a color code for green 
+ * You can colorize parts of the text using color codes, eg. `2 is a color code for green
  * and `` removes the effect of the last color code.
  * Color codes are defined in colorCodes array in the chao namespace.
  * Example: "This is a text\nwith a `14yellow`` word inside." will create a
@@ -3113,18 +3269,19 @@ function ComponentText(font, text, size) {
 			this.changeText(); // Font that was previously not ready was finally loaded, so we need to redraw this image.
 		}
 
-		var drawScaleX = this.flipX ? -this.entity.screenScaleX : this.entity.screenScaleX;
-		var drawScaleY = this.flipY ? -this.entity.screenScaleY : this.entity.screenScaleY;
-		var drawAlpha = this.entity.screenAlpha;
-		var drawX = this.entity.screenX - (this.entity.screenWidth * this.entity.pivotX);
-		var drawY = this.entity.screenY - (this.entity.screenHeight * this.entity.pivotY);
+		var entity = this.entity;
+		var drawScaleX = this.flipX ? -entity.screenScaleX : entity.screenScaleX;
+		var drawScaleY = this.flipY ? -entity.screenScaleY : entity.screenScaleY;
+		var drawAlpha = entity.screenAlpha;
+		var drawX = entity.screenX - (entity.screenWidth * entity.pivotX);
+		var drawY = entity.screenY - (entity.screenHeight * entity.pivotY);
 
 		chao.drawImage(chao.canvas, this.image,
 			drawX, drawY,
 			drawAlpha,
 			drawScaleX, drawScaleY,
-			this.entity.screenRotation,
-			this.entity.pivotX, this.entity.pivotY);
+			entity.screenRotation,
+			entity.pivotX, entity.pivotY);
 	};
 
 	this.changeText = function (text) {
@@ -3458,7 +3615,7 @@ function ComponentCamera() {
 
 	this.offsetX = 0;
 	this.offsetY = 0;
-	
+
 	this.bounds = {
 		x: 0,
 		y: 0,
@@ -3474,17 +3631,7 @@ function ComponentCamera() {
 			return;
 		}
 
-		var targetPosOffset = {
-			x: chao.screenWidth / 2 - this.trackedEntity.screenX,
-			y: chao.screenHeight / 2 - this.trackedEntity.screenY
-		};
-
-		var cameraPos = {
-			x: this.entity.x + targetPosOffset.x,
-			y: this.entity.y + targetPosOffset.y
-		};
-
-		this.clampToBounds(cameraPos);
+		var cameraPos = this.getCameraTargetPosition();
 
 		this.entity.x = chao.interpolate(this.entity.x, cameraPos.x, chao.timeDelta * this.trackingSpeed);
 		this.entity.y = chao.interpolate(this.entity.y, cameraPos.y, chao.timeDelta * this.trackingSpeed);
@@ -3503,6 +3650,12 @@ function ComponentCamera() {
 		this.trackedEntity = null;
 	};
 
+	this.snapToFollowed = function () {
+		var cameraPos = this.getCameraTargetPosition();
+		this.entity.x = cameraPos.x;
+		this.entity.y = cameraPos.y;
+	}
+
 	this.slideToPosition = function (x, y, time, interpolationType, callback) {
 		interpolationType = interpolationType !== undefined ? interpolationType : chao.INTERPOLATE_SMOOTH;
 
@@ -3512,9 +3665,9 @@ function ComponentCamera() {
 		x = -x + chao.screenWidth / 2;
 		y = -y + chao.screenHeight / 2;
 
-		this.slideTweens.push(ComponentTween.addTween(this.entity, "x", 
+		this.slideTweens.push(ComponentTween.addTween(this.entity, "x",
 			this.entity.x, x, time, interpolationType, chao.REPEAT_MODE_ONCE, 0, callback));
-		this.slideTweens.push(ComponentTween.addTween(this.entity, "y", 
+		this.slideTweens.push(ComponentTween.addTween(this.entity, "y",
 			this.entity.y, y, time, interpolationType, chao.REPEAT_MODE_ONCE));
 	};
 
@@ -3525,7 +3678,7 @@ function ComponentCamera() {
 		this.slideTweens = [];
 	};
 
-	this.setBounds = function(x, y, width, height) {
+	this.setBounds = function (x, y, width, height) {
 		this.bounds.x = x;
 		this.bounds.y = y;
 		this.bounds.width = width;
@@ -3540,13 +3693,27 @@ function ComponentCamera() {
 			cameraPos.y = -chao.clamp(-cameraPos.y, this.bounds.y, (this.bounds.y + this.bounds.height) - chao.screenHeight);
 		}
 	};
+
+	this.getCameraTargetPosition = function () {
+		var targetPosOffset = {
+			x: chao.screenWidth / 2 - this.trackedEntity.screenX,
+			y: chao.screenHeight / 2 - this.trackedEntity.screenY
+		};
+
+		var cameraPos = {
+			x: this.entity.x + targetPosOffset.x,
+			y: this.entity.y + targetPosOffset.y
+		};
+
+		this.clampToBounds(cameraPos);
+
+		return cameraPos;
+	}
 }
 
 function ComponentTween(varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
 	this.name = "Tween";
 	this.entity = null;
-
-	this.id = chao.getRandomRange(10000, 99999);
 
 	this.target = null;
 	this.varName = varName;
@@ -3659,7 +3826,7 @@ function ComponentParticles(image) {
 	this.entity = null;
 
 	this.emitting = false;
-	
+
 	this.amount = 1;
 	this.lifetime = 1.0;
 	this.explosiveness = 0.0;
@@ -3695,7 +3862,7 @@ function ComponentParticles(image) {
 		// spawning new particles
 		if (this.emitting) {
 			var interval = this.lifetime / this.amount;
-			
+
 
 			this.timer += delta;
 
@@ -3735,8 +3902,8 @@ function ComponentParticles(image) {
 					}
 				}
 			} while (this.timer >= nextEmit && this.emitting)
-			
-		} else { 
+
+		} else {
 			if (this.particles.length <= 0) {
 				if (this.disposable) {
 					entity.removeComponent(this);
@@ -3796,14 +3963,14 @@ function ComponentParticles(image) {
 			if (this.useLocalCoords) {
 				transform = particle.transform.getMultiplied(entityTransform);
 			}
-			
+
 			var drawScaleX = transform.getScaleX();
 			var drawScaleY = transform.getScaleY();
 			var screenWidth = image.width * drawScaleX;
 			var screenHeight = image.height * drawScaleY;
 			var drawX = transform.origin[0] - (screenWidth * 0.5);
 			var drawY = transform.origin[1] - (screenHeight * 0.5);
-			
+
 			var thisAlpha = drawAlpha;
 			var fadeOutThreshold = this.lifetime * this.fadeOutStartTime;
 			if (particle.timer > fadeOutThreshold) {
@@ -3812,7 +3979,7 @@ function ComponentParticles(image) {
 			}
 
 			chao.drawImage(chao.canvas, image, drawX, drawY, thisAlpha,
-					drawScaleX, drawScaleY, transform.getRotation(), 
+					drawScaleX, drawScaleY, transform.getRotation(),
 					0.5, 0.5);
 		}
 	};
@@ -3861,7 +4028,7 @@ function ComponentShake(force, time, damped) {
 				return;
 			}
 
-			// Put this component at the end if it's not already. 
+			// Put this component at the end if it's not already.
 			// So we can take the position changes made by other components into account.
 			var id = this.entity.components.indexOf(this);
 			if (id != this.entity.components.length - 1) {
@@ -3905,3 +4072,218 @@ function ComponentShake(force, time, damped) {
 		this.timer = this.duration;
 	};
 }
+
+function ComponentYSort () {
+	this.name = "Y Sort";
+	
+	this.update = function () {
+		let objs = this.entity.children;
+		let n = objs.length;
+		for (let i = 0; i < n; ++i) {
+			for (let j = 0; j < n - i - 1; ++j) {
+				if (objs[j].y > objs[j + 1].y) {
+					let tempChild = objs[j];
+					objs[j] = objs[j + 1];
+					objs[j + 1] = tempChild;
+				}
+			}
+		}
+	};
+};
+
+function ComponentCollider ( shape, isKinematic ) {
+	// Watch out not to name anything else like this.
+	this.name = "ChaoCollider"
+	this.otherBodies = [];
+	this.shape = shape;
+	this.isKinematic = isKinematic == undefined ? true : false;
+
+	this.onCollide = chao.makeSignal(/**ComponentCollider*/);
+
+	this.lastPos = chao.makeVector2();
+
+	this.create = function () {
+		var entity = this.entity;
+
+		this.remove = this.destroy;
+		this.lastPos.set(entity.x, entity.y);
+
+		this.otherBodies = chao.findComponents(this.name);
+		for (let i = 0; i < this.otherBodies.length; ++i) {
+			this.otherBodies[i].otherBodies.push(this);
+		}
+	};
+
+	this.destroy = function () {
+		for (let i = 0; i < this.otherBodies.length; ++i) {
+			this.otherBodies[i].splice(this.otherBodies[i].indexOf(this), 1);
+		}
+	};
+
+	this.update = function () {
+		var entity = this.entity;
+		var lastPos = this.lastPos;
+
+		if (Math.abs(entity.x - lastPos.x) >= 1 || Math.abs(entity.y - lastPos.y) >= 1) {
+			var thisPos = this.shape.getPosition(entity.x, entity.y);
+			var thisLastPos = this.shape.getPosition(lastPos.x, lastPos.y);
+			var moveVec = chao.makeVector2(lastPos.x - entity.x, lastPos.y - entity.y);
+			var moveVecNormalized = moveVec.getNormalized();
+			var thisPosDiff = {
+				x: Math.ceil(Math.abs(thisLastPos.x - thisPos.x)),
+				y: Math.ceil(Math.abs(thisLastPos.y - thisPos.y))
+			}
+
+			for (let i = 0; i < this.otherBodies.length; ++i) {
+				var other = this.otherBodies[i];
+				var otherPos = other.shape.getPosition(other.entity.x, other.entity.y);
+				var colX = false;
+				var colY = false;
+				
+				if (this.shape.name == "circle" && other.shape.name == "circle") {
+					var maxDist = this.shape.radius + other.shape.radius;
+					
+					var vecX = chao.makeVector2(otherPos.x - thisPos.x, otherPos.y - thisLastPos.y);
+					var distX = vecX.getLength();
+					
+					colX = distX < maxDist;
+
+					var vecY = chao.makeVector2(otherPos.x - thisPos.x, otherPos.y - thisPos.y);
+					var distY = vecY.getLength();
+					
+					colY = distY < maxDist;
+					
+				} else if (this.shape.name == "rect" && other.shape.name == "rect") {
+					var thisHalfSize = this.shape.getHalfSize();
+					var otherHalfSize = other.shape.getHalfSize();
+					var combinedHalfSizes = {
+						x: thisHalfSize.x + otherHalfSize.x,
+						y: thisHalfSize.y + otherHalfSize.y,
+					};
+					
+					var vx = {
+						x: Math.abs(thisPos.x - otherPos.x),
+						y: Math.abs(thisLastPos.y - otherPos.y),
+					};
+					colX = vx.x < combinedHalfSizes.x && vx.y < combinedHalfSizes.y;
+
+					var vy = {
+						x: Math.abs(thisLastPos.x - otherPos.x),
+						y: Math.abs(thisPos.y - otherPos.y),
+					};
+					colY = vy.x < combinedHalfSizes.x && vy.y < combinedHalfSizes.y;
+
+				} else {
+					if (this.shape.name == "circle") {
+						colX = this.testRectCircleCollision(other.shape, this.shape, 
+							otherPos, chao.makeVector2(thisPos.x, thisLastPos.y));
+						colY = this.testRectCircleCollision(other.shape, this.shape,
+							otherPos, chao.makeVector2(thisLastPos.x, thisPos.y));
+					} else {
+						colX = this.testRectCircleCollision(this.shape, other.shape,
+							chao.makeVector2(thisPos.x, thisLastPos.y), otherPos);
+						colY = this.testRectCircleCollision(this.shape, other.shape,
+							chao.makeVector2(thisLastPos.x, thisPos.y), otherPos);
+					}
+				}
+
+
+				if (colX) {
+					this.entity.x = this.lastPos.x;
+					if (!other.isKinematic) {
+						other.entity.x -= moveVecNormalized.x * thisPosDiff.x;
+					}
+				}
+
+				if (colY) {
+					this.entity.y = this.lastPos.y;
+					if (!other.isKinematic) {
+						other.entity.y -= moveVecNormalized.y * thisPosDiff.y;
+					}
+				}
+
+				if (colX || colY) {
+					this.fireCollisionSignal(other);
+					other.fireCollisionSignal(this);
+				}
+			}
+
+			this.lastPos.set(entity.x, entity.y);
+		}
+
+	};
+
+	this.draw = function() {
+		if (ComponentCollider.drawColliders) {
+			var color = chao.makeColor(200, 50, 50);
+			var pos = this.shape.getPosition(this.entity.screenX, this.entity.screenY);
+
+			if (this.shape.name == "rect") {
+				chao.drawRectFill(chao.canvas,
+					pos.x - this.shape.width / 2,
+					pos.y - this.shape.height / 2,
+					this.shape.width, this.shape.height, color)
+			} else {
+				chao.drawCircleFill( chao.canvas, pos.x, pos.y,
+					this.shape.radius, color);
+			}
+		}
+	};
+
+	this.fireCollisionSignal = function(withWhat) {
+		this.onCollide.fire(withWhat);
+	};
+
+	this.testRectCircleCollision = function(shapeRect, shapeCircle, rectPos, circlePos) {
+		// src: http://www.jeffreythompson.org/collision-detection/circle-rect.php
+		var rectHalf = shapeRect.getHalfSize();
+		var test = {
+			x: circlePos.x,
+			y: circlePos.y
+		}
+
+		if (circlePos.x < rectPos.x - rectHalf.x) { 
+			test.x = rectPos.x - rectHalf.x; 
+		} else if (circlePos.x  > rectPos.x + rectHalf.x) {
+			test.x = rectPos.x + rectHalf.x;
+		}
+
+		if (circlePos.y < rectPos.y - rectHalf.y) { 
+			test.y = rectPos.y - rectHalf.y; 
+		} else if (circlePos.y  > rectPos.y + rectHalf.y) {
+			test.y = rectPos.y + rectHalf.y;
+		}
+
+		var distVec = chao.makeVector2(circlePos.x - test.x, circlePos.y - test.y);
+
+		return distVec.getLength() <= shapeCircle.radius;
+	};
+
+};
+ComponentCollider.shapeRect = function(width, height, offsetX, offsetY) {
+	this.name = "rect";
+	this.width = width;
+	this.height = height;
+	this.offset = { x: offsetX || 0, y: offsetY || 0 };
+	this.getPosition = function(entityPosX, entityPosY) {
+		return chao.makeVector2(
+			(entityPosX || 0) + this.offset.x,
+			(entityPosY || 0) + this.offset.y
+		);
+	};
+	this.getHalfSize = function(){
+		return { x: this.width / 2, y: this.height / 2 };
+	};
+}
+ComponentCollider.shapeCircle = function(radius, offsetX, offsetY) {
+	this.name = "circle";
+	this.radius = radius;
+	this.offset = { x: offsetX || 0, y: offsetY || 0 };
+	this.getPosition = function(entityPosX, entityPosY) {
+		return chao.makeVector2(
+			entityPosX + this.offset.x,
+			entityPosY + this.offset.y
+		);
+	};
+}
+ComponentCollider.drawColliders = false;
