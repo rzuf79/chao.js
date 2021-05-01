@@ -244,6 +244,8 @@ var chao = {
 		chao.muteOnFocusLost = true;
 		chao.wasMutedOnFocusLost = false;
 
+		chao.invokes = [];
+
 		chao.pressed = [];
 		chao.justPressed = [];
 		chao.justReleased = [];
@@ -370,6 +372,8 @@ var chao = {
 	},
 
 	update () {
+		var i;
+
 		if (chao.enableFontsLoadCheck) {
 			chao.updateFontsLoading();
 		}
@@ -421,7 +425,7 @@ var chao = {
 			chao.drawImage(chao.canvas, chao.imagePauseFade, 0, 0);
 		}
 
-		for (var i = 0; i < chao.entitiesToDestroy.length; ++i) {
+		for (i = 0; i < chao.entitiesToDestroy.length; ++i) {
 			chao.entitiesToDestroy[i].destroy();
 			if (chao.entitiesToDestroy[i].parent) {
 				chao.entitiesToDestroy[i].parent.remove(chao.entitiesToDestroy[i]);
@@ -429,6 +433,15 @@ var chao = {
 			}
 		}
 		chao.entitiesToDestroy = [];
+
+		for (i = 0; i < chao.invokes.length; ++i) {
+			chao.invokes[i].timer -= chao.getTimeDelta();
+			if (chao.invokes[i].timer <= 0.0) {
+				chao.invokes[i].func.call(chao.invokes[i].targetObject);
+				chao.invokes.splice(i, 1);
+				i --;
+			}
+		}
 
 
 		if (chao.newState !== undefined) {
@@ -532,7 +545,15 @@ var chao = {
 		return entity.getComponentsInChildrenByName(name);
 	},
 
-	makeSignal() {
+	invoke (delay, func, targetObject) {
+		chao.invokes.push( {
+			timer: delay,
+			func: func,
+			targetObject: targetObject
+		});
+	},
+
+	makeSignal () {
 		var observers = [];
 
 		var findObserver = function(func) {
@@ -2184,6 +2205,40 @@ var chao = {
 		});
 	},
 
+	csvToArray (strData, strDelimiter) {
+		// stolen from https://www.bennadel.com/blog/
+		// eventually this will be used for translations
+		strDelimiter = (strDelimiter || ",");
+		var objPattern = new RegExp(
+			(
+				"(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+				"(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+				"([^\"\\" + strDelimiter + "\\r\\n]*))"
+			), "gi" );
+		var arrData = [[]];
+		var arrMatches = null;
+		while (arrMatches = objPattern.exec( strData ) ){
+			var strMatchedDelimiter = arrMatches[1];
+			if (
+				strMatchedDelimiter.length &&
+				(strMatchedDelimiter != strDelimiter)
+				){
+
+				arrData.push( [] );
+			}
+
+			if (arrMatches[2]) {
+				var strMatchedValue = arrMatches[2].replace(
+					new RegExp( "\"\"", "g" ), "\"" );
+			} else {
+				var strMatchedValue = arrMatches[3];
+			}
+
+			arrData[arrData.length - 1].push(strMatchedValue);
+		}
+		return arrData;
+	},
+
 	log (thingie, logTrace) {
 		if (chao.loggingEnabled) {
 			if (chao.debugLogTarget) {
@@ -3580,16 +3635,18 @@ function ComponentButton(image) {
 		this.spritePressed.entity.visible = false;
 	};
 
-	this.setText = function (text, font, size) {
+	this.setText = function (text, font, size, color) {
 		if (!this.text) {
 			this.text = this.entity.addWithComponent("Button Text", new ComponentText(font, text, size));
 			this.text.align = "left";
+			this.text.color = color || "#000000";
 			this.text.entity.clickable = false;
 			this.entity.add(this.text.entity);
 		} else {
 			if (font) this.text.font = font;
 			if (text) this.text.text = text;
 			if (size) this.text.size = size;
+			if (color)  this.text.colot = color;
 		}
 
 		this.text.entity.alignToParent();
@@ -4089,7 +4146,7 @@ function ComponentYSort () {
 			}
 		}
 	};
-};
+}
 
 function ComponentCollider ( shape, isKinematic ) {
 	// Watch out not to name anything else like this.
