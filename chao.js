@@ -2428,7 +2428,27 @@ var chao = {
 			newShake.disposable = true;
 			entity.addComponent(newShake);
 			newShake.shake();
-		}
+		},
+
+		createHierarchy (hierarchyData) {
+			var i, j;
+			var entities = [];
+			for (i = 0; i < hierarchyData.length; ++i) {
+				var data = hierarchyData[i];
+				var entity = new Entity(data.name);
+				entity.x = data.x || 0;
+				entity.y = data.y || 0;
+				for (j = 0; j < data.components; ++j) {
+					entity.addComponent(data.components[j]);
+				}
+				
+				if (data.parent) {
+					entities[data.parent].add(entity);
+				}
+
+				entities.push(entity);
+			}
+		},
 	}
 
 };

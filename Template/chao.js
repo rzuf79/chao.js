@@ -2428,7 +2428,45 @@ var chao = {
 			newShake.disposable = true;
 			entity.addComponent(newShake);
 			newShake.shake();
-		}
+		},
+
+		createHierarchy (hierarchyData) {
+			var i, j;
+			var root = chao.getCurrentState().rootEntity;
+			var entities = [];
+			for (i = 0; i < hierarchyData.length; ++i) {
+				var data = hierarchyData[i];
+				var entity = new Entity(data.name);
+			
+				for (j = 0; j < data.components.length; ++j) {
+					entity.addComponent(data.components[j]);
+					chao.log("uh");
+				}
+				
+				if (data.parent != undefined) {
+					entities[data.parent].add(entity);
+				} else {
+					root.add(entity);
+				}
+
+				if (data.scaleX != undefined) {
+					entity.scaleX = data.scaleX;
+				}
+				if (data.scaleY != undefined) {
+					entity.scaleY = data.scaleY;
+				}
+
+				if (data.align != undefined) {
+					entity.alignToParent(data.align[0], data.align[1], data.align[2],
+						data.align[3], data.align[4], data.align[5], data.align[6]);
+				} else {
+					entity.x = data.x || 0;
+					entity.y = data.y || 0;
+				}
+
+				entities.push(entity);
+			}
+		},
 	}
 
 };
