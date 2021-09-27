@@ -2440,7 +2440,6 @@ var chao = {
 			
 				for (j = 0; j < data.components.length; ++j) {
 					entity.addComponent(data.components[j]);
-					chao.log("uh");
 				}
 				
 				if (data.parent != undefined) {
