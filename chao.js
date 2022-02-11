@@ -12,7 +12,7 @@
 var chao = {
 
 	/** Consts. */
-	VERSION: "0.7",
+	VERSION: "0.71",
 
 	SCALING_MODE_NONE: 0, // Game canvas will not be scaled at all.
 	SCALING_MODE_STRETCH: 1, // Scales the canvas to fill the whole viewport.
@@ -158,12 +158,13 @@ var chao = {
 	 */
 	colorCodes: [0xff000000, 0xff0000aa, 0xff00ff00, 0xff00aaaa, 0xffaa0000,
 		0xff800080, 0xff995500, 0xffaaaaaa, 0xff555555, 0xff5555ff, 0xff54ff3f,
-		0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff],
+		0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff
+	],
 
 	/** String for testing if a font was loaded. */
 	fontTestString: "giItT1WQy@!-/#", // this only looks like it's random, but it's not!
 
-	init (width, height, scalingMode, canvasId) {
+	init(width, height, scalingMode, canvasId) {
 
 		// Some cross-browser compatibility stuff below
 		if (!Date.now) {
@@ -283,7 +284,7 @@ var chao = {
 
 		// A default loading state that can be overwritten
 		chao.setLoadingState({
-			draw () {
+			draw() {
 				var barWidth = chao.screenWidth * 0.6;
 				var barHeight = barWidth * 0.1;
 				var barX = chao.screenWidth / 2 - barWidth / 2;
@@ -302,7 +303,7 @@ var chao = {
 		canvas.addEventListener("mousedown", chao.onMouseDown);
 		window.addEventListener("mouseup", chao.onMouseUp);
 		canvas.addEventListener("mousemove", chao.onMouseMove);
-		window.addEventListener('contextmenu', function (e) {
+		window.addEventListener('contextmenu', function(e) {
 			e.preventDefault();
 		});
 		window.addEventListener("wheel", chao.onMouseWheel);
@@ -315,12 +316,12 @@ var chao = {
 
 	},
 
-	setFPS (FPS) {
+	setFPS(FPS) {
 		chao.framerate = FPS;
 		chao.updateInterval = setInterval(chao.update, 1000 / FPS);
 	},
 
-	clearScreen () {
+	clearScreen() {
 		if (chao.backgroundColor === undefined) {
 			chao.canvas.context.clearRect(0, 0, chao.canvas.canvas.width, chao.canvas.canvas.height);
 		} else {
@@ -329,7 +330,7 @@ var chao = {
 		}
 	},
 
-	onFocusChange (isFocused) {
+	onFocusChange(isFocused) {
 		if (chao.hasFocus == isFocused) {
 			return;
 		}
@@ -357,7 +358,7 @@ var chao = {
 		}
 	},
 
-	resetInput () {
+	resetInput() {
 		for (var i = 0; i < 0x80; ++i) {
 			chao.pressed[i] = false;
 			chao.justPressed[i] = false;
@@ -371,7 +372,7 @@ var chao = {
 		chao.focusedEntity = null;
 	},
 
-	update () {
+	update() {
 		var i;
 
 		if (chao.enableFontsLoadCheck) {
@@ -439,7 +440,7 @@ var chao = {
 			if (chao.invokes[i].timer <= 0.0) {
 				chao.invokes[i].func.call(chao.invokes[i].targetObject);
 				chao.invokes.splice(i, 1);
-				i --;
+				i--;
 			}
 		}
 
@@ -450,7 +451,7 @@ var chao = {
 		}
 	},
 
-	switchState (newState) {
+	switchState(newState) {
 		if (chao.currentState === undefined) {
 			chao.destroyCurrentStateAndInitNewOne(newState);
 		} else {
@@ -458,7 +459,7 @@ var chao = {
 		}
 	},
 
-	destroyCurrentStateAndInitNewOne (newState) {
+	destroyCurrentStateAndInitNewOne(newState) {
 		chao.resetInput();
 
 		chao.destroyState(chao.currentState);
@@ -471,7 +472,7 @@ var chao = {
 		}
 	},
 
-	setLoadingState (newLoadingState) {
+	setLoadingState(newLoadingState) {
 		chao.destroyState(chao.loadingState);
 
 		chao.loadingState = newLoadingState;
@@ -479,19 +480,19 @@ var chao = {
 
 	},
 
-	initState (state) {
+	initState(state) {
 		state.rootEntity = new Entity("Root", 0, 0);
 		state.rootEntity.width = chao.screenWidth;
 		state.rootEntity.height = chao.screenHeight;
 		state.rootEntity.pivotX = 0;
 		state.rootEntity.pivotY = 0;
-		state.add = function (entity) {
+		state.add = function(entity) {
 			return this.rootEntity.add(entity);
 		};
-		state.addWithComponent = function (entity, component) {
+		state.addWithComponent = function(entity, component) {
 			return this.rootEntity.addWithComponent(entity, component);
 		};
-		state.remove = function (entity) {
+		state.remove = function(entity) {
 			this.rootEntity.remove(entity);
 		};
 
@@ -501,15 +502,15 @@ var chao = {
 		chao.resize();
 	},
 
-	initCurrentState () {
+	initCurrentState() {
 		chao.initState(chao.currentState);
 	},
 
-	getCurrentState () {
+	getCurrentState() {
 		return chao.getLoadingProgress() >= 1.0 ? chao.currentState : chao.loadingState;
 	},
 
-	destroyState (state) {
+	destroyState(state) {
 		if (!state) {
 			return;
 		}
@@ -521,11 +522,11 @@ var chao = {
 		state.rootEntity = null;
 	},
 
-	destroyEntity (entity) {
+	destroyEntity(entity) {
 		chao.entitiesToDestroy.push(entity);
 	},
 
-	findEntities (name, entity, array) {
+	findEntities(name, entity, array) {
 		entity = entity || chao.currentState.rootEntity;
 		array = array || [];
 
@@ -540,20 +541,20 @@ var chao = {
 		return array;
 	},
 
-	findComponents (name, entity) {
+	findComponents(name, entity) {
 		entity = entity || chao.currentState.rootEntity;
 		return entity.getComponentsInChildrenByName(name);
 	},
 
-	invoke (delay, func, targetObject) {
-		chao.invokes.push( {
+	invoke(delay, func, targetObject) {
+		chao.invokes.push({
 			timer: delay,
 			func: func,
 			targetObject: targetObject
 		});
 	},
 
-	makeSignal () {
+	makeSignal() {
 		var observers = [];
 
 		var findObserver = function(func) {
@@ -571,7 +572,7 @@ var chao = {
 
 			subscribe(func, targetObject) {
 				if (findObserver(func) == -1) {
-					observers.push( {
+					observers.push({
 						func: func,
 						target: targetObject
 					});
@@ -603,7 +604,7 @@ var chao = {
 		};
 	},
 
-	createImage (key, width, height) {
+	createImage(key, width, height) {
 		var newCanvas = document.createElement("canvas");
 		var newContext = newCanvas.getContext("2d");
 		newCanvas.width = width;
@@ -627,7 +628,7 @@ var chao = {
 		return newImage;
 	},
 
-	loadImage (key, path) {
+	loadImage(key, path) {
 		var img = new Image();
 		img.src = path;
 		var newCanvas = document.createElement("canvas");
@@ -645,7 +646,7 @@ var chao = {
 			chao.addImage(newImage);
 		}
 
-		img.onload = function () {
+		img.onload = function() {
 			newImage.canvas.width = img.width;
 			newImage.canvas.height = img.height;
 			chao.setSmoothingForImage(newImage, chao.smoothing);
@@ -658,7 +659,7 @@ var chao = {
 		return newImage;
 	},
 
-	createTiledImage (image, newImageKey, tilesX, tilesY) {
+	createTiledImage(image, newImageKey, tilesX, tilesY) {
 		var img = chao.getImage(image);
 		var newWidth = img.width * tilesX;
 		var newHeight = img.height * tilesY;
@@ -687,13 +688,13 @@ var chao = {
 		return newImage;
 	},
 
-	resizeImage (image, newWidth, newHeight) {
+	resizeImage(image, newWidth, newHeight) {
 		var img = chao.getImage(image);
 		img.width = img.canvas.width = newWidth;
 		img.height = img.canvas.height = newHeight;
 	},
 
-	addImage (image) {
+	addImage(image) {
 		var oldImage = -1;
 
 		var n = chao.images.length;
@@ -711,7 +712,7 @@ var chao = {
 		chao.images.push(image);
 	},
 
-	getImage (key) {
+	getImage(key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.images.length;
 			for (var i = 0; i < n; ++i) {
@@ -723,7 +724,7 @@ var chao = {
 		return key;
 	},
 
-	tintImage (image, color) {
+	tintImage(image, color) {
 		image = chao.getImage(image);
 
 		var tint = chao.createImage(undefined, image.width, image.height);
@@ -733,7 +734,7 @@ var chao = {
 		image.context.drawImage(tint.canvas, 0, 0, image.width, image.height);
 	},
 
-	setImagesSmoothing (value) {
+	setImagesSmoothing(value) {
 		chao.smoothing = value;
 
 		chao.setSmoothingForImage(chao.canvas, value);
@@ -745,7 +746,7 @@ var chao = {
 
 	},
 
-	setSmoothingForImage (image, value) {
+	setSmoothingForImage(image, value) {
 		// // some of these are deprecated and throw warnings. will just leave them here - who knows
 		// image.context.mozImageSmoothingEnabled = value;
 		image.context.webkitImageSmoothingEnabled = value;
@@ -759,7 +760,8 @@ var chao = {
 		} else {
 			var renderTypes = [
 				'optimizeSpeed', 'crisp-edges', '-moz-crisp-edges',
-				'-webkit-optimize-contrast', 'optimize-contrast', 'pixelated'];
+				'-webkit-optimize-contrast', 'optimize-contrast', 'pixelated'
+			];
 			for (var i = 0; i < renderTypes.length; ++i) {
 				image.canvas.style['image-rendering'] = renderTypes[i];
 			}
@@ -767,7 +769,7 @@ var chao = {
 		}
 	},
 
-	drawImage (target, image, x, y, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
+	drawImage(target, image, x, y, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
@@ -812,7 +814,7 @@ var chao = {
 		target.context.restore();
 	},
 
-	drawImagePart (target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
+	drawImagePart(target, image, x, y, rect, alpha, scaleX, scaleY, angle, rotationOffsetX, rotationOffsetY) {
 		angle = angle || 0;
 		alpha = alpha === undefined ? 1 : alpha;
 		scaleX = scaleX === undefined ? 1 : scaleX;
@@ -865,7 +867,7 @@ var chao = {
 		target.context.restore();
 	},
 
-	setFillStyle (image, color) {
+	setFillStyle(image, color) {
 		if (typeof color === "string") {
 			image.context.fillStyle = color;
 		} else {
@@ -873,7 +875,7 @@ var chao = {
 		}
 	},
 
-	setStrokeStyle (image, color, width) {
+	setStrokeStyle(image, color, width) {
 		width = width || image.context.lineWidth;
 		image.context.lineWidth = width;
 		if (typeof color === "string") {
@@ -884,19 +886,19 @@ var chao = {
 	},
 
 	// Creates a color in a 0xFFFFFFFF form. Values in 0-255 range.
-	makeColor (r, g, b, a) {
+	makeColor(r, g, b, a) {
 		a = a || 255;
 		return (a << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | ((b & 0xff));
 	},
 
 	// Creates a color in a 0xFFFFFFFF form. Values in 0-1 range.
-	makeColorf (r, g, b, a) {
+	makeColorf(r, g, b, a) {
 		a = a || 1;
 		return chao.makeColor(r * 255, g * 255, b * 255, a * 255);
 	},
 
 	// Creates a color string in "rgba(r,g,b,a)" format.
-	getRGBAString (hexColor) {
+	getRGBAString(hexColor) {
 		var r = (hexColor >> 16) & 0xff;
 		var g = (hexColor >> 8) & 0xff;
 		var b = hexColor & 0xff;
@@ -904,27 +906,27 @@ var chao = {
 		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
 	},
 
-	getPixel (image, x, y) {
+	getPixel(image, x, y) {
 		var data = image.context.getImageData(x, y, 1, 1).data;
 		return (data[3] << 24) | ((data[0] & 0xff) << 16) | ((data[1] & 0xff) << 8) | ((data[2] & 0xff));
 	},
 
-	putPixel (image, x, y, color) {
+	putPixel(image, x, y, color) {
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, 1, 1);
 	},
 
-	clearImage (image) {
+	clearImage(image) {
 		image.context.clearRect(0, 0, image.width, image.height);
 	},
 
-	clearToColor (image, color) {
+	clearToColor(image, color) {
 		image.context.clearRect(0, 0, image.width, image.height);
 		chao.setFillStyle(image, color);
 		image.context.fillRect(0, 0, image.width, image.height);
 	},
 
-	drawLine (image, x1, y1, x2, y2, color, width) {
+	drawLine(image, x1, y1, x2, y2, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		image.context.beginPath();
 		image.context.moveTo(x1, y1);
@@ -933,31 +935,31 @@ var chao = {
 		image.context.stroke();
 	},
 
-	drawRect (image, x, y, w, h, color, width) {
+	drawRect(image, x, y, w, h, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		image.context.strokeRect(x, y, w, h);
 	},
 
-	drawRectFill (image, x, y, w, h, color) {
+	drawRectFill(image, x, y, w, h, color) {
 		chao.setFillStyle(image, color);
 		image.context.fillRect(x, y, w, h);
 	},
 
-	drawCircle (image, x, y, radius, color, width) {
+	drawCircle(image, x, y, radius, color, width) {
 		chao.setStrokeStyle(image, color, width || 2);
 		image.context.beginPath();
 		image.context.arc(x, y, radius, 0, 2 * Math.PI);
 		image.context.stroke();
 	},
 
-	drawCircleFill (image, x, y, radius, color) {
+	drawCircleFill(image, x, y, radius, color) {
 		chao.setFillStyle(image, color);
 		image.context.beginPath();
 		image.context.arc(x, y, radius, 0, 2 * Math.PI);
 		image.context.fill();
 	},
 
-	drawPolygonLines (image, points) {
+	drawPolygonLines(image, points) {
 		image.context.beginPath();
 		for (var i = 0; i < points.length; i++) {
 			if (i) {
@@ -969,19 +971,19 @@ var chao = {
 		image.context.closePath();
 	},
 
-	drawPolygon (image, points, color, width) {
+	drawPolygon(image, points, color, width) {
 		chao.setStrokeStyle(image, color, width);
 		chao.drawPolygonLines(image, points);
 		image.context.stroke();
 	},
 
-	drawPolygonFill (image, points, color) {
+	drawPolygonFill(image, points, color) {
 		chao.setFillStyle(image, color);
 		chao.drawPolygonLines(image, points);
 		image.context.fill();
 	},
 
-	updatePauseFadeImage () {
+	updatePauseFadeImage() {
 		var playWidth = chao.screenWidth * 0.3;
 		var playHeight = chao.screenWidth * 0.3;
 		var center = {
@@ -1000,7 +1002,7 @@ var chao = {
 		chao.drawPolygonFill(chao.imagePauseFade, poly.points, chao.makeColor(255, 255, 255, 170));
 	},
 
-	loadFont (key, path) {
+	loadFont(key, path) {
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
 		s.id = fontname;
@@ -1023,15 +1025,15 @@ var chao = {
 		return newFont;
 	},
 
-	loadBase64Font (key, data) {
+	loadBase64Font(key, data) {
 		var s = document.createElement('style');
 		var fontname = "font" + (chao.loadedFontsNum++);
 		s.id = fontname;
 		s.type = "text/css";
 		document.head.appendChild(s);
-		s.textContent = "@font-face { font-family: " + fontname
-			+ "; src:url('data:application/font-woff;base64," + data
-			+ "') format('woff');}";
+		s.textContent = "@font-face { font-family: " + fontname +
+			"; src:url('data:application/font-woff;base64," + data +
+			"') format('woff');}";
 
 		var newFont = {
 			key: key,
@@ -1044,7 +1046,7 @@ var chao = {
 		return newFont;
 	},
 
-	addFont (font) {
+	addFont(font) {
 		var oldFont = -1;
 
 		for (var i = 0; i < chao.fonts.length; ++i) {
@@ -1067,7 +1069,7 @@ var chao = {
 		chao.fonts.push(font);
 	},
 
-	getFont (key) {
+	getFont(key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.fonts.length;
 			for (var i = 0; i < n; ++i) {
@@ -1079,7 +1081,7 @@ var chao = {
 		return key;
 	},
 
-	drawText (image, font, text, x, y, size, color, align, outlineColor, outlineSize) {
+	drawText(image, font, text, x, y, size, color, align, outlineColor, outlineSize) {
 		color = color || 0xff000000;
 		align = align || "left";
 		outlineColor = outlineColor || 0xff000000;
@@ -1096,14 +1098,14 @@ var chao = {
 		}
 	},
 
-	getTextSize (image, text) {
+	getTextSize(image, text) {
 		return {
 			width: image.context.measureText(text).width,
 			height: image.context.measureText("M").width // well, it seems good enough.
 		};
 	},
 
-	updateFontsLoading () {
+	updateFontsLoading() {
 		var n = chao.fonts.length;
 		var currentSize = 0;
 		for (var i = 0; i < n; ++i) {
@@ -1118,7 +1120,7 @@ var chao = {
 		}
 	},
 
-	loadSound (key, path, volume, looped, channels) {
+	loadSound(key, path, volume, looped, channels) {
 		if (channels < 1) {
 			chao.log("Can't add a sound with no channels, you silly goose.");
 			return null;
@@ -1142,7 +1144,7 @@ var chao = {
 		sound.ready = false;
 
 		sound.channels.push(new Audio(path));
-		sound.channels[0].onloadeddata = function () {
+		sound.channels[0].onloadeddata = function() {
 			sound.ready = true;
 			for (var i = 0; i < (channels || 1); ++i) {
 				if (i > 0) {
@@ -1150,14 +1152,14 @@ var chao = {
 				}
 
 				if (looped) {
-					sound.channels[i].addEventListener('ended', function () {
+					sound.channels[i].addEventListener('ended', function() {
 						this.currentTime = 0;
 					}, false);
 					sound.channels[i].loop = true;
 				}
 			}
 		};
-		sound.channels[0].onerror = function (e) {
+		sound.channels[0].onerror = function(e) {
 			var msg = "Loading the \"" + sound.key + "\" sound failed with error: ";
 			switch (e.currentTarget.error.code) {
 				case 1:
@@ -1185,7 +1187,7 @@ var chao = {
 		return sound;
 	},
 
-	loadMusic (key, path, fallbackFormatPath, volume) {
+	loadMusic(key, path, fallbackFormatPath, volume) {
 		var sound = null;
 		var mainExtension = path.split('.').pop();
 		var fallbackExtension = fallbackFormatPath ? fallbackFormatPath.split('.').pop() : "";
@@ -1203,7 +1205,7 @@ var chao = {
 		return sound;
 	},
 
-	getSound (key) {
+	getSound(key) {
 		if (typeof key === "string" || key instanceof String) {
 			var n = chao.sounds.length;
 			for (var i = 0; i < n; ++i) {
@@ -1218,7 +1220,7 @@ var chao = {
 		return key;
 	},
 
-	playSound (key, force) {
+	playSound(key, force) {
 
 		if (force === undefined) {
 			force = true;
@@ -1255,9 +1257,9 @@ var chao = {
 			var promise = sound.channels[sound.currentChannel].play();
 
 			if (promise !== undefined) {
-				promise.then(function () {
+				promise.then(function() {
 					// Whoa! We are fine!
-				}).catch(function () {
+				}).catch(function() {
 					// Was unable to play sound. :(
 					// Prolly the browser is messing with audio permissions.
 					// Will try to resume it on the first input.
@@ -1273,7 +1275,7 @@ var chao = {
 		}
 	},
 
-	setMute (value) {
+	setMute(value) {
 		if (chao.muted != value) {
 			chao.muted = value;
 
@@ -1297,11 +1299,11 @@ var chao = {
 		}
 	},
 
-	toggleMute () {
+	toggleMute() {
 		chao.setMute(!chao.muted);
 	},
 
-	stopSound (key) {
+	stopSound(key) {
 		var sound = chao.getSound(key);
 
 		for (var i = 0; i < sound.channels.length; ++i) {
@@ -1310,72 +1312,77 @@ var chao = {
 		}
 	},
 
-	getSoundPosition (key) {
+	getSoundPosition(key) {
 		var sound = chao.getSound(key);
 		return sound.channels[sound.currentChannel].currentTime;
 	},
 
-	setSoundPosition (key, position) {
+	setSoundPosition(key, position) {
 		var sound = chao.getSound(key);
 		sound.channels[sound.currentChannel].currentTime = position;
 	},
 
-	pauseSound (key) {
+	pauseSound(key) {
 		var sound = chao.getSound(key);
 		sound.channels[sound.currentChannel].pause();
 	},
 
-	resumeMusicPlaybackIfNeeded () {
+	resumeMusicPlaybackIfNeeded() {
 		if (chao.musicWasSupressed) {
 			chao.musicWasSupressed = false;
 			chao.playSound(chao.currentMusic);
 		}
 	},
 
-	canPlayAudioType (extension) {
+	canPlayAudioType(extension) {
 		var audioTest = document.createElement('audio');
 		if (!audioTest || !audioTest.canPlayType) {
 			return false;
 		}
 
 		switch (extension) {
-			case "ogg": {
-				if (audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/, '')) {
-					return true;
+			case "ogg":
+				{
+					if (audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/, '')) {
+						return true;
+					}
+					break;
 				}
-				break;
-			}
-			case "opus": {
-				if (audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '')
-						|| audioTest.canPlayType('audio/opus;').replace(/^no$/, '')) {
-					return true;
+			case "opus":
+				{
+					if (audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, '') ||
+						audioTest.canPlayType('audio/opus;').replace(/^no$/, '')) {
+						return true;
+					}
+					break;
 				}
-				break;
-			}
-			case "mp3": {
-				if (audioTest.canPlayType('audio/mpeg;').replace(/^no$/, '')) {
-					return true;
+			case "mp3":
+				{
+					if (audioTest.canPlayType('audio/mpeg;').replace(/^no$/, '')) {
+						return true;
+					}
+					break;
 				}
-				break;
-			}
-			case "wav": {
-				if (audioTest.canPlayType('audio/wav; codecs="1"').replace(/^no$/, '')) {
-					return true;
+			case "wav":
+				{
+					if (audioTest.canPlayType('audio/wav; codecs="1"').replace(/^no$/, '')) {
+						return true;
+					}
+					break;
 				}
-				break;
-			}
-			case "m4a": {
-				if (audioTest.canPlayType('audio/x-m4a;')
-					|| audioTest.canPlayType('audio/aac;').replace(/^no$/, '')) {
-					return true;
+			case "m4a":
+				{
+					if (audioTest.canPlayType('audio/x-m4a;') ||
+						audioTest.canPlayType('audio/aac;').replace(/^no$/, '')) {
+						return true;
+					}
 				}
-			}
 		}
 
 		return false;
 	},
 
-	updateMouse () {
+	updateMouse() {
 		chao.mouse.wheelDelta = 0;
 		chao.mouse.justPressed = false;
 		chao.mouse.justReleased = false;
@@ -1385,11 +1392,11 @@ var chao = {
 		chao.mouse.justReleasedMiddle = false;
 	},
 
-	getEntityUnderMouse () {
+	getEntityUnderMouse() {
 		return chao.getCurrentState().rootEntity.getEntityAt(chao.mouse.x, chao.mouse.y);
 	},
 
-	handleMouseDown (button) {
+	handleMouseDown(button) {
 		chao.resumeMusicPlaybackIfNeeded();
 
 		if (chao.mouse.suppressUntilUp) {
@@ -1413,7 +1420,7 @@ var chao = {
 		}
 	},
 
-	handleMouseUp (button) {
+	handleMouseUp(button) {
 
 		if (chao.mouse.suppressUntilUp) {
 			chao.mouse.suppressUntilUp = false;
@@ -1443,7 +1450,7 @@ var chao = {
 		}
 	},
 
-	handleMouseMove (x, y) {
+	handleMouseMove(x, y) {
 		chao.mouse.x = x;
 		chao.mouse.y = y;
 
@@ -1464,37 +1471,37 @@ var chao = {
 		}
 	},
 
-	onMouseDown (e) {
+	onMouseDown(e) {
 		chao.handleMouseDown(e.which);
 		e.preventDefault();
 	},
 
-	onMouseUp (e) {
+	onMouseUp(e) {
 		chao.handleMouseUp(e.which);
 		e.preventDefault();
 	},
 
-	onMouseMove (e) {
+	onMouseMove(e) {
 		chao.handleMouseMove(e.offsetX, e.offsetY);
 		e.preventDefault();
 	},
 
-	onMouseWheel (e) {
+	onMouseWheel(e) {
 		chao.mouse.wheelDelta = e.deltaY;
 		// e.preventDefault();
 	},
 
-	setMouseVisibility (value) {
+	setMouseVisibility(value) {
 		chao.canvas.canvas.style.cursor = value ? "auto" : "none";
 	},
 
-	updateTouches () {
+	updateTouches() {
 		for (var i = 0; i < chao.touches.length; ++i) {
 			chao.touches[i].justPressed = false;
 		}
 	},
 
-	onTouchStart (e) {
+	onTouchStart(e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touchPos = chao.getTouchPos(touches[i]);
@@ -1518,7 +1525,7 @@ var chao = {
 		}
 	},
 
-	onTouchMove (e) {
+	onTouchMove(e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touch = chao.getTouch(touches[i].identifier);
@@ -1537,7 +1544,7 @@ var chao = {
 		}
 	},
 
-	onTouchEnd (e) {
+	onTouchEnd(e) {
 		var touches = e.changedTouches;
 		for (var i = 0; i < touches.length; ++i) {
 			var touch = chao.getTouch(touches[i].identifier);
@@ -1556,7 +1563,7 @@ var chao = {
 		}
 	},
 
-	getTouch (id) {
+	getTouch(id) {
 		for (var i = 0; i < chao.touches.length; ++i) {
 			if (chao.touches[i].id == id) {
 				return chao.touches[i];
@@ -1565,21 +1572,21 @@ var chao = {
 		return null;
 	},
 
-	getTouchPos (touch) {
+	getTouchPos(touch) {
 		return {
 			x: (touch.pageX - touch.target.offsetLeft) / chao.screenScaleX,
 			y: (touch.pageY - touch.target.offsetTop) / chao.screenScaleY
 		};
 	},
 
-	updateKeyboard () {
+	updateKeyboard() {
 		for (var i = 0; i < 0x80; ++i) {
 			chao.justPressed[i] = false;
 			chao.justReleased[i] = false;
 		}
 	},
 
-	onKeyDown (e) {
+	onKeyDown(e) {
 		if (!chao.pressed[e.keyCode]) {
 			chao.justPressed[e.keyCode] = true;
 		}
@@ -1588,14 +1595,14 @@ var chao = {
 		e.preventDefault();
 	},
 
-	onKeyUp (e) {
+	onKeyUp(e) {
 		chao.justReleased[e.keyCode] = true;
 		chao.pressed[e.keyCode] = false;
 
 		e.preventDefault();
 	},
 
-	resize () {
+	resize() {
 		if (chao.scalingMode <= chao.SCALING_MODE_NONE || chao.scalingMode >= chao.SCALING_MODE_END) {
 			return;
 		}
@@ -1606,53 +1613,56 @@ var chao = {
 		var scale = Math.min(scaleX, scaleY);
 
 		switch (chao.scalingMode) {
-			case chao.SCALING_MODE_STRETCH: {
-				chao.setCanvasScale(scaleX, scaleY);
-				break;
-			}
-			case chao.SCALING_MODE_KEEP_RATIO: {
-				chao.setCanvasScale(scale, scale);
-				var center = "horizontally";
-				if ((canvas.width > canvas.height && canvas.width * scale >= window.innerWidth) ||
-					(canvas.width <= canvas.height && canvas.height * scale < window.innerHeight)) {
-					center = "vertically";
+			case chao.SCALING_MODE_STRETCH:
+				{
+					chao.setCanvasScale(scaleX, scaleY);
+					break;
 				}
+			case chao.SCALING_MODE_KEEP_RATIO:
+				{
+					chao.setCanvasScale(scale, scale);
+					var center = "horizontally";
+					if ((canvas.width > canvas.height && canvas.width * scale >= window.innerWidth) ||
+						(canvas.width <= canvas.height && canvas.height * scale < window.innerHeight)) {
+						center = "vertically";
+					}
 
-				var margin;
-				if (center === "horizontally") {
-					margin = (window.innerWidth - canvas.width * scale) / 2;
-					canvas.style.marginLeft = margin + "px";
-					canvas.style.marginRight = margin + "px";
-				} else {
-					margin = (window.innerHeight - canvas.height * scale) / 2;
-					canvas.style.marginTop = margin + "px";
-					canvas.style.marginBottom = margin + "px";
+					var margin;
+					if (center === "horizontally") {
+						margin = (window.innerWidth - canvas.width * scale) / 2;
+						canvas.style.marginLeft = margin + "px";
+						canvas.style.marginRight = margin + "px";
+					} else {
+						margin = (window.innerHeight - canvas.height * scale) / 2;
+						canvas.style.marginTop = margin + "px";
+						canvas.style.marginBottom = margin + "px";
+					}
+
+					break;
 				}
+			case chao.SCALING_MODE_EXTEND:
+				{
+					chao.setCanvasScale(scale, scale);
 
-				break;
-			}
-			case chao.SCALING_MODE_EXTEND: {
-				chao.setCanvasScale(scale, scale);
+					if (chao.baseScreenWidth * scale < window.innerWidth) {
+						// extend the viewport horizontally
+						var spareWidth = window.innerWidth - (chao.baseScreenWidth * scale);
+						chao.screenWidth = chao.baseScreenWidth + (spareWidth / scale);
+						chao.screenHeight = chao.baseScreenHeight;
+					} else {
+						// extend the viewport vertically
+						var spareHeight = window.innerHeight - (chao.baseScreenHeight * scale);
+						chao.screenWidth = chao.baseScreenWidth;
+						chao.screenHeight = chao.baseScreenHeight + (spareHeight / scale);
+					}
+					chao.canvas.width = chao.screenWidth;
+					chao.canvas.height = chao.screenHeight;
+					canvas.setAttribute("width", chao.screenWidth);
+					canvas.setAttribute("height", chao.screenHeight);
 
-				if (chao.baseScreenWidth * scale < window.innerWidth) {
-					// extend the viewport horizontally
-					var spareWidth = window.innerWidth - (chao.baseScreenWidth * scale);
-					chao.screenWidth = chao.baseScreenWidth + (spareWidth / scale);
-					chao.screenHeight = chao.baseScreenHeight;
-				} else {
-					// extend the viewport vertically
-					var spareHeight = window.innerHeight - (chao.baseScreenHeight * scale);
-					chao.screenWidth = chao.baseScreenWidth;
-					chao.screenHeight = chao.baseScreenHeight + (spareHeight / scale);
+					chao.updatePauseFadeImage();
+					break;
 				}
-				chao.canvas.width = chao.screenWidth;
-				chao.canvas.height = chao.screenHeight;
-				canvas.setAttribute("width", chao.screenWidth);
-				canvas.setAttribute("height", chao.screenHeight);
-
-				chao.updatePauseFadeImage();
-				break;
-			}
 		}
 
 		// Fix Safari scaling
@@ -1683,7 +1693,7 @@ var chao = {
 		}
 	},
 
-	setCanvasScale (x, y) {
+	setCanvasScale(x, y) {
 		chao.screenScaleX = x;
 		chao.screenScaleY = y;
 
@@ -1703,7 +1713,7 @@ var chao = {
 		canvas.style.transform = "scale(" + x + "," + y + ")";
 	},
 
-	getLoadingProgress () {
+	getLoadingProgress() {
 		var allData = chao.images.length + chao.sounds.length;
 		var loadedData = 0;
 		var i;
@@ -1723,20 +1733,27 @@ var chao = {
 		return loadedData / allData;
 	},
 
-	getTimeDelta () {
+	getTimeDelta() {
 		return chao.timeDelta * chao.timeScale;
 	},
 
-	getUnscaledDelta () {
+	getUnscaledDelta() {
 		return chao.timeDelta;
 	},
 
-	makeRect (x, y, width, height) {
+	makeRect(x, y, width, height) {
 		return {
 			x: x,
 			y: y,
 			width: width,
-			height: height
+			height: height,
+
+			intersects(rect2) {
+				return !(rect2.x > this.x + this.width 
+						|| rect2.x + rect2.width < this.x
+						|| rect2.y > this.y + this.height
+						|| rect2.y + rect2.height < this.y);
+			},
 		};
 	},
 
@@ -1750,10 +1767,10 @@ var chao = {
 				this.y = y;
 			},
 
-			compare (vector, epsilon) {
+			compare(vector, epsilon) {
 				epsilon = epsilon || 0.001;
-				return Math.abs(this.x - vector.x) < epsilon
-					&& Math.abs(this.y - vector.y) < epsilon;
+				return Math.abs(this.x - vector.x) < epsilon &&
+					Math.abs(this.y - vector.y) < epsilon;
 			},
 
 			toString() {
@@ -1766,17 +1783,17 @@ var chao = {
 				return chao.makeVector2(this.x, this.y);
 			},
 
-			add (vector) {
+			add(vector) {
 				this.x += vector.x;
 				this.y += vector.y;
 			},
 
-			substract (vector) {
+			substract(vector) {
 				this.x -= vector.x;
 				this.y -= vector.y;
 			},
 
-			multiply (value1, value2) {
+			multiply(value1, value2) {
 				if (typeof(value1) === "object") {
 					this.x *= value1.x;
 					this.y *= value1.y;
@@ -1789,7 +1806,7 @@ var chao = {
 				}
 			},
 
-			divide (value1, value2) {
+			divide(value1, value2) {
 				if (typeof(value1) === "object") {
 					this.x /= value1.x;
 					this.y /= value1.y;
@@ -1802,23 +1819,23 @@ var chao = {
 				}
 			},
 
-			getLength () {
+			getLength() {
 				return Math.sqrt((this.x * this.x) + (this.y * this.y));
 			},
 
-			getNormalized () {
+			getNormalized() {
 				var copy = this.duplicate();
 				copy.normalize();
 				return copy;
 			},
 
-			normalize () {
+			normalize() {
 				var len = this.getLength();
 				this.x /= len;
 				this.y /= len;
 			},
 
-			rotate (degrees) {
+			rotate(degrees) {
 				degrees = chao.deg2rad(degrees);
 				var newX = this.x * Math.cos(degrees) - this.y * Math.sin(degrees);
 				var newY = this.x * Math.sin(degrees) + this.y * Math.cos(degrees);
@@ -1864,10 +1881,10 @@ var chao = {
 				var y1 = parent.x[1] * this.y[0] + parent.y[1] * this.y[1];
 
 				var newMatrix = chao.makeTransformMatrix();
-				newMatrix.origin[0] = parent.x[0] * this.origin[0]
-					+ parent.y[0] * this.origin[1] + parent.origin[0];
-				newMatrix.origin[1] = parent.x[1] * this.origin[0]
-					+ parent.y[1] * this.origin[1] + parent.origin[1];
+				newMatrix.origin[0] = parent.x[0] * this.origin[0] +
+					parent.y[0] * this.origin[1] + parent.origin[0];
+				newMatrix.origin[1] = parent.x[1] * this.origin[0] +
+					parent.y[1] * this.origin[1] + parent.origin[1];
 				newMatrix.x = [x0, x1];
 				newMatrix.y = [y0, y1];
 
@@ -1932,7 +1949,7 @@ var chao = {
 
 	// Points - All the points shaping the polygon.
 	// Can be array of Vector2s (see makeVector2()) or just a simple array built like this: [x1, y1, x2, y2, ...].
-	makePolygon (points) {
+	makePolygon(points) {
 		if (!Array.isArray(points) || points.length < 1) {
 			chao.log("makePolygon: points param is not an array or has no elements. :(");
 			return;
@@ -1970,7 +1987,7 @@ var chao = {
 			top: top,
 			bottom: bottom,
 
-			intersects (otherPoly) {
+			intersects(otherPoly) {
 				var polys = [this, otherPoly];
 				var i1, pi, point, projected;
 				for (var i = 0; i < polys.length; ++i) {
@@ -2042,18 +2059,18 @@ var chao = {
 		};
 	},
 
-	areLinesIntersecting (line1a, line1b, line2a, line2b) {
-		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y)
-			- (line2b.x - line2a.x) * (line1b.y - line1a.y);
+	areLinesIntersecting(line1a, line1b, line2a, line2b) {
+		var det = (line1b.x - line1a.x) * (line2b.y - line2a.y) -
+			(line2b.x - line2a.x) * (line1b.y - line1a.y);
 
 		if (det === 0) {
 			return false;
 		}
 
-		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x)
-			+ (line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
-		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x)
-			+ (line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
+		var lambda = ((line2b.y - line2a.y) * (line2b.x - line1a.x) +
+			(line2a.x - line2b.x) * (line2b.y - line1a.y)) / det;
+		var gamma = ((line1a.y - line1b.y) * (line2b.x - line1a.x) +
+			(line1b.x - line1a.x) * (line2b.y - line1a.y)) / det;
 		return (lambda > 0 && lambda < 1) && (gamma > 0 && gamma < 1);
 	},
 
@@ -2086,44 +2103,44 @@ var chao = {
 		return { x, y };
 	},
 
-	getRandom (max) {
+	getRandom(max) {
 		max -= 1;
 		return Math.round(max * Math.random());
 	},
 
-	getRandomRange (min, max) {
+	getRandomRange(min, max) {
 		max -= min;
 		return min + max * Math.random();
 	},
 
-	getRandiRange (min, max) {
+	getRandiRange(min, max) {
 		return Math.round(chao.getRandomRange(min, max));
 	},
 
-	coinFlip (successChance) {
+	coinFlip(successChance) {
 		successChance = successChance || 50;
 		return chao.getRandom(100) < successChance;
 	},
 
-	getRandomElement (array) {
+	getRandomElement(array) {
 		return array[chao.getRandom(array.length)];
 	},
 
-	rad2deg (radians) {
+	rad2deg(radians) {
 		return radians * (180.0 / Math.PI);
 	},
 
-	deg2rad (degrees) {
+	deg2rad(degrees) {
 		return degrees * (Math.PI / 180.0);
 	},
 
-	clamp (value, min, max) {
+	clamp(value, min, max) {
 		if (value < min) value = min;
 		if (value > max) value = max;
 		return value;
 	},
 
-	moveTowards (a, b, maxStep) {
+	moveTowards(a, b, maxStep) {
 		if (b > a) {
 			a += maxStep;
 			if (a > b) {
@@ -2138,74 +2155,79 @@ var chao = {
 		return a;
 	},
 
-	interpolate (a, b, v, interpolationType) {
+	interpolate(a, b, v, interpolationType) {
 		interpolationType = interpolationType || chao.INTERPOLATE_LINEAR;
 		v = chao.clamp(v, 0.0, 1.0);
 
 		switch (interpolationType) {
-			case chao.INTERPOLATE_SMOOTH: {
-				v = v * v * (3 - 2 * v);
-				break;
-			}
-			case chao.INTERPOLATE_EASE_TO: {
-				v = 1 - (1 - v) * (1 - v);
-				break;
-			}
-			case chao.INTERPOLATE_EASE_FROM: {
-				v = v * v;
-				break;
-			}
-			case chao.INTERPOLATE_BOUNCE: {
-				if (v < (1.0 / 2.75)) {
-					v = 7.5625 * v * v;
-				} else if (v < (2.0 / 2.75)) {
-					v = 7.5625 * (v -= (1.5 / 2.75)) * v + 0.75;
-				} else if (v < (2.5 / 2.75)) {
-					v = 7.5625 * (v -= (2.25 / 2.75)) * v + 0.9375;
-				} else {
-					v = 7.5625 * (v -= (2.625 / 2.75)) * v + 0.984375;
+			case chao.INTERPOLATE_SMOOTH:
+				{
+					v = v * v * (3 - 2 * v);
+					break;
 				}
-				break;
-			}
-			case chao.INTERPOLATE_ELASTIC: {
-				var amplitude = 0.0;
-				var period = 0.3;
-				if (v === 0) {
-					v = 0;
-				} else if (v == 1.0) {
-					v = 1;
-				} else {
-					var s = period / 4.0;
-					if (amplitude < 1.0) {
-						amplitude = 1.0;
+			case chao.INTERPOLATE_EASE_TO:
+				{
+					v = 1 - (1 - v) * (1 - v);
+					break;
+				}
+			case chao.INTERPOLATE_EASE_FROM:
+				{
+					v = v * v;
+					break;
+				}
+			case chao.INTERPOLATE_BOUNCE:
+				{
+					if (v < (1.0 / 2.75)) {
+						v = 7.5625 * v * v;
+					} else if (v < (2.0 / 2.75)) {
+						v = 7.5625 * (v -= (1.5 / 2.75)) * v + 0.75;
+					} else if (v < (2.5 / 2.75)) {
+						v = 7.5625 * (v -= (2.25 / 2.75)) * v + 0.9375;
 					} else {
-						s = period * Math.sin(1.0 / amplitude) / (2 * Math.PI);
+						v = 7.5625 * (v -= (2.625 / 2.75)) * v + 0.984375;
 					}
-					v = (amplitude * Math.pow(2.0, -10.0 * v) * Math.sin((v - s) * (2.0 * Math.PI) / period) + 1.0);
+					break;
 				}
-			}
+			case chao.INTERPOLATE_ELASTIC:
+				{
+					var amplitude = 0.0;
+					var period = 0.3;
+					if (v === 0) {
+						v = 0;
+					} else if (v == 1.0) {
+						v = 1;
+					} else {
+						var s = period / 4.0;
+						if (amplitude < 1.0) {
+							amplitude = 1.0;
+						} else {
+							s = period * Math.sin(1.0 / amplitude) / (2 * Math.PI);
+						}
+						v = (amplitude * Math.pow(2.0, -10.0 * v) * Math.sin((v - s) * (2.0 * Math.PI) / period) + 1.0);
+					}
+				}
 		}
 
 		return (b * v) + (a * (1.0 - v));
 	},
 
-	interpolateVector (a, b, v, interpolationType) {
+	interpolateVector(a, b, v, interpolationType) {
 		return {
 			x: chao.interpolate(a.x, b.x, v, interpolationType),
 			y: chao.interpolate(a.y, b.y, v, interpolationType)
 		};
 	},
 
-	setupLogTarget (htmlElementId) {
+	setupLogTarget(htmlElementId) {
 		chao.debugLogTarget = document.getElementById(htmlElementId);
-		window.addEventListener("error", function (e) {
+		window.addEventListener("error", function(e) {
 			var fa = e.filename.split("/");
 			fa.reverse();
 			chao.log("[" + fa[0] + ":" + e.lineno + ":" + e.colno + "] " + e.message);
 		});
 	},
 
-	csvToArray (strData, strDelimiter) {
+	csvToArray(strData, strDelimiter) {
 		// stolen from https://www.bennadel.com/blog/
 		// eventually this will be used for translations
 		strDelimiter = (strDelimiter || ",");
@@ -2214,22 +2236,24 @@ var chao = {
 				"(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
 				"(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
 				"([^\"\\" + strDelimiter + "\\r\\n]*))"
-			), "gi" );
-		var arrData = [[]];
+			), "gi");
+		var arrData = [
+			[]
+		];
 		var arrMatches = null;
-		while (arrMatches = objPattern.exec( strData ) ){
+		while (arrMatches = objPattern.exec(strData)) {
 			var strMatchedDelimiter = arrMatches[1];
 			if (
 				strMatchedDelimiter.length &&
 				(strMatchedDelimiter != strDelimiter)
-				){
+			) {
 
-				arrData.push( [] );
+				arrData.push([]);
 			}
 
 			if (arrMatches[2]) {
 				var strMatchedValue = arrMatches[2].replace(
-					new RegExp( "\"\"", "g" ), "\"" );
+					new RegExp("\"\"", "g"), "\"");
 			} else {
 				var strMatchedValue = arrMatches[3];
 			}
@@ -2239,7 +2263,7 @@ var chao = {
 		return arrData;
 	},
 
-	log (thingie, logTrace) {
+	log(thingie, logTrace) {
 		if (chao.loggingEnabled) {
 			if (chao.debugLogTarget) {
 				chao.debugLogTarget.innerHTML += String(thingie).replace(/\n/g, "<br/>") + "<br/>";
@@ -2249,12 +2273,12 @@ var chao = {
 		}
 	},
 
-	logHierarchy (entity) {
+	logHierarchy(entity) {
 		var logString = chao.logEntity(entity, 0);
 		chao.log(logString);
 	},
 
-	logEntity (entity, indent) {
+	logEntity(entity, indent) {
 		entity = entity || chao.getCurrentState().rootEntity;
 		indent = indent || 0;
 
@@ -2291,7 +2315,7 @@ var chao = {
 		return "\n" + entityLog;
 	},
 
-	installVisibilityHandler () {
+	installVisibilityHandler() {
 		if (chao.visibilityHandlerInstalled) {
 			chao.log("Visibility Handler is already installed!");
 			return;
@@ -2306,9 +2330,9 @@ var chao = {
 		} else {
 			var vendors = ["webkit", "moz", "ms"];
 
-			vendors.forEach(function (prefix) {
+			vendors.forEach(function(prefix) {
 				if (document[prefix + "Hidden"] !== undefined) {
-					document.hidden = function () {
+					document.hidden = function() {
 						return document[prefix + "Hidden"];
 					};
 					hiddenVar = prefix + "visibilitychange";
@@ -2317,7 +2341,7 @@ var chao = {
 		}
 
 		if (hiddenVar) {
-			document.addEventListener(hiddenVar, function (event) {
+			document.addEventListener(hiddenVar, function(event) {
 				if (document.hidden || event.type === "pause") {
 					chao.onFocusChange(false);
 				} else {
@@ -2326,17 +2350,17 @@ var chao = {
 			}, false);
 		}
 
-		window.onblur = function () {
+		window.onblur = function() {
 			chao.onFocusChange(false);
 		};
-		window.onfocus = function () {
+		window.onfocus = function() {
 			chao.onFocusChange(true);
 		};
 	},
 
 	helpers: {
 
-		createSprite (parent, entityName, image, x, y) {
+		createSprite(parent, entityName, image, x, y) {
 			var newSprite = (new Entity(entityName, x, y)).addComponent(new ComponentSprite(image));
 			if (parent) {
 				parent.add(newSprite.entity);
@@ -2344,7 +2368,7 @@ var chao = {
 			return newSprite;
 		},
 
-		createText (parent, entityName, x, y, font, text, size) {
+		createText(parent, entityName, x, y, font, text, size) {
 			var newText = (new Entity(entityName, x, y)).addComponent(new ComponentText(font, text, size));
 			if (parent) {
 				parent.add(newText.entity);
@@ -2352,7 +2376,7 @@ var chao = {
 			return newText;
 		},
 
-		createButton (parent, entityName, x, y, image, imagePressed, font, fontSize, text) {
+		createButton(parent, entityName, x, y, image, imagePressed, font, fontSize, text) {
 			var newButton = (new Entity(entityName, x, y)).addComponent(new ComponentButton(image));
 
 			if (imagePressed) {
@@ -2371,7 +2395,7 @@ var chao = {
 			return newButton;
 		},
 
-		createFpsCounter (parent, size) {
+		createFpsCounter(parent, size) {
 			size = size || 25;
 			chao.countFPS = true;
 
@@ -2382,7 +2406,7 @@ var chao = {
 			var componentCounter = {
 				name: "FPS Counter",
 				textComponent: textFPS,
-				update () {
+				update() {
 					this.textComponent.text = "" + chao.currentFPS + " fps";
 				}
 			};
@@ -2395,17 +2419,17 @@ var chao = {
 			return textFPS;
 		},
 
-		fadeEntityOut (entity, time, delay) {
+		fadeEntityOut(entity, time, delay) {
 			return ComponentTween.addTween(entity, "alpha", 1.0, 0.0,
 				time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
-		fadeEntityIn (entity, time, delay) {
+		fadeEntityIn(entity, time, delay) {
 			return ComponentTween.addTween(entity, "alpha", 0.0, 1.0,
 				time || 0.25, chao.INTERPOLATE_LINEAR, chao.REPEAT_MODE_ONCE, delay || 0.0);
 		},
 
-		addBounceTween (entity, amplitude, time) {
+		addBounceTween(entity, amplitude, time) {
 			var tweenName = "BounceTween";
 			entity.removeComponentsByName(tweenName);
 			var newTween = ComponentTween.addTween(entity, "y",
@@ -2415,7 +2439,7 @@ var chao = {
 			return newTween;
 		},
 
-		shake (entity, force, time, damped) {
+		shake(entity, force, time, damped) {
 			var shakerName = "Disposable Shake";
 
 			var oldShake = entity.getComponentByName(shakerName);
@@ -2430,20 +2454,37 @@ var chao = {
 			newShake.shake();
 		},
 
-		createHierarchy (hierarchyData) {
+		createHierarchy(hierarchyData) {
 			var i, j;
+			var root = chao.getCurrentState().rootEntity;
 			var entities = [];
 			for (i = 0; i < hierarchyData.length; ++i) {
 				var data = hierarchyData[i];
 				var entity = new Entity(data.name);
-				entity.x = data.x || 0;
-				entity.y = data.y || 0;
-				for (j = 0; j < data.components; ++j) {
+
+				for (j = 0; j < data.components.length; ++j) {
 					entity.addComponent(data.components[j]);
 				}
-				
-				if (data.parent) {
+
+				if (data.parent != undefined) {
 					entities[data.parent].add(entity);
+				} else {
+					root.add(entity);
+				}
+
+				if (data.scaleX != undefined) {
+					entity.scaleX = data.scaleX;
+				}
+				if (data.scaleY != undefined) {
+					entity.scaleY = data.scaleY;
+				}
+
+				if (data.align != undefined) {
+					entity.alignToParent(data.align[0], data.align[1], data.align[2],
+						data.align[3], data.align[4], data.align[5], data.align[6]);
+				} else {
+					entity.x = data.x || 0;
+					entity.y = data.y || 0;
 				}
 
 				entities.push(entity);
@@ -2479,7 +2520,7 @@ function Entity(name, x, y) {
 	this.keepClickFocus = false;
 	this.foldInLog = false;
 
-	this.destroy = function () {
+	this.destroy = function() {
 		var i;
 		for (i = 0; i < this.components.length; ++i) {
 			if (this.components[i].destroy) {
@@ -2495,7 +2536,7 @@ function Entity(name, x, y) {
 		this.components = [];
 	};
 
-	this.draw = function () {
+	this.draw = function() {
 		if (!this.visible) {
 			return;
 		}
@@ -2517,7 +2558,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.update = function () {
+	this.update = function() {
 		if (this.paused || !this.visible) {
 			return;
 		}
@@ -2551,7 +2592,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.add = function (childEntity) {
+	this.add = function(childEntity) {
 		if (childEntity.parent === undefined) {
 			chao.log("The object you are trying to add as an entity is not an Entity.");
 			chao.log(childEntity);
@@ -2562,7 +2603,7 @@ function Entity(name, x, y) {
 		return childEntity;
 	};
 
-	this.addWithComponent = function (childEntity, component) {
+	this.addWithComponent = function(childEntity, component) {
 		if (typeof childEntity === "string" || childEntity instanceof String) {
 			childEntity = new Entity(childEntity);
 		}
@@ -2573,14 +2614,14 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.remove = function (childEntity) {
+	this.remove = function(childEntity) {
 		if (childEntity.parent === this) {
 			this.children.splice(this.children.indexOf(childEntity), 1);
 			return childEntity;
 		}
 	};
 
-	this.resize = function () {
+	this.resize = function() {
 		if (this.anchor.stretch) {
 			this.stretchOnParent(true);
 		}
@@ -2605,7 +2646,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.addComponent = function (component) {
+	this.addComponent = function(component) {
 		if (!component.entity) {
 			component.entity = this;
 			if (component.create) {
@@ -2624,7 +2665,7 @@ function Entity(name, x, y) {
 		return null;
 	};
 
-	this.getComponentByName = function (componentName) {
+	this.getComponentByName = function(componentName) {
 		for (var i = 0; i < this.components.length; ++i) {
 			var c = this.components[i];
 			if (c.name === componentName && !this.isComponentQueuedForRemoval(c)) {
@@ -2635,7 +2676,7 @@ function Entity(name, x, y) {
 		return null;
 	};
 
-	this.getComponentsByName = function (componentName) {
+	this.getComponentsByName = function(componentName) {
 		var allComponents = [];
 
 		for (var i = 0; i < this.components.length; ++i) {
@@ -2648,7 +2689,7 @@ function Entity(name, x, y) {
 		return allComponents;
 	};
 
-	this.getComponentInChildrenByName = function (componentName) {
+	this.getComponentInChildrenByName = function(componentName) {
 		var foundComponent = this.getComponentByName(componentName);
 		if (foundComponent !== null) {
 			return foundComponent;
@@ -2664,7 +2705,7 @@ function Entity(name, x, y) {
 		return null;
 	};
 
-	this.getComponentsInChildrenByName = function (componentName, outArray) {
+	this.getComponentsInChildrenByName = function(componentName, outArray) {
 		var i;
 		outArray = outArray || [];
 
@@ -2680,7 +2721,7 @@ function Entity(name, x, y) {
 		return outArray;
 	};
 
-	this.removeComponent = function (component) {
+	this.removeComponent = function(component) {
 		if (component.entity === this) {
 			if (!this.isComponentQueuedForRemoval(component)) {
 				this.removalQueuedComponents.push(component);
@@ -2690,11 +2731,11 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.removeComponentByName = function (componentName) {
+	this.removeComponentByName = function(componentName) {
 		this.removeComponent(this.getComponentByName(componentName));
 	};
 
-	this.removeComponentsByName = function (componentName) {
+	this.removeComponentsByName = function(componentName) {
 		for (;;) {
 			var component = this.getComponentByName(componentName);
 			if (!component) {
@@ -2708,7 +2749,7 @@ function Entity(name, x, y) {
 		return this.removalQueuedComponents.indexOf(component) != -1;
 	};
 
-	this.onClick = function () {
+	this.onClick = function() {
 		var relativeX = chao.mouse.x - this.screenX;
 		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
@@ -2718,7 +2759,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.onMove = function () {
+	this.onMove = function() {
 		var relativeX = chao.mouse.x - this.screenX;
 		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
@@ -2728,7 +2769,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.onCancel = function () {
+	this.onCancel = function() {
 		for (var i = 0; i < this.components.length; ++i) {
 			if (this.components[i].onCancel) {
 				this.components[i].onCancel();
@@ -2736,7 +2777,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.onRelease = function () {
+	this.onRelease = function() {
 		var relativeX = chao.mouse.x - this.screenX;
 		var relativeY = chao.mouse.y - this.screenY;
 		for (var i = 0; i < this.components.length; ++i) {
@@ -2756,13 +2797,18 @@ function Entity(name, x, y) {
 		}
 	};
 
+	this.setPivot = function(x, y) {
+		this.pivotX = x;
+		this.pivotY = y;
+	}
+
 	this.setScale = function(x, y) {
 		y = y || x;
 		this.scaleX = x;
 		this.scaleY = y;
 	}
 
-	this.stretchOnParent = function (setAnchor) {
+	this.stretchOnParent = function(setAnchor) {
 		if (setAnchor === undefined) {
 			setAnchor = true;
 		}
@@ -2778,12 +2824,12 @@ function Entity(name, x, y) {
 
 	// this one's the same as stretch but also sets pivot so coordinates are the same as screens.
 	// (0x0 is top-right)
-	this.makeFullscreen = function (setAnchor) {
+	this.makeFullscreen = function(setAnchor) {
 		this.pivotX = this.pivotY = 0.0;
 		this.stretchOnParent(setAnchor);
 	};
 
-	this.alignToParent = function (parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor) {
+	this.alignToParent = function(parentX, parentY, childX, childY, pxOffsetX, pxOffsetY, setAnchor) {
 		if (setAnchor === undefined) {
 			setAnchor = true;
 		}
@@ -2791,7 +2837,7 @@ function Entity(name, x, y) {
 		this.alignToParentVertically(parentY, childY, pxOffsetY, setAnchor);
 	};
 
-	this.alignToParentHorizontally = function (parentX, childX, pxOffset, setAnchor) {
+	this.alignToParentHorizontally = function(parentX, childX, pxOffset, setAnchor) {
 		if (setAnchor === undefined) {
 			setAnchor = true;
 		}
@@ -2813,7 +2859,7 @@ function Entity(name, x, y) {
 		}
 	};
 
-	this.alignToParentVertically = function (parentY, childY, pxOffset, setAnchor) {
+	this.alignToParentVertically = function(parentY, childY, pxOffset, setAnchor) {
 		if (setAnchor === undefined) {
 			setAnchor = true;
 		}
@@ -2836,22 +2882,22 @@ function Entity(name, x, y) {
 	};
 
 	// mind that this one gets you just a copy of the thing
-	this.getTransformMatrix = function () {
+	this.getTransformMatrix = function() {
 		if (this.parent === null) {
 			return this.transformMatrix.getDuplicate();
 		}
 		return this.transformMatrix.getMultiplied(this.parent.getTransformMatrix());
 	};
 
-	this.getWidth = function () {
+	this.getWidth = function() {
 		return this.width * this.scaleX;
 	};
 
-	this.getHeight = function () {
+	this.getHeight = function() {
 		return this.height * this.scaleY;
 	};
 
-	this.isPointInside = function (x, y) {
+	this.isPointInside = function(x, y) {
 		var sx = this.screenX;
 		var sy = this.screenY;
 		var sw = this.screenWidth;
@@ -2867,7 +2913,7 @@ function Entity(name, x, y) {
 			y < sh * this.pivotY);
 	};
 
-	this.getEntityAt = function (x, y) {
+	this.getEntityAt = function(x, y) {
 		if (!this.visible || this.alpha <= 0) {
 			return null;
 		}
@@ -2888,14 +2934,14 @@ function Entity(name, x, y) {
 		return null;
 	};
 
-	this.isVisible = function () {
+	this.isVisible = function() {
 		if (this.parent !== null) {
 			return this.visible && this.parent.isVisible();
 		}
 		return this.visible;
 	};
 
-	this.checkCollision = function (entity) {
+	this.checkCollision = function(entity) {
 		var thisPos = chao.makeVector2(this.screenX, this.screenY);
 		var thisSize = chao.makeVector2(this.getWidth(), this.getHeight());
 		var otherPos = chao.makeVector2(entity.screenX, entity.screenY);
@@ -3034,11 +3080,11 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 
 	this.ready = true;
 
-	this.create = function () {
+	this.create = function() {
 		this.setImage(this.imageKey, this.frameWidth, this.frameHeight);
 	};
 
-	this.draw = function () {
+	this.draw = function() {
 		var entity = this.entity;
 
 		if (!this.image) {
@@ -3121,7 +3167,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 			entity.pivotX, entity.pivotY);
 	};
 
-	this.update = function () {
+	this.update = function() {
 
 		if (!this.ready && this.image.ready) {
 			this.ready = true;
@@ -3155,7 +3201,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		}
 	};
 
-	this.setImage = function (image, frameWidth, frameHeight) {
+	this.setImage = function(image, frameWidth, frameHeight) {
 		if (!image) {
 			return;
 		}
@@ -3170,7 +3216,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		}
 	};
 
-	this.addAnim = function (key, frames, delay, loop) {
+	this.addAnim = function(key, frames, delay, loop) {
 		this.anims.push({
 			key: key,
 			frames: frames,
@@ -3179,7 +3225,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		});
 	};
 
-	this.playAnim = function (key, force) {
+	this.playAnim = function(key, force) {
 		for (var i = 0; i < this.anims.length; ++i) {
 			if (this.anims[i].key === key) {
 				if (this.currentAnim == i && !force) {
@@ -3198,7 +3244,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		chao.log("Entity \"" + this.entity.name + "\" has no anim named \"" + key + "\".");
 	};
 
-	this.getCurrentAnim = function () {
+	this.getCurrentAnim = function() {
 		if (this.currentAnim >= 0 && this.currentAnim < this.anims.length) {
 			return this.anims[this.currentAnim];
 		}
@@ -3206,7 +3252,7 @@ function ComponentSprite(key, frameWidth, frameHeight) {
 		return null;
 	};
 
-	this.setAnimPause = function (value) {
+	this.setAnimPause = function(value) {
 		this.animPaused = value;
 	};
 };
@@ -3223,7 +3269,7 @@ function ComponentFrame(image, cornerSize) {
 		this.updateImage();
 	};
 
-	this.draw = function () {
+	this.draw = function() {
 		var entity = this.entity;
 		var drawX = entity.screenX - (entity.screenWidth * entity.pivotX);
 		var drawY = entity.screenY - (entity.screenHeight * entity.pivotY);
@@ -3236,7 +3282,7 @@ function ComponentFrame(image, cornerSize) {
 			entity.pivotX, entity.pivotY);
 	};
 
-	this.update = function () {
+	this.update = function() {
 		var entity = this.entity;
 		if (this.lastSize.x != entity.width || this.lastSize.y != entity.height) {
 			this.lastSize.set(entity.width, entity.height);
@@ -3250,7 +3296,7 @@ function ComponentFrame(image, cornerSize) {
 		var newSize = chao.makeVector2(
 			Math.max(minSize, entity.width),
 			Math.max(minSize, entity.height));
-		
+
 		if (this.frameImage == null) {
 			this.frameImage = chao.createImage(undefined, newSize.x, newSize.y);
 		} else {
@@ -3267,10 +3313,10 @@ function ComponentFrame(image, cornerSize) {
 		var borderHeight = entity.height - doubleCorner;
 		var borderScaleX = borderWidth / sourceBorderWidth;
 		var borderScaleY = borderHeight / sourceBorderHeight;
-		
+
 		var rectMid = chao.makeRect(cornerSize, cornerSize, sourceBorderWidth, sourceImg.height - doubleCorner);
 		var rectTop = chao.makeRect(cornerSize, 0, sourceBorderWidth, cornerSize);
-		var rectBottom = chao.makeRect(cornerSize, sourceImg.height - cornerSize , sourceBorderWidth, cornerSize);
+		var rectBottom = chao.makeRect(cornerSize, sourceImg.height - cornerSize, sourceBorderWidth, cornerSize);
 		var rectLeft = chao.makeRect(0, cornerSize, cornerSize, sourceImg.height - doubleCorner);
 		var rectRight = chao.makeRect(sourceImg.width - cornerSize, cornerSize, cornerSize, sourceImg.height - doubleCorner);
 		var rectTL = chao.makeRect(0, 0, cornerSize, cornerSize);
@@ -3285,9 +3331,9 @@ function ComponentFrame(image, cornerSize) {
 		this.drawFramePart(frameImg.width - cornerSize, cornerSize, rectRight, 1.0, borderScaleY);
 
 		this.drawFramePart(0, 0, rectTL);
-		this.drawFramePart(entity.width-cornerSize, 0, rectTR);
-		this.drawFramePart(0, entity.height-cornerSize, rectBL);
-		this.drawFramePart(entity.width-cornerSize, entity.height-cornerSize, rectBR);
+		this.drawFramePart(entity.width - cornerSize, 0, rectTR);
+		this.drawFramePart(0, entity.height - cornerSize, rectBL);
+		this.drawFramePart(entity.width - cornerSize, entity.height - cornerSize, rectBR);
 	};
 
 	this.drawFramePart = function(x, y, sourceRect, scaleX, scaleY) {
@@ -3325,7 +3371,7 @@ function ComponentText(font, text, size) {
 	this.rawText = text;
 	this.ready = true;
 
-	this.create = function () {
+	this.create = function() {
 		this._font = chao.getFont(this._font);
 		if (chao.enableFontsLoadCheck) {
 			this.ready = this._font.ready;
@@ -3334,7 +3380,7 @@ function ComponentText(font, text, size) {
 		this.changeText();
 	};
 
-	this.draw = function () {
+	this.draw = function() {
 		if (this.text === "") {
 			return;
 		}
@@ -3359,7 +3405,7 @@ function ComponentText(font, text, size) {
 			entity.pivotX, entity.pivotY);
 	};
 
-	this.changeText = function (text) {
+	this.changeText = function(text) {
 		text = text || this.text;
 
 		var i, j;
@@ -3480,7 +3526,7 @@ function ComponentText(font, text, size) {
 		}
 	};
 
-	this.isNumber = function (c) {
+	this.isNumber = function(c) {
 		return "0123456789".indexOf(c) !== -1;
 	};
 
@@ -3577,12 +3623,12 @@ function ComponentButton(image) {
 	this.onHold = chao.makeSignal();
 	this.onReleased = chao.makeSignal();
 
-	this.create = function () {
+	this.create = function() {
 		this.setImage(this.imageKey);
 		this.entity.clickable = true;
 	};
 
-	this.update = function () {
+	this.update = function() {
 		if (!this.entity.visible) {
 			return;
 		}
@@ -3630,7 +3676,7 @@ function ComponentButton(image) {
 		}
 	};
 
-	this.setImage = function (key) {
+	this.setImage = function(key) {
 		if (this.sprite) {
 			this.entity.remove(this.sprite.entity);
 		}
@@ -3645,7 +3691,7 @@ function ComponentButton(image) {
 		this.entity.height = this.sprite.entity.height;
 	};
 
-	this.setImagePressed = function (key) {
+	this.setImagePressed = function(key) {
 		if (this.spritePressed) {
 			this.entity.remove(this.spritePressed.entity);
 		}
@@ -3655,7 +3701,7 @@ function ComponentButton(image) {
 		this.spritePressed.entity.visible = false;
 	};
 
-	this.setText = function (text, font, size, color) {
+	this.setText = function(text, font, size, color) {
 		if (!this.text) {
 			this.text = this.entity.addWithComponent("Button Text", new ComponentText(font, text, size));
 			this.text.align = "left";
@@ -3666,7 +3712,7 @@ function ComponentButton(image) {
 			if (font) this.text.font = font;
 			if (text) this.text.text = text;
 			if (size) this.text.size = size;
-			if (color)  this.text.colot = color;
+			if (color) this.text.colot = color;
 		}
 
 		this.text.entity.alignToParent();
@@ -3674,7 +3720,7 @@ function ComponentButton(image) {
 		return this.text;
 	};
 
-	this.isAbove = function (x, y) {
+	this.isAbove = function(x, y) {
 		if (!this.entity.visible) {
 			return false;
 		}
@@ -3702,7 +3748,7 @@ function ComponentCamera() {
 
 	this.slideTweens = [];
 
-	this.update = function () {
+	this.update = function() {
 		if (this.trackedEntity === null) {
 			this.clampToBounds(this.entity);
 			return;
@@ -3714,7 +3760,7 @@ function ComponentCamera() {
 		this.entity.y = chao.interpolate(this.entity.y, cameraPos.y, chao.timeDelta * this.trackingSpeed);
 	};
 
-	this.follow = function (entity, trackingSpeed) {
+	this.follow = function(entity, trackingSpeed) {
 		this.removeSlideTweens();
 		this.trackedEntity = entity;
 		this.trackingSpeed = trackingSpeed || this.trackingSpeed;
@@ -3723,17 +3769,21 @@ function ComponentCamera() {
 		}
 	};
 
-	this.unfollow = function () {
+	this.unfollow = function() {
 		this.trackedEntity = null;
 	};
 
-	this.snapToFollowed = function () {
-		var cameraPos = this.getCameraTargetPosition();
-		this.entity.x = cameraPos.x;
-		this.entity.y = cameraPos.y;
-	}
+	this.snapToPosition = function(x, y) {
+		this.entity.x = x;
+		this.entity.y = y;
+	};
 
-	this.slideToPosition = function (x, y, time, interpolationType, callback) {
+	this.snapToFollowed = function() {
+		var cameraPos = this.getCameraTargetPosition();
+		this.snapToPosition(cameraPos.x, cameraPos.y);
+	};
+
+	this.slideToPosition = function(x, y, time, interpolationType, callback) {
 		interpolationType = interpolationType !== undefined ? interpolationType : chao.INTERPOLATE_SMOOTH;
 
 		this.removeSlideTweens();
@@ -3748,21 +3798,33 @@ function ComponentCamera() {
 			this.entity.y, y, time, interpolationType, chao.REPEAT_MODE_ONCE));
 	};
 
-	this.removeSlideTweens = function () {
+	this.removeSlideTweens = function() {
 		for (var i = 0; i < this.slideTweens.length; ++i) {
 			ComponentTween.removeTween(this.slideTweens[i]);
 		}
 		this.slideTweens = [];
 	};
 
-	this.setBounds = function (x, y, width, height) {
+	this.getVisibleRect = function() {
+		return chao.makeRect( -this.entity.x, -this.entity.y, chao.screenWidth, chao.screenHeight);
+	};
+
+	this.setBounds = function(x, y, width, height) {
 		this.bounds.x = x;
 		this.bounds.y = y;
 		this.bounds.width = width;
 		this.bounds.height = height;
 	};
 
-	this.clampToBounds = function (cameraPos) {
+	this.resetBounds = function() {
+		this.setBounds(0, 0, -1, -1);
+	};
+
+	this.isRectVisible = function(rect) {
+		return this.getVisibleRect().intersects(rect);
+	};
+
+	this.clampToBounds = function(cameraPos) {
 		if (this.bounds.width > 0) {
 			cameraPos.x = -chao.clamp(-cameraPos.x, this.bounds.x, (this.bounds.x + this.bounds.width) - chao.screenWidth);
 		}
@@ -3771,7 +3833,7 @@ function ComponentCamera() {
 		}
 	};
 
-	this.getCameraTargetPosition = function () {
+	this.getCameraTargetPosition = function() {
 		var targetPosOffset = {
 			x: chao.screenWidth / 2 - this.trackedEntity.screenX,
 			y: chao.screenHeight / 2 - this.trackedEntity.screenY
@@ -3808,11 +3870,11 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 	this.timer = 0;
 	this.direction = 1;
 
-	this.create = function () {
+	this.create = function() {
 		this.target = this.target || this.entity;
 	};
 
-	this.update = function () {
+	this.update = function() {
 		this.timer += this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
 
 		if (this.delay > 0) {
@@ -3826,29 +3888,32 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 
 		if (this.timer >= this.lifetime) {
 			switch (this.repeatMode) {
-				case chao.REPEAT_MODE_ONCE: {
-					this.timer = this.lifetime;
-					this.finished = true;
-					if (this.finishCallback) {
-						this.finishCallback.call(this, this);
+				case chao.REPEAT_MODE_ONCE:
+					{
+						this.timer = this.lifetime;
+						this.finished = true;
+						if (this.finishCallback) {
+							this.finishCallback.call(this, this);
+						}
+						this.entity.removeComponent(this);
+						break;
 					}
-					this.entity.removeComponent(this);
-					break;
-				}
-				case chao.REPEAT_MODE_LOOP: {
-					this.timer = 0.0;
-					if (this.finishCallback) {
-						this.finishCallback.call(this, this);
+				case chao.REPEAT_MODE_LOOP:
+					{
+						this.timer = 0.0;
+						if (this.finishCallback) {
+							this.finishCallback.call(this, this);
+						}
+						break;
 					}
-					break;
-				}
-				case chao.REPEAT_MODE_BOUNCE: {
-					this.timer = 0.0;
-					this.direction = this.direction == 1 ? -1 : 1;
-					if (this.finishCallback) {
-						this.finishCallback.call(this, this);
+				case chao.REPEAT_MODE_BOUNCE:
+					{
+						this.timer = 0.0;
+						this.direction = this.direction == 1 ? -1 : 1;
+						if (this.finishCallback) {
+							this.finishCallback.call(this, this);
+						}
 					}
-				}
 			}
 		}
 
@@ -3859,20 +3924,20 @@ function ComponentTween(varName, from, to, time, interpolationType, repeatMode, 
 		this.updateVar(v);
 	};
 
-	this.updateVar = function (progress) {
+	this.updateVar = function(progress) {
 		this.target[this.varName] = chao.interpolate(this.from, this.to, progress, this.interpolationType);
 	};
 
 }
 
-ComponentTween.addTween = function (targetEntity, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
+ComponentTween.addTween = function(targetEntity, varName, from, to, time, interpolationType, repeatMode, delay, finishCallback) {
 	return targetEntity.addComponent(
 		new ComponentTween(varName, from, to,
 			time, interpolationType, repeatMode, delay, finishCallback)
 	);
 };
 
-ComponentTween.removeTween = function (tween, finish) {
+ComponentTween.removeTween = function(tween, finish) {
 	if (tween.finished) {
 		return;
 	}
@@ -3882,14 +3947,14 @@ ComponentTween.removeTween = function (tween, finish) {
 	tween.entity.removeComponent(tween);
 };
 
-ComponentTween.removeTweensFromEntity = function (targetEntity, finish) {
+ComponentTween.removeTweensFromEntity = function(targetEntity, finish) {
 	var tweensToRemove = targetEntity.getComponentsByName("Tween");
 	for (var i = 0; i < tweensToRemove.length; ++i) {
 		this.removeTween(tweensToRemove[i], finish);
 	}
 };
 
-ComponentTween.removeAllTweens = function (finish) {
+ComponentTween.removeAllTweens = function(finish) {
 	var allTweens = chao.findComponents("Tween");
 	var n = allTweens.length;
 	for (var i = 0; i < n; ++i) {
@@ -3925,12 +3990,12 @@ function ComponentParticles(image) {
 
 	this.fadeOutStartTime = 0.8; // percentwise, 0-1
 
-	this.create = function () {
+	this.create = function() {
 		image = chao.getImage(image);
 		this.particles = [];
 	};
 
-	this.update = function () {
+	this.update = function() {
 		var entity = this.entity;
 		var i;
 		var deadParticles = [];
@@ -3947,7 +4012,7 @@ function ComponentParticles(image) {
 				var nextEmit = interval * this.emittedAmount * (1.0 - this.explosiveness);
 
 				if (this.timer >= nextEmit) {
-					this.emittedAmount ++;
+					this.emittedAmount++;
 
 					var newTransform = chao.makeTransformMatrix(
 						chao.getRandomRange(-this.emissionShapeSize, this.emissionShapeSize),
@@ -3959,10 +4024,10 @@ function ComponentParticles(image) {
 					}
 
 					var newVel = this.velocity.duplicate();
-					var rand = chao.makeVector2(this.velocityRandomness.x/2, this.velocityRandomness.y/2);
+					var rand = chao.makeVector2(this.velocityRandomness.x / 2, this.velocityRandomness.y / 2);
 					newVel.x += this.velocity.x * chao.getRandomRange(-rand.x, rand.x);
 					newVel.y += this.velocity.y * chao.getRandomRange(-rand.y, rand.y);
-					newVel.rotate(chao.getRandomRange(-this.velocitySpread/2, this.velocitySpread/2));
+					newVel.rotate(chao.getRandomRange(-this.velocitySpread / 2, this.velocitySpread / 2));
 
 					var newParticle = {
 						transform: newTransform,
@@ -3984,7 +4049,7 @@ function ComponentParticles(image) {
 			if (this.particles.length <= 0) {
 				if (this.disposable) {
 					entity.removeComponent(this);
-				} else if (!this.oneShot){
+				} else if (!this.oneShot) {
 					chao.log("uh?");
 					this.play();
 				}
@@ -4056,18 +4121,18 @@ function ComponentParticles(image) {
 			}
 
 			chao.drawImage(chao.canvas, image, drawX, drawY, thisAlpha,
-					drawScaleX, drawScaleY, transform.getRotation(),
-					0.5, 0.5);
+				drawScaleX, drawScaleY, transform.getRotation(),
+				0.5, 0.5);
 		}
 	};
 
-	this.play = function () {
+	this.play = function() {
 		this.emittedAmount = 0;
 		this.timer = this.timerLast = 0.0;
 		this.emitting = true;
 	};
 
-	this.stop = function (immediately) {
+	this.stop = function(immediately) {
 		if (immediately) {
 			this.particles = [];
 		}
@@ -4090,7 +4155,7 @@ function ComponentShake(force, time, damped) {
 	this.entityPosition = chao.makeVector2();
 	this.shakenPosition = chao.makeVector2();
 
-	this.update = function () {
+	this.update = function() {
 		if (this.timer > 0.0) {
 			this.timer -= this.useUnscaledTime ? chao.getUnscaledDelta() : chao.getTimeDelta();
 			if (this.timer <= 0.0) {
@@ -4134,7 +4199,7 @@ function ComponentShake(force, time, damped) {
 		}
 	};
 
-	this.shake = function (force, time, damped) {
+	this.shake = function(force, time, damped) {
 		if (force) this.force = force;
 		if (time) this.duration = time;
 		if (damped) this.damped = damped;
@@ -4150,10 +4215,10 @@ function ComponentShake(force, time, damped) {
 	};
 }
 
-function ComponentYSort () {
+function ComponentYSort() {
 	this.name = "Y Sort";
-	
-	this.update = function () {
+
+	this.update = function() {
 		let objs = this.entity.children;
 		let n = objs.length;
 		for (let i = 0; i < n; ++i) {
@@ -4168,18 +4233,18 @@ function ComponentYSort () {
 	};
 }
 
-function ComponentCollider ( shape, isKinematic ) {
+function ComponentCollider(shape, isKinematic) {
 	// Watch out not to name anything else like this.
 	this.name = "ChaoCollider"
 	this.otherBodies = [];
 	this.shape = shape;
 	this.isKinematic = isKinematic == undefined ? true : false;
 
-	this.onCollide = chao.makeSignal(/**ComponentCollider*/);
+	this.onCollide = chao.makeSignal( /**ComponentCollider*/ );
 
 	this.lastPos = chao.makeVector2();
 
-	this.create = function () {
+	this.create = function() {
 		var entity = this.entity;
 
 		this.remove = this.destroy;
@@ -4191,13 +4256,13 @@ function ComponentCollider ( shape, isKinematic ) {
 		}
 	};
 
-	this.destroy = function () {
+	this.destroy = function() {
 		for (let i = 0; i < this.otherBodies.length; ++i) {
 			this.otherBodies[i].splice(this.otherBodies[i].indexOf(this), 1);
 		}
 	};
 
-	this.update = function () {
+	this.update = function() {
 		var entity = this.entity;
 		var lastPos = this.lastPos;
 
@@ -4216,20 +4281,20 @@ function ComponentCollider ( shape, isKinematic ) {
 				var otherPos = other.shape.getPosition(other.entity.x, other.entity.y);
 				var colX = false;
 				var colY = false;
-				
+
 				if (this.shape.name == "circle" && other.shape.name == "circle") {
 					var maxDist = this.shape.radius + other.shape.radius;
-					
+
 					var vecX = chao.makeVector2(otherPos.x - thisPos.x, otherPos.y - thisLastPos.y);
 					var distX = vecX.getLength();
-					
+
 					colX = distX < maxDist;
 
 					var vecY = chao.makeVector2(otherPos.x - thisPos.x, otherPos.y - thisPos.y);
 					var distY = vecY.getLength();
-					
+
 					colY = distY < maxDist;
-					
+
 				} else if (this.shape.name == "rect" && other.shape.name == "rect") {
 					var thisHalfSize = this.shape.getHalfSize();
 					var otherHalfSize = other.shape.getHalfSize();
@@ -4237,7 +4302,7 @@ function ComponentCollider ( shape, isKinematic ) {
 						x: thisHalfSize.x + otherHalfSize.x,
 						y: thisHalfSize.y + otherHalfSize.y,
 					};
-					
+
 					var vx = {
 						x: Math.abs(thisPos.x - otherPos.x),
 						y: Math.abs(thisLastPos.y - otherPos.y),
@@ -4252,7 +4317,7 @@ function ComponentCollider ( shape, isKinematic ) {
 
 				} else {
 					if (this.shape.name == "circle") {
-						colX = this.testRectCircleCollision(other.shape, this.shape, 
+						colX = this.testRectCircleCollision(other.shape, this.shape,
 							otherPos, chao.makeVector2(thisPos.x, thisLastPos.y));
 						colY = this.testRectCircleCollision(other.shape, this.shape,
 							otherPos, chao.makeVector2(thisLastPos.x, thisPos.y));
@@ -4301,7 +4366,7 @@ function ComponentCollider ( shape, isKinematic ) {
 					pos.y - this.shape.height / 2,
 					this.shape.width, this.shape.height, color)
 			} else {
-				chao.drawCircleFill( chao.canvas, pos.x, pos.y,
+				chao.drawCircleFill(chao.canvas, pos.x, pos.y,
 					this.shape.radius, color);
 			}
 		}
@@ -4319,15 +4384,15 @@ function ComponentCollider ( shape, isKinematic ) {
 			y: circlePos.y
 		}
 
-		if (circlePos.x < rectPos.x - rectHalf.x) { 
-			test.x = rectPos.x - rectHalf.x; 
-		} else if (circlePos.x  > rectPos.x + rectHalf.x) {
+		if (circlePos.x < rectPos.x - rectHalf.x) {
+			test.x = rectPos.x - rectHalf.x;
+		} else if (circlePos.x > rectPos.x + rectHalf.x) {
 			test.x = rectPos.x + rectHalf.x;
 		}
 
-		if (circlePos.y < rectPos.y - rectHalf.y) { 
-			test.y = rectPos.y - rectHalf.y; 
-		} else if (circlePos.y  > rectPos.y + rectHalf.y) {
+		if (circlePos.y < rectPos.y - rectHalf.y) {
+			test.y = rectPos.y - rectHalf.y;
+		} else if (circlePos.y > rectPos.y + rectHalf.y) {
 			test.y = rectPos.y + rectHalf.y;
 		}
 
@@ -4348,7 +4413,7 @@ ComponentCollider.shapeRect = function(width, height, offsetX, offsetY) {
 			(entityPosY || 0) + this.offset.y
 		);
 	};
-	this.getHalfSize = function(){
+	this.getHalfSize = function() {
 		return { x: this.width / 2, y: this.height / 2 };
 	};
 }
