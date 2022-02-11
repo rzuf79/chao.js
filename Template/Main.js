@@ -7,4 +7,4 @@ chao.loadImage("sticker", "assets/images/sticker.png");
 
 // -----
 
-chao.switchState(new StateEditor());
+chao.switchState(new StateGame());
