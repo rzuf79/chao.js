@@ -1,6 +1,11 @@
 # chao.js
 ![Easier than opening a boutique](https://i.imgur.com/3S5f9TE.png "")
 
+# Current state
+Well, haha, turns out the entity-component systems as well as most other so called paradigms are just a bad idea. Who knew!
+
+# What's this about?
+
 chao.js
 
 aka
